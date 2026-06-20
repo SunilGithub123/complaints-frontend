@@ -1,0 +1,36 @@
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.iml
+*.swp
+*.log
+
+# Node
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+build/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# Env / secrets — never commit
+.env
+.env.*
+!.env.example
+
+# OS / tool artifacts
+.cache/
+.parcel-cache/
+.vite/
+
+# Expo / native
+ios/build/
+android/build/
+*.apk
+*.ipa
+

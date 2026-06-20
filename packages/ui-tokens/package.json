@@ -1,0 +1,14 @@
+{
+  "name": "@complaints/ui-tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "echo 'noop'",
+    "typecheck": "echo 'noop'",
+    "test": "echo 'noop'"
+  }
+}
+
