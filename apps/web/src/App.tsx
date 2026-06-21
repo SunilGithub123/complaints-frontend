@@ -5,6 +5,7 @@ import { initI18n } from '@complaints/i18n';
 import { wireApi } from '@/auth/wireApi';
 import { useAuthStore } from '@/auth/authStore';
 import { router } from '@/router';
+import { ToastViewport } from '@/components/ui/toast';
 
 // Single boot wiring — happens once before React renders. Calling at module
 // scope keeps the dance synchronous so `setAuthHooks` is in place by the
@@ -42,6 +43,7 @@ export default function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
+      <ToastViewport />
     </QueryClientProvider>
   );
 }

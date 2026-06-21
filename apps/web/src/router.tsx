@@ -9,7 +9,7 @@
 import { lazy, Suspense, type ReactElement } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RequireAuth, RequirePasswordChanged } from '@/auth/guards';
+import { RequireAuth, RequirePasswordChanged, RequireRole } from '@/auth/guards';
 
 const LoginScreen = lazy(() => import('@/screens/login/LoginScreen'));
 const ChangePasswordScreen = lazy(
@@ -17,13 +17,16 @@ const ChangePasswordScreen = lazy(
 );
 const DashboardLayout = lazy(() => import('@/screens/dashboard/DashboardLayout'));
 const HomeScreen = lazy(() => import('@/screens/dashboard/HomeScreen'));
-const SubdivisionsScreen = lazy(
-  () => import('@/screens/masterdata/SubdivisionsScreen'),
+const SubdivisionsAdminScreen = lazy(
+  () => import('@/screens/masterdata/SubdivisionsAdminScreen'),
 );
-const DistributionCentersScreen = lazy(
-  () => import('@/screens/masterdata/DistributionCentersScreen'),
+const DistributionCentersAdminScreen = lazy(
+  () => import('@/screens/masterdata/DistributionCentersAdminScreen'),
 );
-const CategoriesScreen = lazy(() => import('@/screens/masterdata/CategoriesScreen'));
+const CategoriesAdminScreen = lazy(
+  () => import('@/screens/masterdata/CategoriesAdminScreen'),
+);
+const StaffListScreen = lazy(() => import('@/screens/admin-staff/StaffListScreen'));
 const NotFoundScreen = lazy(() => import('@/screens/not-found/NotFoundScreen'));
 
 function PageFallback(): ReactElement {
@@ -52,12 +55,26 @@ export const router = createBrowserRouter([
             element: wrap(<DashboardLayout />),
             children: [
               { index: true, element: wrap(<HomeScreen />) },
-              { path: 'masterdata/subdivisions', element: wrap(<SubdivisionsScreen />) },
               {
-                path: 'masterdata/distribution-centers',
-                element: wrap(<DistributionCentersScreen />),
+                // Phase 2: master-data write screens + staff management,
+                // all admin-only. Gate the whole sub-tree once.
+                element: <RequireRole roles={['ADMIN']} />,
+                children: [
+                  {
+                    path: 'masterdata/subdivisions',
+                    element: wrap(<SubdivisionsAdminScreen />),
+                  },
+                  {
+                    path: 'masterdata/distribution-centers',
+                    element: wrap(<DistributionCentersAdminScreen />),
+                  },
+                  {
+                    path: 'masterdata/categories',
+                    element: wrap(<CategoriesAdminScreen />),
+                  },
+                  { path: 'admin/staff', element: wrap(<StaffListScreen />) },
+                ],
               },
-              { path: 'masterdata/categories', element: wrap(<CategoriesScreen />) },
             ],
           },
         ],

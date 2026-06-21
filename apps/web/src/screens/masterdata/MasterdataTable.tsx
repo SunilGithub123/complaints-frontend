@@ -36,6 +36,8 @@ export interface MasterdataTableProps<TRow> {
   isLoading: boolean;
   error: unknown;
   rowKey: (row: TRow) => string | number;
+  /** Optional toolbar rendered on the right of the heading row (e.g. "New" button). */
+  toolbar?: React.ReactNode;
 }
 
 export function MasterdataTable<TRow>({
@@ -46,14 +48,18 @@ export function MasterdataTable<TRow>({
   isLoading,
   error,
   rowKey,
+  toolbar,
 }: MasterdataTableProps<TRow>): React.JSX.Element {
   const t = useT();
 
   return (
     <section className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1">
-        <h2 className="text-2xl font-semibold">{heading}</h2>
-        <p className="text-sm text-[var(--color-muted-500)]">{subheading}</p>
+      <header className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-semibold">{heading}</h2>
+          <p className="text-sm text-[var(--color-muted-500)]">{subheading}</p>
+        </div>
+        {toolbar ? <div className="shrink-0">{toolbar}</div> : null}
       </header>
 
       {error ? (

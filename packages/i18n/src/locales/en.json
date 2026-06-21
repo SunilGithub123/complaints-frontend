@@ -1,13 +1,27 @@
 {
-  "$schema": "https://json-schema.org/draft-07/schema#",
-  "title": "Complaint Resolution System — i18n messages",
   "common": {
     "logout": "Logout",
     "loading": "Loading…",
     "cancel": "Cancel",
     "save": "Save",
+    "create": "Create",
+    "creating": "Creating…",
+    "edit": "Edit",
+    "saving": "Saving…",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "actions": "Actions",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied to clipboard",
+    "all": "All",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{current}} of {{total}}"
   },
   "staff": {
     "login": {
@@ -42,8 +56,9 @@
       "navSubdivisions": "Subdivisions",
       "navDistributionCenters": "Distribution centres",
       "navCategories": "Complaint categories",
+      "navStaff": "Staff",
       "homeHeading": "Dashboard",
-      "homeBody": "Use the side navigation to view master data. Admin write actions land in Phase 2."
+      "homeBody": "Use the side navigation to manage master data and staff accounts."
     }
   },
   "masterdata": {
@@ -53,23 +68,102 @@
       "name": "Name",
       "status": "Status",
       "empty": "No records found.",
-      "errorTitle": "Could not load data"
+      "errorTitle": "Could not load data",
+      "createdToast": "Created successfully.",
+      "updatedToast": "Saved.",
+      "activatedToast": "Activated.",
+      "deactivatedToast": "Deactivated.",
+      "codePattern": "Use upper-case letters, digits and hyphens only.",
+      "required": "Required."
     },
     "subdivisions": {
       "heading": "Subdivisions",
       "subheading": "Geographical units managed by the board.",
-      "district": "District"
+      "district": "District",
+      "createTitle": "Create subdivision",
+      "editTitle": "Edit subdivision",
+      "newButton": "New subdivision"
     },
     "distributionCenters": {
       "heading": "Distribution centres",
       "subheading": "Field offices grouped under a subdivision.",
       "address": "Address",
-      "subdivisionId": "Subdivision"
+      "subdivisionId": "Subdivision",
+      "createTitle": "Create distribution centre",
+      "editTitle": "Edit distribution centre",
+      "newButton": "New distribution centre",
+      "scopedToYourSubdivision": "Centre will be created under your subdivision."
     },
     "categories": {
       "heading": "Complaint categories",
       "subheading": "SLA-bound complaint types.",
-      "slaHours": "SLA (hours)"
+      "slaHours": "SLA (hours)",
+      "createTitle": "Create category",
+      "editTitle": "Edit category",
+      "newButton": "New category",
+      "slaRange": "SLA must be between 1 and 720 hours."
+    }
+  },
+  "adminStaff": {
+    "heading": "Staff",
+    "subheading": "Create and manage staff accounts in your subdivision.",
+    "newButton": "New staff member",
+    "filterRole": "Role",
+    "filterDc": "Distribution centre",
+    "filterEnabled": "Status",
+    "filterEnabledTrue": "Enabled only",
+    "filterEnabledFalse": "Disabled only",
+    "role": {
+      "ADMIN": "Admin",
+      "ENGINEER": "Engineer",
+      "TECHNICIAN": "Technician"
+    },
+    "table": {
+      "employeeId": "Employee ID",
+      "fullName": "Name",
+      "role": "Role",
+      "distributionCenterId": "DC",
+      "email": "Email",
+      "mobile": "Mobile",
+      "status": "Status",
+      "lastLoginAt": "Last login",
+      "never": "Never"
+    },
+    "form": {
+      "createTitle": "Create staff member",
+      "editTitle": "Edit staff member",
+      "employeeId": "Employee ID",
+      "employeeIdHelp": "Upper-case, digits and hyphens.",
+      "fullName": "Full name",
+      "roleLabel": "Role",
+      "email": "Email",
+      "mobile": "Mobile",
+      "mobileHelp": "Optional. Digits only, up to 15 chars.",
+      "distributionCenterId": "Distribution centre",
+      "distributionCenterIdHelp": "Required for engineers and technicians.",
+      "selectDc": "Select a distribution centre",
+      "submit": "Create",
+      "submitting": "Creating…",
+      "save": "Save changes",
+      "saving": "Saving…"
+    },
+    "tempPassword": {
+      "title": "Temporary password",
+      "intro": "Share this password with {{name}} ({{employeeId}}) over a secure channel. They will be required to change it on first sign-in.",
+      "warning": "This password will NOT be shown again. Copy it now.",
+      "label": "Temporary password",
+      "copy": "Copy password",
+      "done": "I have shared it"
+    },
+    "resetConfirm": {
+      "title": "Reset password",
+      "body": "This will revoke all active sessions for {{name}} and generate a new one-time password. Continue?",
+      "submit": "Reset password"
+    },
+    "deactivateConfirm": {
+      "title": "Deactivate staff member",
+      "body": "Deactivating {{name}} will revoke their sessions and block sign-in. You can re-activate later. Continue?",
+      "submit": "Deactivate"
     }
   },
   "errors": {
@@ -78,7 +172,20 @@
     "unauthorized": "Your session has expired. Please sign in again.",
     "passwordResetRequired": "You must change your password before continuing.",
     "network": "Network error. Please try again.",
-    "generic": "Unexpected error. Please try again."
+    "generic": "Unexpected error. Please try again.",
+    "VALIDATION_FAILED": "Please correct the highlighted fields.",
+    "SUBDIVISION_HAS_ACTIVE_DCS": "Cannot deactivate: this subdivision still has active distribution centres.",
+    "SUBDIVISION_HAS_ACTIVE_STAFF": "Cannot deactivate: this subdivision still has active staff accounts.",
+    "DC_HAS_ACTIVE_STAFF": "Cannot deactivate: this distribution centre still has active staff accounts.",
+    "EMPLOYEE_ID_TAKEN": "This employee ID is already in use.",
+    "ADMIN_ALREADY_EXISTS_FOR_SUBDIV": "An active admin already exists for this subdivision.",
+    "ENGINEER_ALREADY_EXISTS_FOR_DC": "An active engineer already exists for this distribution centre.",
+    "STAFF_NOT_FOUND": "Staff account not found.",
+    "STAFF_SCOPE_MISMATCH": "Staff account is outside your subdivision.",
+    "STAFF_ROLE_FIELDS_INVALID": "The provided fields do not match the selected role.",
+    "DC_NOT_IN_SUBDIVISION": "The chosen distribution centre is not in your subdivision.",
+    "CANNOT_DEACTIVATE_SELF": "You cannot deactivate or reset your own account.",
+    "DUPLICATE_KEY": "A record with the same code already exists."
   },
   "notFound": {
     "title": "Page not found",
@@ -86,4 +193,3 @@
     "backHome": "Back to dashboard"
   }
 }
-

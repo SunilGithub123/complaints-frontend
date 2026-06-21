@@ -296,6 +296,182 @@ heavy form widgets rather than land in the entry chunk.
 
 ---
 
+## Phase 2 — Admin write + Staff management
+
+> Backend Stages 5 + 6 (masterdata writes + admin staff CRUD) ship the
+> contracts this frontend stage consumes. See
+> `../complaints/docs/IMPLEMENTATION_LOG.md` for those entries.
+
+### Stage 7 · `apps/web` admin write screens + staff user management — ✅ 2026-06-22
+
+#### Scope delivered
+
+- **`packages/api`**
+  - Regenerated bindings from the updated `openapi.json` (admin-staff
+    tag added by BE Stage 6).
+  - Extended `endpoints.ts` barrel with intention-revealing aliases
+    for the orval numeric-suffix collisions on `create` / `update` /
+    `activate` / `deactivate` (1 = subdivisions, 2 = distribution
+    centres, 3 = categories). Re-exported the admin-staff hooks under
+    `useListStaff` / `useCreateStaff` / etc. and `getListStaffQueryKey`
+    so screens never collide with the generic `useList`. **The
+    numeric mapping is comment-documented and must be re-verified
+    after every `pnpm api:gen`.**
+- **`apps/web` primitives** (zero new npm deps)
+  - `components/ui/dialog.tsx` — hand-rolled over the native
+    `<dialog>` element. Saves ~10 KB gzipped vs `@radix-ui/react-dialog`.
+    Test-safe: falls back to the `open` attribute when jsdom doesn't
+    implement `showModal()`/`close()`.
+  - `components/ui/select.tsx` — styled native `<select>`. Free a11y,
+    zero bundle cost.
+  - `components/ui/toast.tsx` — Zustand-backed store + `ToastViewport`
+    mounted once in `App.tsx`. Auto-dismiss 5 s, dismissable. Saves
+    ~6 KB gzipped vs `@radix-ui/react-toast`. Imperative `toast.*`
+    shortcuts plus the `useToast()` hook for screens.
+  - `lib/apiErrors.ts` — `mapApiError(err, t)` → `{ code, message, fieldErrors }`.
+    Centralised so screens never grow `if (code === 'X') ...` ladders.
+    Looks up `errors.<BE_CODE>` keys; falls back to BE message →
+    `errors.generic`.
+- **Masterdata admin screens** (gated by `RequireRole={['ADMIN']}`)
+  - `SubdivisionsAdminScreen.tsx` + `SubdivisionFormDialog.tsx`.
+  - `DistributionCentersAdminScreen.tsx` + `DistributionCenterFormDialog.tsx`.
+    Form derives `subdivisionId` from the signed-in admin's token (no
+    picker per spec — Phase 1 admins are subdivision-scoped).
+  - `CategoriesAdminScreen.tsx` + `CategoryFormDialog.tsx`. SLA hours
+    coerced + range-checked 1–720.
+  - `MasterdataTable` extended with optional `toolbar?: React.ReactNode`
+    so the "New X" button slots into the header row without a new
+    wrapper component.
+  - Each form: React Hook Form + Zod, BE `fieldErrors` mapped onto
+    individual inputs via `setError`. The three guardrail codes
+    `SUBDIVISION_HAS_ACTIVE_DCS` / `SUBDIVISION_HAS_ACTIVE_STAFF` /
+    `DC_HAS_ACTIVE_STAFF` surface as non-blocking warning toasts; row
+    state stays unchanged (BE rejected the deactivate).
+- **Staff management** (`/admin/staff`, ADMIN-only)
+  - `StaffListScreen.tsx` — server-side paginated TanStack Query list,
+    filters by role / DC id / enabled. Per-row Edit / Activate /
+    Deactivate / Reset. Self-protection: Deactivate + Reset are hidden
+    for the row whose `id` equals the signed-in admin's id (BE also
+    enforces `CANNOT_DEACTIVATE_SELF`; failing fast in the UI saves a
+    round-trip).
+  - `StaffFormDialog.tsx` — bifurcated by mode because the BE bifurcates
+    the payload (`CreateStaffRequest` vs `UpdateStaffRequest` — role
+    and employeeId are immutable post-create). `subdivisionId` for
+    create comes from the auth store. DC picker appears only when role
+    is ENGINEER or TECHNICIAN. `EMPLOYEE_ID_TAKEN` is mapped onto the
+    employeeId field as well as the form-level alert. DC option list
+    loads via the existing `useListDcs` read hook (single page of 100
+    — enough for Phase 2 cardinality).
+  - `TempPasswordDialog.tsx` — one-time reveal after create or reset.
+    Password lives **only** in the screen's transient component state;
+    closing the dialog drops it. Never written to localStorage, never
+    logged. Copy-to-clipboard with inline "Copied" status; falls back
+    to manual copy if the Clipboard API is unavailable.
+- **Routing** — `router.tsx` consolidated all admin write paths under
+  a single `<RequireRole roles={['ADMIN']} />` outlet (one guard layer
+  instead of per-route checks). `/admin/staff` added alongside the
+  three masterdata paths.
+- **Nav** — `DashboardLayout` adds the "Staff" link to `ADMIN_NAV`.
+- **i18n** — Full EN + MR coverage for:
+  - `common.{create,creating,edit,saving,activate,deactivate,actions,yes,no,close,copy,copied,all,previous,next,page}`.
+  - `masterdata.common.{createdToast,updatedToast,activatedToast,deactivatedToast,codePattern,required}`
+    plus `*.createTitle/editTitle/newButton` for each entity.
+  - Full `adminStaff.{heading,subheading,newButton,filter*,role.*,table.*,form.*,tempPassword.*,resetConfirm.*,deactivateConfirm.*}` tree.
+  - 13 new error codes under `errors.*` covering the 3 masterdata
+    guardrails + 8 staff-management BE codes + `VALIDATION_FAILED` +
+    `DUPLICATE_KEY`.
+
+#### Incidents fixed during implementation
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | `Dialog` tests failed under jsdom with `TypeError: el.showModal is not a function`. | jsdom doesn't implement the imperative `HTMLDialogElement` methods. | Guarded `showModal()` / `close()` with `typeof === 'function'` checks; fall back to setting/removing the native `open` attribute so the dialog content still renders in tests. Real browsers continue to use the imperative API (focus trap, `inert`, backdrop layer). |
+| 2 | `pnpm --filter web typecheck` failed with `'@complaints/api' has no exported member named 'getListStaffQueryKey'`. | Re-exported only the staff *hooks* in the manual barrel; forgot the matching query-key helper that screens need for `invalidateQueries`. | Added `getListQueryKey as getListStaffQueryKey` to the admin-staff named re-export block in `packages/api/src/endpoints.ts`. |
+| 3 | `findByText(EMPLOYEE_ID_TAKEN message)` matched twice (field error + form-level alert) and threw. | Two render sites surface the same i18n string by design — the user sees a focused field error *and* the summary alert. | Test asserts `findAllByText(...).length > 0` instead of `findByText`. |
+
+#### Tests added
+
+Five files / **8 tests** total (4 new this stage, 4 pre-existing). All
+green:
+
+- `screens/admin-staff/StaffFormDialog.test.tsx` — 2 tests (happy
+  create + reveal temp password; `EMPLOYEE_ID_TAKEN` rejected →
+  field-level error + no reveal). `useListDcs` is mocked for a
+  deterministic option list; mutation hooks are injected props so the
+  test owns them.
+- `screens/admin-staff/TempPasswordDialog.test.tsx` — 1 test
+  enforcing the **two non-negotiable rules**: dialog is dismissable
+  AND the temporary password is not present in *any* `localStorage`
+  key (scans every key, not just `complaints:auth`).
+- `screens/masterdata/SubdivisionsAdminScreen.test.tsx` — 1 test for
+  the `SUBDIVISION_HAS_ACTIVE_DCS` guardrail: clicking Deactivate
+  fires the mutation, the BE rejects, the warning toast renders with
+  the localised text.
+
+Per the minimum-test policy (`.github/copilot-instructions.md`):
+intentionally **no** tests for the DC / Category form dialogs — they
+share the same pattern as the Subdivision one. Bumping coverage on a
+copy-paste form pattern doesn't earn its keep.
+
+#### Build status
+
+- `pnpm -w typecheck` → ✅
+- `pnpm -w test` → ✅ **5 files / 8 tests passing** (`@complaints/api` 2,
+  `apps/web` 6).
+- `pnpm -w build` → ✅
+- **Initial JS gzipped: 133.09 KB** (budget 180 KB → **46.91 KB headroom**).
+  Δ from Stage 4 baseline (129.91 KB): **+3.18 KB**, all of it in the
+  new Zustand toast store + `mapApiError` helper that the entry chunk
+  imports.
+- CSS gzipped: **4.20 KB** (budget 20 KB).
+- Admin write screens are **all route-level lazy** so they stay out of
+  the entry chunk:
+
+```
+SubdivisionsAdminScreen           2.13 KB
+CategoriesAdminScreen             2.24 KB
+DistributionCentersAdminScreen    2.26 KB
+StaffListScreen                   4.68 KB
+dialog (shared chunk)             5.16 KB
+```
+
+#### Carry-overs / known follow-ups
+
+- **`apps/web` ESLint script** still points at an uninstalled
+  `eslint` binary (script: `"lint": "eslint . --max-warnings=0"`).
+  Pre-existing Phase 0 gap, not introduced by Stage 7. ESLint flat
+  config + `eslint-plugin-i18next` (no-literal-string) land in the
+  Phase 1.5 CI hardening pass alongside `size-limit` and
+  `lighthouse-ci`.
+- **Numeric-suffix aliases in `endpoints.ts`** are positionally
+  brittle — if the BE re-orders masterdata controllers in the OpenAPI
+  tag iteration order, `useCreate1` will silently point at a
+  different tag. Mitigation today is the comment-documented mapping
+  + manual re-verification on every `pnpm api:gen`. Long-term fix:
+  ask BE to assign unique `operationId`s (`createSubdivision` etc.).
+  Filed against backend backlog.
+- **DC picker for staff create** loads at most one 100-row page of
+  active DCs. Single-subdivision Phase 2 caps make this fine; Phase
+  4+ multi-subdivision tooling will need a paged combobox.
+- **Reset-password confirmation** is a `window.confirm()` — good
+  enough for Phase 2 (browser-native, no a11y regression). A Dialog-
+  based confirm primitive can replace it when the third destructive
+  confirm appears (currently: deactivate masterdata, deactivate
+  staff, reset password — the third lands here, so the abstraction is
+  due, but the existing flow is shippable).
+- **`StaffFormDialog` accepts mutation hooks as injected props**
+  (rather than calling `useCreateStaff()` / `useUpdateStaff()`
+  internally) — done to keep the screen as the single owner of
+  cache-invalidation, but it duplicates the "create vs edit" split
+  that `SubdivisionFormDialog` solves internally. Inconsistency worth
+  resolving the **second** time another form needs the same
+  injection pattern (likely complaint forms in Phase 3).
+- **No E2E for the admin write flows yet** — deferred to Phase 2
+  Playwright slice alongside axe-core (`FRONTEND_DESIGN.md 9.2`).
+- **Marathi parity CI guard** still outstanding (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

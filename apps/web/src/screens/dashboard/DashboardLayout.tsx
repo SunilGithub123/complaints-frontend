@@ -29,6 +29,7 @@ const ADMIN_NAV: readonly NavItem[] = [
     labelKey: 'staff.dashboard.navDistributionCenters',
   },
   { to: '/masterdata/categories', labelKey: 'staff.dashboard.navCategories' },
+  { to: '/admin/staff', labelKey: 'staff.dashboard.navStaff' },
 ];
 
 const NON_ADMIN_NAV: readonly NavItem[] = [
