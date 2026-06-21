@@ -287,6 +287,13 @@ heavy form widgets rather than land in the entry chunk.
 - **axe-core E2E** — Phase 2 alongside the four critical Playwright
   journeys (see `FRONTEND_DESIGN.md §9.2`).
 
+#### Post-Stage-4 incidents (hotfixes)
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | Login (and every other API call) 404'd against `/api/v1/api/v1/staff/auth/login` — doubled `/api/v1` prefix. | The committed OpenAPI snapshot embeds `/api/v1` in every `paths` entry, so orval-generated callsites already pass `/api/v1/...` as an origin-relative URL. `setAuthHooks({ baseUrl: '/api/v1' })` in `wireApi.ts` (plus `DEFAULT_BASE_URL = '/api/v1'` + `REFRESH_PATH = '/staff/auth/refresh'` in `packages/api/src/client.ts`) then prepended it again. | Flipped defaults to empty: `wireApi.ts` reads `VITE_API_BASE_URL ?? ''`; `client.ts` `DEFAULT_BASE_URL = ''` and `REFRESH_PATH = '/api/v1/staff/auth/refresh'`. Dev still works because Vite's proxy forwards `/api/*` → `http://localhost:8080`; prod works because the web app is served same-origin behind a reverse proxy. Hosts that need to point at a different origin still inject a fully-qualified `baseUrl` (e.g. mobile). Updated the two assertions in `packages/api/src/__tests__/client.test.ts` that encoded the old doubled-prefix expectation. No new tests — the existing happy + 401-refresh pair already covers the URL-assembly contract.
+| 2 | After a successful first-login password change, every protected call (e.g. `GET /api/v1/staff/masterdata/subdivisions`) was rejected with `403 PASSWORD_RESET_REQUIRED — "Password change is required before continuing"`. | The BE bakes `passwordResetRequired` into the JWT access token at **login** time. `POST /staff/auth/change-password` only returns a fresh `StaffSummary` — it does **not** rotate tokens. The FE updated `staff` in the store (so the `RequirePasswordChanged` guard let the user navigate) while the still-issued access token continued to carry the stale `passwordResetRequired = true` claim, which the BE auth filter rejects. | `ChangePasswordScreen` now follows `changePassword` with an immediate `useRefresh({ refreshToken })` call, then writes the fresh `{ accessToken, refreshToken, staff }` triple via `setSession(...)` before navigating to `/`. Falls back to `setStaff(...)` only if no refresh token is present (defensive — shouldn't happen for a logged-in user). No new tests — the FE contract is unchanged from the test's perspective (form submit → store mutation → navigate); the bug was in the *order* of side-effects, not the surface.
+
 ---
 
 ## How to update this log

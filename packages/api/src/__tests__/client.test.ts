@@ -25,12 +25,12 @@ describe('customFetch', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     setAuthHooks({
-      baseUrl: '/api/v1',
+      baseUrl: '',
       getAccessToken: () => 'access-123',
     });
 
     const result = await customFetch<{ data: { success: boolean; data: { id: number } } }>(
-      '/staff/me',
+      '/api/v1/staff/me',
       { method: 'GET' },
     );
 
@@ -44,7 +44,7 @@ describe('customFetch', () => {
   it('on 401: refreshes once and retries the original request with the new token', async () => {
     const onTokensRefreshed = vi.fn();
     setAuthHooks({
-      baseUrl: '/api/v1',
+      baseUrl: '',
       getAccessToken: () => 'stale-token',
       getRefreshToken: () => 'refresh-abc',
       onTokensRefreshed,
@@ -74,7 +74,7 @@ describe('customFetch', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const result = await customFetch<{ data: { success: boolean; data: { id: number } } }>(
-      '/staff/me',
+      '/api/v1/staff/me',
       { method: 'GET' },
     );
 

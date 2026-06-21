@@ -7,7 +7,12 @@
 import { setAuthHooks } from '@complaints/api';
 import { useAuthStore } from '@/auth/authStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+// The OpenAPI snapshot already embeds the `/api/v1` prefix in every path,
+// so generated callsites pass `/api/v1/...` directly. We leave `baseUrl`
+// empty in dev (Vite's proxy forwards `/api/*` → http://localhost:8080)
+// and in prod (web is served same-origin behind a reverse proxy). Override
+// `VITE_API_BASE_URL` only when the API lives on a different origin.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 export function wireApi(): void {
   setAuthHooks({

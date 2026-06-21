@@ -77,8 +77,14 @@ export function __resetAuthHooksForTests(): void {
   inFlightRefresh = null;
 }
 
-const DEFAULT_BASE_URL = '/api/v1';
-const REFRESH_PATH = '/staff/auth/refresh';
+// The committed OpenAPI snapshot embeds the `/api/v1` prefix in every
+// `paths` entry, so orval-generated callsites already pass an absolute
+// (origin-relative) URL like `/api/v1/staff/auth/login`. Defaulting
+// `baseUrl` to anything non-empty would double-prefix the path. Hosts
+// can still inject a fully-qualified origin (e.g. `https://api.example`)
+// via `setAuthHooks({ baseUrl })` when needed (mobile, tests).
+const DEFAULT_BASE_URL = '';
+const REFRESH_PATH = '/api/v1/staff/auth/refresh';
 
 let inFlightRefresh: Promise<string | null> | null = null;
 
