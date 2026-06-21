@@ -17,6 +17,8 @@
 | You need to know… | File |
 |-------------------|------|
 | Code conventions, hard rules, test policy | [`.github/copilot-instructions.md`](.github/copilot-instructions.md) |
+| **What has actually shipped + incidents per stage** | [`docs/IMPLEMENTATION_LOG.md`](docs/IMPLEMENTATION_LOG.md) |
+| Backend implementation log (sibling repo) | [`../complaints/docs/IMPLEMENTATION_LOG.md`](../complaints/docs/IMPLEMENTATION_LOG.md) |
 | Frontend design (stack, UX flows, hosting, perf budgets) | [`../complaints/docs/FRONTEND_DESIGN.md`](../complaints/docs/FRONTEND_DESIGN.md) |
 | Delivery phases | [`../complaints/docs/ROADMAP.md`](../complaints/docs/ROADMAP.md) |
 | Business rules / user roles | [`../complaints/docs/BRD.md`](../complaints/docs/BRD.md) |

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Complaint Resolution System — i18n messages",
+  "common": {
+    "logout": "Logout",
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "staff": {
+    "login": {
+      "title": "Staff sign in",
+      "subtitle": "Complaint Resolution System",
+      "employeeId": "Employee ID",
+      "employeeIdPlaceholder": "e.g. ADMIN001",
+      "password": "Password",
+      "passwordPlaceholder": "Your password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "employeeIdRequired": "Employee ID is required",
+      "passwordRequired": "Password is required"
+    },
+    "changePassword": {
+      "title": "Change your password",
+      "subtitle": "You must set a new password before continuing.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "successToast": "Password updated.",
+      "mismatch": "Passwords do not match.",
+      "tooShort": "Password must be at least 12 characters.",
+      "complexity": "Must include lower-case, upper-case, digit and symbol."
+    },
+    "dashboard": {
+      "welcome": "Welcome, {{name}}",
+      "role": "Role: {{role}}",
+      "navHome": "Home",
+      "navSubdivisions": "Subdivisions",
+      "navDistributionCenters": "Distribution centres",
+      "navCategories": "Complaint categories",
+      "homeHeading": "Dashboard",
+      "homeBody": "Use the side navigation to view master data. Admin write actions land in Phase 2."
+    }
+  },
+  "masterdata": {
+    "common": {
+      "id": "ID",
+      "code": "Code",
+      "name": "Name",
+      "status": "Status",
+      "empty": "No records found.",
+      "errorTitle": "Could not load data"
+    },
+    "subdivisions": {
+      "heading": "Subdivisions",
+      "subheading": "Geographical units managed by the board.",
+      "district": "District"
+    },
+    "distributionCenters": {
+      "heading": "Distribution centres",
+      "subheading": "Field offices grouped under a subdivision.",
+      "address": "Address",
+      "subdivisionId": "Subdivision"
+    },
+    "categories": {
+      "heading": "Complaint categories",
+      "subheading": "SLA-bound complaint types.",
+      "slaHours": "SLA (hours)"
+    }
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "badCredentials": "Employee ID or password is incorrect.",
+    "unauthorized": "Your session has expired. Please sign in again.",
+    "passwordResetRequired": "You must change your password before continuing.",
+    "network": "Network error. Please try again.",
+    "generic": "Unexpected error. Please try again."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you requested does not exist.",
+    "backHome": "Back to dashboard"
+  }
+}
+

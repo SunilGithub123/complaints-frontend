@@ -9,6 +9,9 @@
     "lint": "echo 'noop'",
     "typecheck": "echo 'noop'",
     "test": "echo 'noop'"
+  },
+  "dependencies": {
+    "i18next": "^23.16.8",
+    "react-i18next": "^15.7.4"
   }
 }
-

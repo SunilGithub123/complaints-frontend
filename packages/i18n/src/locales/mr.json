@@ -1,0 +1,87 @@
+{
+  "common": {
+    "logout": "लॉगआउट",
+    "loading": "लोड होत आहे…",
+    "cancel": "रद्द करा",
+    "save": "जतन करा",
+    "active": "सक्रिय",
+    "inactive": "निष्क्रिय"
+  },
+  "staff": {
+    "login": {
+      "title": "कर्मचारी लॉगिन",
+      "subtitle": "तक्रार निवारण प्रणाली",
+      "employeeId": "कर्मचारी आयडी",
+      "employeeIdPlaceholder": "उदा. ADMIN001",
+      "password": "पासवर्ड",
+      "passwordPlaceholder": "तुमचा पासवर्ड",
+      "submit": "साइन इन",
+      "submitting": "साइन इन होत आहे…",
+      "employeeIdRequired": "कर्मचारी आयडी आवश्यक आहे",
+      "passwordRequired": "पासवर्ड आवश्यक आहे"
+    },
+    "changePassword": {
+      "title": "पासवर्ड बदला",
+      "subtitle": "पुढे जाण्यापूर्वी नवीन पासवर्ड सेट करा.",
+      "currentPassword": "सध्याचा पासवर्ड",
+      "newPassword": "नवीन पासवर्ड",
+      "confirmPassword": "नवीन पासवर्ड पुन्हा टाका",
+      "submit": "पासवर्ड अद्ययावत करा",
+      "submitting": "अद्ययावत होत आहे…",
+      "successToast": "पासवर्ड अद्ययावत झाला.",
+      "mismatch": "पासवर्ड जुळत नाहीत.",
+      "tooShort": "पासवर्ड किमान १२ अक्षरांचा हवा.",
+      "complexity": "लहान, मोठे अक्षर, अंक आणि चिन्ह आवश्यक."
+    },
+    "dashboard": {
+      "welcome": "स्वागत, {{name}}",
+      "role": "भूमिका: {{role}}",
+      "navHome": "मुख्यपृष्ठ",
+      "navSubdivisions": "उपविभाग",
+      "navDistributionCenters": "वितरण केंद्रे",
+      "navCategories": "तक्रार श्रेण्या",
+      "homeHeading": "डॅशबोर्ड",
+      "homeBody": "मास्टर डेटा पाहण्यासाठी डाव्या मेनूचा वापर करा. व्यवस्थापकीय बदल टप्पा २ मध्ये येतील."
+    }
+  },
+  "masterdata": {
+    "common": {
+      "id": "आयडी",
+      "code": "कोड",
+      "name": "नाव",
+      "status": "स्थिती",
+      "empty": "कोणतीही नोंद आढळली नाही.",
+      "errorTitle": "डेटा लोड होऊ शकला नाही"
+    },
+    "subdivisions": {
+      "heading": "उपविभाग",
+      "subheading": "मंडळाद्वारे व्यवस्थापित भौगोलिक एकके.",
+      "district": "जिल्हा"
+    },
+    "distributionCenters": {
+      "heading": "वितरण केंद्रे",
+      "subheading": "उपविभागांतर्गत क्षेत्रीय कार्यालये.",
+      "address": "पत्ता",
+      "subdivisionId": "उपविभाग"
+    },
+    "categories": {
+      "heading": "तक्रार श्रेण्या",
+      "subheading": "एसएलए-बद्ध तक्रार प्रकार.",
+      "slaHours": "एसएलए (तास)"
+    }
+  },
+  "errors": {
+    "title": "काहीतरी चुकले",
+    "badCredentials": "कर्मचारी आयडी किंवा पासवर्ड चुकीचा आहे.",
+    "unauthorized": "तुमचे सत्र संपले आहे. कृपया पुन्हा साइन इन करा.",
+    "passwordResetRequired": "पुढे जाण्यापूर्वी पासवर्ड बदला.",
+    "network": "नेटवर्क त्रुटी. कृपया पुन्हा प्रयत्न करा.",
+    "generic": "अनपेक्षित त्रुटी. कृपया पुन्हा प्रयत्न करा."
+  },
+  "notFound": {
+    "title": "पृष्ठ सापडले नाही",
+    "body": "तुम्ही विनंती केलेले पृष्ठ अस्तित्वात नाही.",
+    "backHome": "डॅशबोर्डवर परत"
+  }
+}
+

@@ -1,35 +1,35 @@
-/* Plain CSS placeholder — Tailwind v4 + shadcn/ui drop in during Phase 1
-   (first real screen). See ../../../complaints/docs/FRONTEND_DESIGN.md §3.1. */
-:root {
-  color-scheme: light dark;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
+@import 'tailwindcss';
+
+/*
+ * Design tokens (seed). Will move into `@complaints/ui-tokens` and be
+ * consumed by both web (Tailwind v4 @theme) and mobile (StyleSheet) once
+ * the second feature reuses them — see "add the abstraction the second
+ * time" guidance in .github/copilot-instructions.md.
+ */
+@theme {
+  --color-brand-50: oklch(0.97 0.02 250);
+  --color-brand-500: oklch(0.55 0.18 255);
+  --color-brand-600: oklch(0.48 0.18 255);
+  --color-brand-700: oklch(0.42 0.18 255);
+  --color-danger-50: oklch(0.97 0.03 25);
+  --color-danger-600: oklch(0.55 0.21 25);
+  --color-success-600: oklch(0.55 0.16 145);
+  --color-muted-50: oklch(0.98 0.005 240);
+  --color-muted-200: oklch(0.92 0.005 240);
+  --color-muted-500: oklch(0.55 0.01 240);
+  --color-muted-900: oklch(0.18 0.01 240);
+  --radius-card: 0.75rem;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
   margin: 0;
-  background: #f8fafc;
-  color: #0f172a;
+  background: oklch(0.98 0.005 240);
+  color: oklch(0.18 0.01 240);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
-
-.page {
-  max-width: 720px;
-  margin: 2rem auto;
-  padding: 1.5rem 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-h1 {
-  margin-top: 0;
-  color: #1f2937;
-}
-
-code {
-  background: #f1f5f9;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.95em;
-}
-
