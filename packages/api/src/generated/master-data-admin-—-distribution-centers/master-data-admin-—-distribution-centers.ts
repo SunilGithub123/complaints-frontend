@@ -27,19 +27,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-export type update1Response200 = {
+export type update2Response200 = {
   data: ApiResponseDistributionCenterResponse
   status: 200
 }
     
-export type update1ResponseSuccess = (update1Response200) & {
+export type update2ResponseSuccess = (update2Response200) & {
   headers: Headers;
 };
 ;
 
-export type update1Response = (update1ResponseSuccess)
+export type update2Response = (update2ResponseSuccess)
 
-export const getUpdate1Url = (id: number,) => {
+export const getUpdate2Url = (id: number,) => {
 
 
   
@@ -47,10 +47,10 @@ export const getUpdate1Url = (id: number,) => {
   return `/api/v1/admin/masterdata/distribution-centers/${id}`
 }
 
-export const update1 = async (id: number,
-    distributionCenterRequest: DistributionCenterRequest, options?: RequestInit): Promise<update1Response> => {
+export const update2 = async (id: number,
+    distributionCenterRequest: DistributionCenterRequest, options?: RequestInit): Promise<update2Response> => {
   
-  return customFetch<update1Response>(getUpdate1Url(id),
+  return customFetch<update2Response>(getUpdate2Url(id),
   {      
     ...options,
     method: 'PUT',
@@ -63,11 +63,11 @@ export const update1 = async (id: number,
 
 
 
-export const getUpdate1MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update1>>, TError,{id: number;data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof update1>>, TError,{id: number;data: DistributionCenterRequest}, TContext> => {
+export const getUpdate2MutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update2>>, TError,{id: number;data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof update2>>, TError,{id: number;data: DistributionCenterRequest}, TContext> => {
 
-const mutationKey = ['update1'];
+const mutationKey = ['update2'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -77,10 +77,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof update1>>, {id: number;data: DistributionCenterRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof update2>>, {id: number;data: DistributionCenterRequest}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  update1(id,data,requestOptions)
+          return  update2(id,data,requestOptions)
         }
 
         
@@ -88,39 +88,39 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Update1MutationResult = NonNullable<Awaited<ReturnType<typeof update1>>>
-    export type Update1MutationBody = DistributionCenterRequest
-    export type Update1MutationError = unknown
+    export type Update2MutationResult = NonNullable<Awaited<ReturnType<typeof update2>>>
+    export type Update2MutationBody = DistributionCenterRequest
+    export type Update2MutationError = unknown
 
-    export const useUpdate1 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update1>>, TError,{id: number;data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+    export const useUpdate2 = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update2>>, TError,{id: number;data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof update1>>,
+        Awaited<ReturnType<typeof update2>>,
         TError,
         {id: number;data: DistributionCenterRequest},
         TContext
       > => {
 
-      const mutationOptions = getUpdate1MutationOptions(options);
+      const mutationOptions = getUpdate2MutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Create a DC under the admin's subdivision
  */
-export type create1Response200 = {
+export type create2Response200 = {
   data: ApiResponseDistributionCenterResponse
   status: 200
 }
     
-export type create1ResponseSuccess = (create1Response200) & {
+export type create2ResponseSuccess = (create2Response200) & {
   headers: Headers;
 };
 ;
 
-export type create1Response = (create1ResponseSuccess)
+export type create2Response = (create2ResponseSuccess)
 
-export const getCreate1Url = () => {
+export const getCreate2Url = () => {
 
 
   
@@ -128,9 +128,9 @@ export const getCreate1Url = () => {
   return `/api/v1/admin/masterdata/distribution-centers`
 }
 
-export const create1 = async (distributionCenterRequest: DistributionCenterRequest, options?: RequestInit): Promise<create1Response> => {
+export const create2 = async (distributionCenterRequest: DistributionCenterRequest, options?: RequestInit): Promise<create2Response> => {
   
-  return customFetch<create1Response>(getCreate1Url(),
+  return customFetch<create2Response>(getCreate2Url(),
   {      
     ...options,
     method: 'POST',
@@ -143,11 +143,11 @@ export const create1 = async (distributionCenterRequest: DistributionCenterReque
 
 
 
-export const getCreate1MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create1>>, TError,{data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof create1>>, TError,{data: DistributionCenterRequest}, TContext> => {
+export const getCreate2MutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create2>>, TError,{data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof create2>>, TError,{data: DistributionCenterRequest}, TContext> => {
 
-const mutationKey = ['create1'];
+const mutationKey = ['create2'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -157,10 +157,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof create1>>, {data: DistributionCenterRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof create2>>, {data: DistributionCenterRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  create1(data,requestOptions)
+          return  create2(data,requestOptions)
         }
 
         
@@ -168,39 +168,39 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Create1MutationResult = NonNullable<Awaited<ReturnType<typeof create1>>>
-    export type Create1MutationBody = DistributionCenterRequest
-    export type Create1MutationError = unknown
+    export type Create2MutationResult = NonNullable<Awaited<ReturnType<typeof create2>>>
+    export type Create2MutationBody = DistributionCenterRequest
+    export type Create2MutationError = unknown
 
     /**
  * @summary Create a DC under the admin's subdivision
  */
-export const useCreate1 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create1>>, TError,{data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreate2 = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create2>>, TError,{data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof create1>>,
+        Awaited<ReturnType<typeof create2>>,
         TError,
         {data: DistributionCenterRequest},
         TContext
       > => {
 
-      const mutationOptions = getCreate1MutationOptions(options);
+      const mutationOptions = getCreate2MutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    export type deactivate1Response200 = {
+    export type deactivate2Response200 = {
   data: ApiResponseDistributionCenterResponse
   status: 200
 }
     
-export type deactivate1ResponseSuccess = (deactivate1Response200) & {
+export type deactivate2ResponseSuccess = (deactivate2Response200) & {
   headers: Headers;
 };
 ;
 
-export type deactivate1Response = (deactivate1ResponseSuccess)
+export type deactivate2Response = (deactivate2ResponseSuccess)
 
-export const getDeactivate1Url = (id: number,) => {
+export const getDeactivate2Url = (id: number,) => {
 
 
   
@@ -208,9 +208,9 @@ export const getDeactivate1Url = (id: number,) => {
   return `/api/v1/admin/masterdata/distribution-centers/${id}/deactivate`
 }
 
-export const deactivate1 = async (id: number, options?: RequestInit): Promise<deactivate1Response> => {
+export const deactivate2 = async (id: number, options?: RequestInit): Promise<deactivate2Response> => {
   
-  return customFetch<deactivate1Response>(getDeactivate1Url(id),
+  return customFetch<deactivate2Response>(getDeactivate2Url(id),
   {      
     ...options,
     method: 'POST'
@@ -222,11 +222,11 @@ export const deactivate1 = async (id: number, options?: RequestInit): Promise<de
 
 
 
-export const getDeactivate1MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate1>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deactivate1>>, TError,{id: number}, TContext> => {
+export const getDeactivate2MutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate2>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deactivate2>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['deactivate1'];
+const mutationKey = ['deactivate2'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -236,10 +236,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivate1>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivate2>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  deactivate1(id,requestOptions)
+          return  deactivate2(id,requestOptions)
         }
 
         
@@ -247,36 +247,36 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Deactivate1MutationResult = NonNullable<Awaited<ReturnType<typeof deactivate1>>>
+    export type Deactivate2MutationResult = NonNullable<Awaited<ReturnType<typeof deactivate2>>>
     
-    export type Deactivate1MutationError = unknown
+    export type Deactivate2MutationError = unknown
 
-    export const useDeactivate1 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate1>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    export const useDeactivate2 = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate2>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deactivate1>>,
+        Awaited<ReturnType<typeof deactivate2>>,
         TError,
         {id: number},
         TContext
       > => {
 
-      const mutationOptions = getDeactivate1MutationOptions(options);
+      const mutationOptions = getDeactivate2MutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    export type activate1Response200 = {
+    export type activate2Response200 = {
   data: ApiResponseDistributionCenterResponse
   status: 200
 }
     
-export type activate1ResponseSuccess = (activate1Response200) & {
+export type activate2ResponseSuccess = (activate2Response200) & {
   headers: Headers;
 };
 ;
 
-export type activate1Response = (activate1ResponseSuccess)
+export type activate2Response = (activate2ResponseSuccess)
 
-export const getActivate1Url = (id: number,) => {
+export const getActivate2Url = (id: number,) => {
 
 
   
@@ -284,9 +284,9 @@ export const getActivate1Url = (id: number,) => {
   return `/api/v1/admin/masterdata/distribution-centers/${id}/activate`
 }
 
-export const activate1 = async (id: number, options?: RequestInit): Promise<activate1Response> => {
+export const activate2 = async (id: number, options?: RequestInit): Promise<activate2Response> => {
   
-  return customFetch<activate1Response>(getActivate1Url(id),
+  return customFetch<activate2Response>(getActivate2Url(id),
   {      
     ...options,
     method: 'POST'
@@ -298,11 +298,11 @@ export const activate1 = async (id: number, options?: RequestInit): Promise<acti
 
 
 
-export const getActivate1MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate1>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof activate1>>, TError,{id: number}, TContext> => {
+export const getActivate2MutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate2>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof activate2>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['activate1'];
+const mutationKey = ['activate2'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -312,10 +312,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activate1>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activate2>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  activate1(id,requestOptions)
+          return  activate2(id,requestOptions)
         }
 
         
@@ -323,20 +323,20 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Activate1MutationResult = NonNullable<Awaited<ReturnType<typeof activate1>>>
+    export type Activate2MutationResult = NonNullable<Awaited<ReturnType<typeof activate2>>>
     
-    export type Activate1MutationError = unknown
+    export type Activate2MutationError = unknown
 
-    export const useActivate1 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate1>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    export const useActivate2 = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate2>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof activate1>>,
+        Awaited<ReturnType<typeof activate2>>,
         TError,
         {id: number},
         TContext
       > => {
 
-      const mutationOptions = getActivate1MutationOptions(options);
+      const mutationOptions = getActivate2MutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

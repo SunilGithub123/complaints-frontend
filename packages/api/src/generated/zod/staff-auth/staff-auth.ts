@@ -38,7 +38,8 @@ export const loginBody = zod.object({
 })
 
 /**
- * @summary Change password (required on first login)
+ * Persists the new password, revokes every refresh token belonging to the caller (kicks all other sessions), and returns a brand-new access + refresh pair with passwordResetRequired = false in both the JWT claims and the response envelope. Callers do not need to chain /staff/auth/refresh afterwards.
+ * @summary Change password and receive a fresh token pair
  */
 export const changePasswordBodyCurrentPasswordMin = 0;
 export const changePasswordBodyCurrentPasswordMax = 200;

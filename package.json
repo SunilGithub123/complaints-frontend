@@ -12,6 +12,7 @@
     "lint":     "turbo run lint",
     "test":     "turbo run test",
     "typecheck":"turbo run typecheck",
+    "api:gen":  "pnpm --filter @complaints/api api:gen",
     "clean":    "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {

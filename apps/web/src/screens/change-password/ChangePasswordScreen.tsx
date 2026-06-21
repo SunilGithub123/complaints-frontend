@@ -13,7 +13,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
-import { useChangePassword, useRefresh, ApiError, type Schemas } from '@complaints/api';
+import { useChangePassword, ApiError, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { useAuthStore } from '@/auth/authStore';
 import { Button } from '@/components/ui/button';
@@ -53,8 +53,6 @@ export default function ChangePasswordScreen(): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
-  const setStaff = useAuthStore((s) => s.setStaff);
-  const getRefreshToken = useAuthStore((s) => s.refreshToken);
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -66,45 +64,29 @@ export default function ChangePasswordScreen(): React.JSX.Element {
     defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
   });
 
-  const { mutateAsync: doChangePassword, isPending: changing } = useChangePassword();
-  const { mutateAsync: doRefresh, isPending: refreshing } = useRefresh();
-  const isPending = changing || refreshing;
+  const { mutateAsync, isPending } = useChangePassword();
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
-      const changeResponse = await doChangePassword({
+      // The backend rotates tokens server-side as part of change-password
+      // (Stage 1 post-hotfix): the response carries a fresh access +
+      // refresh pair whose JWT claims reflect passwordResetRequired=false.
+      // We just write the new session triple and navigate.
+      const response = await mutateAsync({
         data: { currentPassword: values.currentPassword, newPassword: values.newPassword },
       });
-      const changeEnvelope = (changeResponse as {
-        data: Schemas.ApiResponseStaffSummaryResponse;
-      }).data;
-      const updatedStaff = changeEnvelope.data;
-
-      // The access token issued at login still carries the old
-      // `passwordResetRequired = true` claim, so every protected call
-      // would be 403'd by the BE auth filter. Force a token refresh so
-      // the BE re-issues a JWT against the updated DB state, then update
-      // the session triple before navigating.
-      if (getRefreshToken) {
-        const refreshResponse = await doRefresh({ data: { refreshToken: getRefreshToken } });
-        const refreshEnvelope = (refreshResponse as {
-          data: Schemas.ApiResponseLoginResponse;
-        }).data;
-        const payload = refreshEnvelope.data;
-        if (payload?.accessToken && payload.refreshToken && payload.staff) {
-          setSession({
-            accessToken: payload.accessToken,
-            refreshToken: payload.refreshToken,
-            staff: payload.staff,
-          });
-        } else if (updatedStaff) {
-          setStaff(updatedStaff);
-        }
-      } else if (updatedStaff) {
-        setStaff(updatedStaff);
+      const envelope = (response as { data: Schemas.ApiResponseLoginResponse }).data;
+      const payload = envelope.data;
+      if (!payload?.accessToken || !payload.refreshToken || !payload.staff) {
+        setFormError(t('errors.generic'));
+        return;
       }
-
+      setSession({
+        accessToken: payload.accessToken,
+        refreshToken: payload.refreshToken,
+        staff: payload.staff,
+      });
       navigate('/', { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {

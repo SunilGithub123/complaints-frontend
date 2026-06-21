@@ -11,56 +11,56 @@ import * as zod from 'zod';
 /**
  * @summary Update a subdivision
  */
-export const updateParams = zod.object({
+export const update1Params = zod.object({
   "id": zod.number()
 })
 
-export const updateBodyCodeMin = 0;
-export const updateBodyCodeMax = 50;
+export const update1BodyCodeMin = 0;
+export const update1BodyCodeMax = 50;
 
 
-export const updateBodyCodeRegExp = new RegExp('^[A-Z0-9-]+$');
-export const updateBodyNameMin = 0;
-export const updateBodyNameMax = 200;
+export const update1BodyCodeRegExp = new RegExp('^[A-Z0-9-]+$');
+export const update1BodyNameMin = 0;
+export const update1BodyNameMax = 200;
 
-export const updateBodyDistrictMin = 0;
-export const updateBodyDistrictMax = 100;
+export const update1BodyDistrictMin = 0;
+export const update1BodyDistrictMax = 100;
 
 
 
-export const updateBody = zod.object({
-  "code": zod.string().min(updateBodyCodeMin).max(updateBodyCodeMax).regex(updateBodyCodeRegExp),
-  "name": zod.string().min(updateBodyNameMin).max(updateBodyNameMax),
-  "district": zod.string().min(updateBodyDistrictMin).max(updateBodyDistrictMax).optional()
+export const update1Body = zod.object({
+  "code": zod.string().min(update1BodyCodeMin).max(update1BodyCodeMax).regex(update1BodyCodeRegExp),
+  "name": zod.string().min(update1BodyNameMin).max(update1BodyNameMax),
+  "district": zod.string().min(update1BodyDistrictMin).max(update1BodyDistrictMax).optional()
 })
 
 /**
  * @summary Create a new subdivision
  */
-export const createBodyCodeMin = 0;
-export const createBodyCodeMax = 50;
+export const create1BodyCodeMin = 0;
+export const create1BodyCodeMax = 50;
 
 
-export const createBodyCodeRegExp = new RegExp('^[A-Z0-9-]+$');
-export const createBodyNameMin = 0;
-export const createBodyNameMax = 200;
+export const create1BodyCodeRegExp = new RegExp('^[A-Z0-9-]+$');
+export const create1BodyNameMin = 0;
+export const create1BodyNameMax = 200;
 
-export const createBodyDistrictMin = 0;
-export const createBodyDistrictMax = 100;
+export const create1BodyDistrictMin = 0;
+export const create1BodyDistrictMax = 100;
 
 
 
-export const createBody = zod.object({
-  "code": zod.string().min(createBodyCodeMin).max(createBodyCodeMax).regex(createBodyCodeRegExp),
-  "name": zod.string().min(createBodyNameMin).max(createBodyNameMax),
-  "district": zod.string().min(createBodyDistrictMin).max(createBodyDistrictMax).optional()
+export const create1Body = zod.object({
+  "code": zod.string().min(create1BodyCodeMin).max(create1BodyCodeMax).regex(create1BodyCodeRegExp),
+  "name": zod.string().min(create1BodyNameMin).max(create1BodyNameMax),
+  "district": zod.string().min(create1BodyDistrictMin).max(create1BodyDistrictMax).optional()
 })
 
-export const deactivateParams = zod.object({
+export const deactivate1Params = zod.object({
   "id": zod.number()
 })
 
-export const activateParams = zod.object({
+export const activate1Params = zod.object({
   "id": zod.number()
 })
 

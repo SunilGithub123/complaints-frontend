@@ -8,54 +8,54 @@
 import * as zod from 'zod';
 
 
-export const update2Params = zod.object({
+export const update3Params = zod.object({
   "id": zod.number()
 })
 
-export const update2BodyCodeMin = 0;
-export const update2BodyCodeMax = 50;
+export const update3BodyCodeMin = 0;
+export const update3BodyCodeMax = 50;
 
 
-export const update2BodyCodeRegExp = new RegExp('^[A-Z0-9_]+$');
-export const update2BodyNameMin = 0;
-export const update2BodyNameMax = 200;
+export const update3BodyCodeRegExp = new RegExp('^[A-Z0-9_]+$');
+export const update3BodyNameMin = 0;
+export const update3BodyNameMax = 200;
 
-export const update2BodySlaHoursMax = 720;
+export const update3BodySlaHoursMax = 720;
 
 
 
-export const update2Body = zod.object({
-  "code": zod.string().min(update2BodyCodeMin).max(update2BodyCodeMax).regex(update2BodyCodeRegExp),
-  "name": zod.string().min(update2BodyNameMin).max(update2BodyNameMax),
-  "slaHours": zod.number().min(1).max(update2BodySlaHoursMax).optional()
+export const update3Body = zod.object({
+  "code": zod.string().min(update3BodyCodeMin).max(update3BodyCodeMax).regex(update3BodyCodeRegExp),
+  "name": zod.string().min(update3BodyNameMin).max(update3BodyNameMax),
+  "slaHours": zod.number().min(1).max(update3BodySlaHoursMax).optional()
 })
 
 /**
  * @summary Create a complaint category
  */
-export const create2BodyCodeMin = 0;
-export const create2BodyCodeMax = 50;
+export const create3BodyCodeMin = 0;
+export const create3BodyCodeMax = 50;
 
 
-export const create2BodyCodeRegExp = new RegExp('^[A-Z0-9_]+$');
-export const create2BodyNameMin = 0;
-export const create2BodyNameMax = 200;
+export const create3BodyCodeRegExp = new RegExp('^[A-Z0-9_]+$');
+export const create3BodyNameMin = 0;
+export const create3BodyNameMax = 200;
 
-export const create2BodySlaHoursMax = 720;
+export const create3BodySlaHoursMax = 720;
 
 
 
-export const create2Body = zod.object({
-  "code": zod.string().min(create2BodyCodeMin).max(create2BodyCodeMax).regex(create2BodyCodeRegExp),
-  "name": zod.string().min(create2BodyNameMin).max(create2BodyNameMax),
-  "slaHours": zod.number().min(1).max(create2BodySlaHoursMax).optional()
+export const create3Body = zod.object({
+  "code": zod.string().min(create3BodyCodeMin).max(create3BodyCodeMax).regex(create3BodyCodeRegExp),
+  "name": zod.string().min(create3BodyNameMin).max(create3BodyNameMax),
+  "slaHours": zod.number().min(1).max(create3BodySlaHoursMax).optional()
 })
 
-export const deactivate2Params = zod.object({
+export const deactivate3Params = zod.object({
   "id": zod.number()
 })
 
-export const activate2Params = zod.object({
+export const activate3Params = zod.object({
   "id": zod.number()
 })
 

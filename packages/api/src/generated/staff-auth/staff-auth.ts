@@ -290,10 +290,11 @@ export const useLogin = <TError = unknown,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Change password (required on first login)
+ * Persists the new password, revokes every refresh token belonging to the caller (kicks all other sessions), and returns a brand-new access + refresh pair with passwordResetRequired = false in both the JWT claims and the response envelope. Callers do not need to chain /staff/auth/refresh afterwards.
+ * @summary Change password and receive a fresh token pair
  */
 export type changePasswordResponse200 = {
-  data: ApiResponseStaffSummaryResponse
+  data: ApiResponseLoginResponse
   status: 200
 }
     
@@ -357,7 +358,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ChangePasswordMutationError = unknown
 
     /**
- * @summary Change password (required on first login)
+ * @summary Change password and receive a fresh token pair
  */
 export const useChangePassword = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
