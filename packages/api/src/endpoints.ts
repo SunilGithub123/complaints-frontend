@@ -83,3 +83,27 @@ export {
   useResetPassword as useResetStaffPassword,
   getListQueryKey as getListStaffQueryKey,
 } from './generated/admin-staff/admin-staff';
+
+// Staff Complaint Management — assign, reassign, severity, reject,
+// mark-duplicate, get-by-id, history.
+// Mutation hooks have unique names and are exported as-is.
+// The two query hooks use generic operationIds (`getById`, `getHistory`) that
+// would collide if a second resource adds identical operationIds in future —
+// alias them at the boundary so call-sites are always unambiguous.
+export {
+  useUpdateSeverity,
+  getUpdateSeverityMutationOptions,
+  useReject,
+  getRejectMutationOptions,
+  useReassign,
+  getReassignMutationOptions,
+  useMarkDuplicate,
+  getMarkDuplicateMutationOptions,
+  useAssign,
+  getAssignMutationOptions,
+  useGetById as useGetStaffComplaintById,
+  getGetByIdQueryKey as getStaffComplaintByIdQueryKey,
+  useGetHistory as useGetStaffComplaintHistory,
+  getGetHistoryQueryKey as getStaffComplaintHistoryQueryKey,
+} from './generated/staff-complaint-management/staff-complaint-management';
+

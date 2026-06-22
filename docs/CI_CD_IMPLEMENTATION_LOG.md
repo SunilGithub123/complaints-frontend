@@ -177,6 +177,12 @@ Local-only at this point (`pnpm lint`). Wired into CI in PR #1.
 _None during implementation — all three jobs were authored against the
 existing green test suite and clean codebase._
 
+### Incidents fixed post-merge
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | `openapi-drift` failed with *"Frontend is out of sync with backend OpenAPI snapshot"* | BE had pushed the **Staff Complaint Management** tag (assign / reassign / severity / reject / mark-duplicate + detail + history endpoints) after the PR #1 sync snapshot was taken. The FE's `openapi.json` was missing those endpoints; running `pnpm api:gen` produced a new untracked `packages/api/src/generated/staff-complaint-management/` and new schema files, so `git status --porcelain -- packages/api` was non-empty. | Copied BE's `docs/openapi.json` → `packages/api/openapi.json`, ran `pnpm api:gen`, added `staff-complaint-management` exports to `packages/api/src/endpoints.ts` with intent-revealing aliases (`useGetById` → `useGetStaffComplaintById`, `useGetHistory` → `useGetStaffComplaintHistory`). Typecheck + tests green. Committed all generated files + `endpoints.ts` update. |
+
 ### Gates added (now enforced on every PR + push to `main`)
 
 | Job | Trigger | Fails on |
