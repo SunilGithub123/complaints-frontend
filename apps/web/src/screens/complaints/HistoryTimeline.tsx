@@ -20,13 +20,11 @@
  *    add a new actor reuses the cached batch.
  */
 import { useMemo } from 'react';
-import {
-  useGetStaffDirectoryMany,
-  type Schemas,
-} from '@complaints/api';
+import { type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { formatIstDateTime } from '@complaints/utils';
 import { Badge } from '@/components/ui/badge';
+import { useStaffDirectoryByIds } from '@/features/staffDirectory/api';
 
 export interface HistoryTimelineProps {
   entries: readonly Schemas.ComplaintHistoryEntryResponse[];
@@ -35,32 +33,19 @@ export interface HistoryTimelineProps {
 export function HistoryTimeline({ entries }: HistoryTimelineProps): React.JSX.Element {
   const t = useT();
 
-  // Unique, sorted (for a stable query key) list of actor ids.
+  // Unique list of actor ids. The hook sorts internally for a stable
+  // cache key.
   const ids = useMemo(() => {
     const set = new Set<number>();
     for (const e of entries) {
       if (typeof e.changedByUserId === 'number') set.add(e.changedByUserId);
     }
-    return Array.from(set).sort((a, b) => a - b);
+    return Array.from(set);
   }, [entries]);
 
   // BE caps the batch at 50 ids. A single complaint's history is
-  // comfortably below that; Stage 16 list columns may push us closer
-  // and we'll chunk + merge if it ever becomes real.
-  const directory = useGetStaffDirectoryMany<
-    { data?: Schemas.ApiResponseListStaffDirectoryEntryResponse },
-    unknown
-  >(
-    { ids },
-    {
-      query: {
-        enabled: ids.length > 0,
-        // Names rarely change; let stale-while-revalidate do its thing.
-        staleTime: 5 * 60_000,
-        retry: false,
-      },
-    },
-  );
+  // comfortably below that; if/when we hit it we'll chunk + merge.
+  const directory = useStaffDirectoryByIds(ids);
 
   const nameMap = useMemo(() => {
     const map = new Map<number, Schemas.StaffDirectoryEntryResponse>();

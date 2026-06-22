@@ -21,9 +21,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  ApiResponseListStaffDirectoryEntryResponse,
   ApiResponseStaffDirectoryEntryResponse,
-  GetManyParams
+  Search200,
+  SearchParams
 } from '.././schemas';
 
 import { customFetch } from '../../client';
@@ -37,19 +37,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * Unknown ids are silently dropped. Order of the response is not guaranteed.
  * @summary Batch-resolve up to 50 staff ids in one round-trip
  */
-export type getManyResponse200 = {
-  data: ApiResponseListStaffDirectoryEntryResponse
+export type searchResponse200 = {
+  data: Search200
   status: 200
 }
     
-export type getManyResponseSuccess = (getManyResponse200) & {
+export type searchResponseSuccess = (searchResponse200) & {
   headers: Headers;
 };
 ;
 
-export type getManyResponse = (getManyResponseSuccess)
+export type searchResponse = (searchResponseSuccess)
 
-export const getGetManyUrl = (params: GetManyParams,) => {
+export const getSearchUrl = (params: SearchParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -62,7 +62,9 @@ export const getGetManyUrl = (params: GetManyParams,) => {
       return;
     }
       
-    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
   });
 
   const stringifiedParams = normalizedParams.toString();
@@ -70,9 +72,9 @@ export const getGetManyUrl = (params: GetManyParams,) => {
   return stringifiedParams.length > 0 ? `/api/v1/staff/users?${stringifiedParams}` : `/api/v1/staff/users`
 }
 
-export const getMany = async (params: GetManyParams, options?: RequestInit): Promise<getManyResponse> => {
+export const search = async (params: SearchParams, options?: RequestInit): Promise<searchResponse> => {
   
-  return customFetch<getManyResponse>(getGetManyUrl(params),
+  return customFetch<searchResponse>(getSearchUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -85,69 +87,69 @@ export const getMany = async (params: GetManyParams, options?: RequestInit): Pro
 
 
 
-export const getGetManyQueryKey = (params?: GetManyParams,) => {
+export const getSearchQueryKey = (params?: SearchParams,) => {
     return [
     `/api/v1/staff/users`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetManyQueryOptions = <TData = Awaited<ReturnType<typeof getMany>>, TError = unknown>(params: GetManyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMany>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getSearchQueryOptions = <TData = Awaited<ReturnType<typeof search>>, TError = unknown>(params: SearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetManyQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getSearchQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMany>>> = () => getMany(params, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof search>>> = () => search(params, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMany>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type GetManyQueryResult = NonNullable<Awaited<ReturnType<typeof getMany>>>
-export type GetManyQueryError = unknown
+export type SearchQueryResult = NonNullable<Awaited<ReturnType<typeof search>>>
+export type SearchQueryError = unknown
 
 
-export function useGetMany<TData = Awaited<ReturnType<typeof getMany>>, TError = unknown>(
- params: GetManyParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMany>>, TError, TData>> & Pick<
+export function useSearch<TData = Awaited<ReturnType<typeof search>>, TError = unknown>(
+ params: SearchParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMany>>,
+          Awaited<ReturnType<typeof search>>,
           TError,
-          Awaited<ReturnType<typeof getMany>>
+          Awaited<ReturnType<typeof search>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetMany<TData = Awaited<ReturnType<typeof getMany>>, TError = unknown>(
- params: GetManyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMany>>, TError, TData>> & Pick<
+export function useSearch<TData = Awaited<ReturnType<typeof search>>, TError = unknown>(
+ params: SearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMany>>,
+          Awaited<ReturnType<typeof search>>,
           TError,
-          Awaited<ReturnType<typeof getMany>>
+          Awaited<ReturnType<typeof search>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetMany<TData = Awaited<ReturnType<typeof getMany>>, TError = unknown>(
- params: GetManyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMany>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useSearch<TData = Awaited<ReturnType<typeof search>>, TError = unknown>(
+ params: SearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Batch-resolve up to 50 staff ids in one round-trip
  */
 
-export function useGetMany<TData = Awaited<ReturnType<typeof getMany>>, TError = unknown>(
- params: GetManyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMany>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useSearch<TData = Awaited<ReturnType<typeof search>>, TError = unknown>(
+ params: SearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getGetManyQueryOptions(params,options)
+  const queryOptions = getSearchQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 

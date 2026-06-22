@@ -6,19 +6,30 @@
  * OpenAPI spec version: v1
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
   AddImagesBody,
   ApiResponseListComplaintImageResponse,
+  ApiResponsePageResponseComplaintListItemResponse,
   ApiResponseVoid,
+  List1Params,
   ResolveComplaintRequest
 } from '.././schemas';
 
@@ -281,4 +292,123 @@ export const useAddImages = <TError = unknown,
 
       return useMutation(mutationOptions, queryClient);
     }
+    /**
+ * Server pins assigned_technician_id = caller.userId(). Optional filters: status, severity, slaBreached, dateFrom/dateTo, q.
+ * @summary Paged list of complaints assigned to the calling technician
+ */
+export type list1Response200 = {
+  data: ApiResponsePageResponseComplaintListItemResponse
+  status: 200
+}
     
+export type list1ResponseSuccess = (list1Response200) & {
+  headers: Headers;
+};
+;
+
+export type list1Response = (list1ResponseSuccess)
+
+export const getList1Url = (params: List1Params,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/technician/complaints?${stringifiedParams}` : `/api/v1/technician/complaints`
+}
+
+export const list1 = async (params: List1Params, options?: RequestInit): Promise<list1Response> => {
+  
+  return customFetch<list1Response>(getList1Url(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getList1QueryKey = (params?: List1Params,) => {
+    return [
+    `/api/v1/technician/complaints`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getList1QueryOptions = <TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(params: List1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getList1QueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof list1>>> = () => list1(params, requestOptions);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type List1QueryResult = NonNullable<Awaited<ReturnType<typeof list1>>>
+export type List1QueryError = unknown
+
+
+export function useList1<TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(
+ params: List1Params, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof list1>>,
+          TError,
+          Awaited<ReturnType<typeof list1>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useList1<TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(
+ params: List1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof list1>>,
+          TError,
+          Awaited<ReturnType<typeof list1>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useList1<TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(
+ params: List1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Paged list of complaints assigned to the calling technician
+ */
+
+export function useList1<TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(
+ params: List1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getList1QueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+

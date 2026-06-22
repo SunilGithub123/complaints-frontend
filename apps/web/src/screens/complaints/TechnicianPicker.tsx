@@ -1,15 +1,17 @@
 /**
  * Technician picker — shared by AssignDialog and ReassignDialog.
  *
- * Calls `useListStaff` with `role=TECHNICIAN, distributionCenterId=<dc>,
- * enabled=true`. We surface a single page of 100 — every DC has well
- * under that in practice, and the BE enforces DC scope on the assign
- * mutation anyway (we just save a round-trip).
+ * BE Stage 16: this used to call the ADMIN-only `/api/v1/admin/staff`
+ * via `useListStaff`, which 403'd for ENGINEER users (carry-over from
+ * Stage 12.1). Now uses the any-authenticated-staff
+ * `/api/v1/staff/users?role=TECHNICIAN&distributionCenterId=&active=true`
+ * search endpoint via the hand-rolled `useStaffDirectorySearch`.
  */
 import { useMemo } from 'react';
-import { useListStaff, type Schemas } from '@complaints/api';
+import { type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { Select } from '@/components/ui/select';
+import { useStaffDirectorySearch } from '@/features/staffDirectory/api';
 
 export interface TechnicianPickerProps {
   id: string;
@@ -27,23 +29,22 @@ export function TechnicianPicker({
   invalid,
 }: TechnicianPickerProps): React.JSX.Element {
   const t = useT();
-  const { data, isLoading } = useListStaff({
-    pageable: { page: 0, size: 100, sort: ['fullName,asc'] },
+  const { data, isLoading } = useStaffDirectorySearch({
     role: 'TECHNICIAN',
     distributionCenterId,
-    enabled: true,
+    active: true,
+    page: 0,
+    size: 100,
+    sort: ['fullName,asc'],
   });
 
   const options = useMemo(() => {
-    const env = (data as
-      | { data: Schemas.ApiResponsePageResponseStaffListItemResponse }
-      | undefined)?.data;
-    const content = env?.data?.content ?? [];
-    return content
-      .filter((s) => s.id !== undefined)
-      .map((s) => ({
-        id: s.id as number,
-        label: `${s.fullName ?? ''} (${s.employeeId ?? ''})`,
+    const rows = data?.data?.data ?? [];
+    return rows
+      .filter((r: Schemas.StaffDirectoryEntryResponse) => r.userId !== undefined)
+      .map((r: Schemas.StaffDirectoryEntryResponse) => ({
+        id: r.userId as number,
+        label: `${r.fullName ?? ''} (${r.employeeId ?? ''})`,
       }));
   }, [data]);
 

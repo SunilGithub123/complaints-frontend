@@ -93,7 +93,15 @@ export {
 //
 // Numeric mapping (re-verify after every `pnpm api:gen`):
 //   getById  → 1 (un-suffixed went to staff-directory tag, Stage 14.5)
+//   list     → 2 (un-suffixed is admin-staff `list`, technician is `list1`)
 //   getHistory has no collision yet
+//
+// NOTE: `useList2` (paged complaint search, Stage 16) is intentionally
+// NOT re-exported — the generated URL builder serialises nested
+// `pageable`/`filters` objects as `[object Object]` and breaks server-side
+// paging. The web app uses the hand-rolled wrapper in
+// `apps/web/src/features/complaints/listApi.ts` instead. Same for
+// `useList1` in `technician-complaints`.
 export {
   useUpdateSeverity,
   getUpdateSeverityMutationOptions,
@@ -105,24 +113,34 @@ export {
   getMarkDuplicateMutationOptions,
   useAssign,
   getAssignMutationOptions,
+  useClose,
+  getCloseMutationOptions,
   useGetById1 as useGetStaffComplaintById,
   getGetById1QueryKey as getStaffComplaintByIdQueryKey,
   useGetHistory as useGetStaffComplaintHistory,
   getGetHistoryQueryKey as getStaffComplaintHistoryQueryKey,
 } from './generated/staff-complaint-management/staff-complaint-management';
 
-// Staff Directory (Stage 14.5) — read-only, any-authenticated-staff lookup
-// for resolving user IDs into { fullName, employeeId, role, enabled, … }.
+// Staff Directory (Stage 14.5, extended Stage 16) — read-only,
+// any-authenticated-staff lookup for resolving user IDs into
+// { fullName, employeeId, role, distributionCenterId, enabled, … }.
 // Distinct from the ADMIN-only `/admin/staff` lifecycle surface
-// (re-exported above as `useListStaff` etc.). The batch endpoint accepts
-// up to 50 ids per call and silently drops unknown ids — callers MUST
-// treat the response as a partial map keyed by `userId`.
+// (re-exported above as `useListStaff` etc.).
 //
-// Both operationIds collide with staff-complaint-management's
-// `useGetById` / `getGetByIdQueryKey`, so we alias at the boundary.
+// We only re-export the single-id `useGetById` (the URL builder is
+// safe — single int path param). The list/search operation
+// (`useSearch` post-Stage 16) is consumed via the hand-rolled
+// wrapper in `apps/web/src/features/staffDirectory/api.ts` because
+// orval serialises the nested `pageable` query object as
+// `[object Object]`, the same bug that affects the complaint list
+// hooks.
+//
+// The single-id hook's operationId still collides with
+// staff-complaint-management (post-Stage 16:
+//   staff-directory          getById → un-suffixed
+//   staff-complaint-management getById → useGetById1
+// Re-verify the suffix after every `pnpm api:gen`.
 export {
-  useGetMany as useGetStaffDirectoryMany,
-  getGetManyQueryKey as getStaffDirectoryManyQueryKey,
   useGetById as useGetStaffDirectoryById,
   getGetByIdQueryKey as getStaffDirectoryByIdQueryKey,
 } from './generated/staff-directory/staff-directory';

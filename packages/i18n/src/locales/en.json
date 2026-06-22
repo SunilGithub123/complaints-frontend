@@ -233,6 +233,9 @@
     "COMPLAINT_NOT_SUBMITTED": "Only newly submitted complaints can take this action.",
     "COMPLAINT_TERMINAL": "This complaint is closed — no further changes are allowed.",
     "INVALID_TECHNICIAN": "Pick a technician active in this distribution centre.",
+    "TECHNICIAN_NOT_FOUND": "We couldn't find that technician.",
+    "TECHNICIAN_NOT_IN_DC": "That technician is not active in this distribution centre.",
+    "SLA_BREACH_REASON_REQUIRED": "A breach reason is required to close this complaint.",
     "DUPLICATE_PARENT_NOT_FOUND": "We couldn't find a complaint with that parent ticket number.",
     "SELF_REFERENCING_DUPLICATE": "A complaint can't be marked as a duplicate of itself."
   },
@@ -304,14 +307,40 @@
     }
   },
   "complaints": {
-    "lookup": {
+    "list": {
       "heading": "Complaints",
-      "subheading": "Open a complaint by ID. A searchable list lands in a later stage.",
-      "label": "Complaint ID",
-      "placeholder": "e.g. 1234",
-      "open": "Open",
-      "outOfScopeTitle": "Outside your area",
-      "outOfScopeBody": "This complaint is in a different distribution centre or subdivision than yours."
+      "subheading": "Filter and open a complaint to act on it.",
+      "apply": "Apply",
+      "reset": "Reset",
+      "empty": "No complaints match these filters.",
+      "outOfScopeTitle": "Filter outside your area",
+      "outOfScopeBody": "The distribution centre or subdivision in your filters is outside what you can see. Reset to view your own area.",
+      "filters": {
+        "q": "Search",
+        "qPlaceholder": "Ticket no. or description",
+        "status": "Status",
+        "severity": "Severity",
+        "slaBreached": "SLA breached",
+        "categoryId": "Category ID",
+        "dc": "DC ID",
+        "assignedTechnicianId": "Technician ID",
+        "dateFrom": "From",
+        "dateTo": "To"
+      },
+      "cols": {
+        "ticketNo": "Ticket",
+        "status": "Status",
+        "severity": "Severity",
+        "sla": "SLA",
+        "slaYes": "Breached",
+        "slaNo": "OK",
+        "category": "Category",
+        "dc": "DC",
+        "engineer": "Engineer",
+        "technician": "Technician",
+        "submittedAt": "Submitted",
+        "deadline": "Deadline"
+      }
     },
     "detail": {
       "loading": "Loading complaint…",
@@ -358,7 +387,8 @@
         "reassign": "Reassign",
         "severity": "Update severity",
         "reject": "Reject",
-        "markDuplicate": "Mark as duplicate"
+        "markDuplicate": "Mark as duplicate",
+        "close": "Close"
       }
     },
     "status": {
@@ -421,6 +451,17 @@
       "submit": "Mark as duplicate",
       "submitting": "Marking…",
       "successToast": "Marked as duplicate."
+    },
+    "close": {
+      "title": "Close complaint",
+      "body": "This will mark the complaint as CLOSED. The consumer will see the resolution.",
+      "bodyBreached": "This complaint breached SLA and the technician did not capture a reason. Please provide one before closing.",
+      "slaBreachReason": "SLA breach reason",
+      "slaBreachReasonPlaceholder": "Why was SLA breached? (e.g. parts delay)",
+      "slaBreachReasonRequired": "A breach reason is required for this complaint.",
+      "submit": "Close",
+      "submitting": "Closing…",
+      "successToast": "Complaint closed."
     }
   },
   "notFound": {

@@ -26,28 +26,30 @@ vi.mock('@complaints/api', async () => {
   return {
     ...actual,
     useAssign: () => ({ mutateAsync: mockAssign, isPending: false }),
-    useListStaff: () => ({
-      data: {
-        data: {
-          success: true,
-          data: {
-            content: [
-              {
-                id: 5,
-                employeeId: 'TECH001',
-                fullName: 'Bob Tech',
-                role: 'TECHNICIAN',
-                distributionCenterId: 7,
-                enabled: true,
-              },
-            ],
-          },
-        },
-      },
-      isLoading: false,
-    }),
   };
 });
+
+// TechnicianPicker now hits the staff-directory search hook (Stage 16).
+vi.mock('@/features/staffDirectory/api', () => ({
+  useStaffDirectorySearch: () => ({
+    data: {
+      data: {
+        success: true,
+        data: [
+          {
+            userId: 5,
+            employeeId: 'TECH001',
+            fullName: 'Bob Tech',
+            role: 'TECHNICIAN',
+            distributionCenterId: 7,
+            enabled: true,
+          },
+        ],
+      },
+    },
+    isLoading: false,
+  }),
+}));
 
 function renderDialog(onSuccess: () => void): void {
   const client = new QueryClient({

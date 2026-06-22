@@ -29,8 +29,8 @@ const CategoriesAdminScreen = lazy(
   () => import('@/screens/masterdata/CategoriesAdminScreen'),
 );
 const StaffListScreen = lazy(() => import('@/screens/admin-staff/StaffListScreen'));
-const ComplaintLookupScreen = lazy(
-  () => import('@/screens/complaints/ComplaintLookupScreen'),
+const ComplaintListScreen = lazy(
+  () => import('@/screens/complaints/ComplaintListScreen'),
 );
 const ComplaintDetailScreen = lazy(
   () => import('@/screens/complaints/ComplaintDetailScreen'),
@@ -100,7 +100,7 @@ export const router = createBrowserRouter([
                 // the mobile flow (Stage 14).
                 element: <RequireRole roles={['ADMIN', 'ENGINEER']} />,
                 children: [
-                  { path: 'complaints', element: wrap(<ComplaintLookupScreen />) },
+                  { path: 'complaints', element: wrap(<ComplaintListScreen />) },
                   {
                     path: 'complaints/:id',
                     element: wrap(<ComplaintDetailScreen />),

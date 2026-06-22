@@ -55,13 +55,21 @@ import { ReassignDialog } from './ReassignDialog';
 import { SeverityDialog } from './SeverityDialog';
 import { RejectDialog } from './RejectDialog';
 import { MarkDuplicateDialog } from './MarkDuplicateDialog';
+import { CloseDialog } from './CloseDialog';
 
 type Status = NonNullable<Schemas.ComplaintStaffDetailResponse['status']>;
 type Severity = NonNullable<Schemas.ComplaintStaffDetailResponse['severity']>;
 
 const TERMINAL: readonly Status[] = ['CLOSED', 'CANCELLED', 'REJECTED', 'DUPLICATE'];
 
-type DialogKind = 'assign' | 'reassign' | 'severity' | 'reject' | 'duplicate' | null;
+type DialogKind =
+  | 'assign'
+  | 'reassign'
+  | 'severity'
+  | 'reject'
+  | 'duplicate'
+  | 'close'
+  | null;
 
 export default function ComplaintDetailScreen(): React.JSX.Element {
   const t = useT();
@@ -72,10 +80,20 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
   const { show: toast } = useToast();
   const [dialog, setDialog] = useState<DialogKind>(null);
 
+  // staleTime: 0 — `ComplaintImageResponse.url` is a signed read URL
+  // with a ~15-min TTL (BE Stage 13.5 + 10c). Caching the detail
+  // response long-term risks showing dead image links after the user
+  // returns from a long break. The detail screen is cheap to refetch.
   const detail = useGetStaffComplaintById<
     { data?: Schemas.ApiResponseComplaintStaffDetailResponse },
     unknown
-  >(id, { query: { retry: false, enabled: Number.isFinite(id) && id > 0 } });
+  >(id, {
+    query: {
+      retry: false,
+      enabled: Number.isFinite(id) && id > 0,
+      staleTime: 0,
+    },
+  });
   const history = useGetStaffComplaintHistory<
     { data?: Schemas.ApiResponseListComplaintHistoryEntryResponse },
     unknown
@@ -155,6 +173,9 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
   const canReassign =
     status === 'ASSIGNED' || status === 'IN_PROGRESS' || status === 'RESOLVED';
   const canEditSeverity = canReassign;
+  // Close-on-behalf (BE Stage 14) — engineer/admin only, RESOLVED only.
+  // Role gate is enforced at the route level (RequireRole ADMIN+ENGINEER).
+  const canClose = status === 'RESOLVED';
 
   return (
     <section className="flex max-w-3xl flex-col gap-4">
@@ -261,22 +282,36 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
           <section className="flex flex-col gap-2 border-t border-[var(--color-muted-200)] pt-3">
             <h3 className="text-sm font-medium">{t('complaints.detail.images')}</h3>
             {view.images && view.images.length > 0 ? (
-              <ul className="grid grid-cols-3 gap-2">
-                {view.images.map((img) => (
-                  <li
-                    key={img.id ?? img.url}
-                    className="overflow-hidden rounded-md border border-[var(--color-muted-200)]"
-                  >
-                    {img.url ? (
-                      <img
-                        src={img.url}
-                        alt=""
-                        loading="lazy"
-                        className="h-24 w-full object-cover"
-                      />
-                    ) : null}
-                  </li>
-                ))}
+              <ul
+                className="grid grid-cols-3 gap-2"
+                data-testid="complaint-gallery"
+              >
+                {/*
+                  Sort by `uploadedAt` ascending — BE Stage 14 doesn't
+                  expose `imageType` so consumer-submitted and
+                  technician-resolution images are co-mingled. A
+                  chronological gallery is the right default until /
+                  unless we ask BE to surface the type.
+                */}
+                {[...view.images]
+                  .sort((a, b) =>
+                    (a.uploadedAt ?? '').localeCompare(b.uploadedAt ?? ''),
+                  )
+                  .map((img) => (
+                    <li
+                      key={img.id ?? img.url}
+                      className="overflow-hidden rounded-md border border-[var(--color-muted-200)]"
+                    >
+                      {img.url ? (
+                        <img
+                          src={img.url}
+                          alt=""
+                          loading="lazy"
+                          className="h-24 w-full object-cover"
+                        />
+                      ) : null}
+                    </li>
+                  ))}
               </ul>
             ) : (
               <p className="text-sm text-[var(--color-muted-500)]">
@@ -311,6 +346,11 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
               {canEditSeverity ? (
                 <Button variant="secondary" onClick={() => setDialog('severity')}>
                   {t('complaints.detail.actions.severity')}
+                </Button>
+              ) : null}
+              {canClose ? (
+                <Button onClick={() => setDialog('close')}>
+                  {t('complaints.detail.actions.close')}
                 </Button>
               ) : null}
               {canReject ? (
@@ -377,6 +417,14 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
             complaintId={view.id}
             ownTicketNo={view.ticketNo ?? null}
             onSuccess={() => onActionSuccess('complaints.markDuplicate.successToast')}
+          />
+          <CloseDialog
+            open={dialog === 'close'}
+            onClose={() => setDialog(null)}
+            complaintId={view.id}
+            slaBreached={view.slaBreached === true}
+            existingSlaBreachReason={view.slaBreachReason ?? null}
+            onSuccess={() => onActionSuccess('complaints.close.successToast')}
           />
         </>
       ) : null}

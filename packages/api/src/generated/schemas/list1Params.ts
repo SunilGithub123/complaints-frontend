@@ -5,11 +5,10 @@
  * Backend API for the Maharashtra State Electricity Board Complaint Resolution System.
  * OpenAPI spec version: v1
  */
+import type { ComplaintSearchRequest } from './complaintSearchRequest';
+import type { Pageable } from './pageable';
 
-export type GetManyParams = {
-/**
- * @minItems 1
- * @maxItems 50
- */
-ids: number[];
+export type List1Params = {
+filters: ComplaintSearchRequest;
+pageable: Pageable;
 };

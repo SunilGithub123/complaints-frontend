@@ -12,39 +12,34 @@ import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HistoryTimeline } from './HistoryTimeline';
 
-vi.mock('@complaints/api', async () => {
-  const actual =
-    await vi.importActual<typeof import('@complaints/api')>('@complaints/api');
-  return {
-    ...actual,
-    // Batch returns 2 of the 3 requested ids — id 99 is "dropped",
-    // exercising the unknown-user fallback branch.
-    useGetStaffDirectoryMany: () => ({
+vi.mock('@/features/staffDirectory/api', () => ({
+  // Batch returns 2 of the 3 requested ids — id 99 is "dropped",
+  // exercising the unknown-user fallback branch.
+  useStaffDirectoryByIds: () => ({
+    data: {
       data: {
-        data: {
-          success: true,
-          data: [
-            {
-              userId: 7,
-              employeeId: 'ENG001',
-              fullName: 'Alice Engineer',
-              role: 'ENGINEER',
-              enabled: true,
-            },
-            {
-              userId: 8,
-              employeeId: 'TECH009',
-              fullName: 'Bob Tech',
-              role: 'TECHNICIAN',
-              enabled: true,
-            },
-          ],
-        },
+        success: true,
+        data: [
+          {
+            userId: 7,
+            employeeId: 'ENG001',
+            fullName: 'Alice Engineer',
+            role: 'ENGINEER',
+            enabled: true,
+          },
+          {
+            userId: 8,
+            employeeId: 'TECH009',
+            fullName: 'Bob Tech',
+            role: 'TECHNICIAN',
+            enabled: true,
+          },
+        ],
       },
-      isLoading: false,
-    }),
-  };
-});
+    },
+    isLoading: false,
+  }),
+}));
 
 function renderWith(entries: unknown[]): void {
   const client = new QueryClient({

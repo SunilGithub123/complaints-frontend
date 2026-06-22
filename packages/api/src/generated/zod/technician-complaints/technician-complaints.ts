@@ -46,3 +46,31 @@ export const addImagesBody = zod.object({
   "images": zod.array(zod.instanceof(File))
 })
 
+/**
+ * Server pins assigned_technician_id = caller.userId(). Optional filters: status, severity, slaBreached, dateFrom/dateTo, q.
+ * @summary Paged list of complaints assigned to the calling technician
+ */
+export const list1QueryPageablePageMin = 0;
+
+
+
+
+export const list1QueryParams = zod.object({
+  "filters": zod.object({
+  "status": zod.enum(['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED', 'REJECTED', 'DUPLICATE']).optional(),
+  "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+  "categoryId": zod.number().optional(),
+  "distributionCenterId": zod.number().optional(),
+  "assignedTechnicianId": zod.number().optional(),
+  "slaBreached": zod.boolean().optional(),
+  "dateFrom": zod.string().datetime({}).optional(),
+  "dateTo": zod.string().datetime({}).optional(),
+  "q": zod.string().optional()
+}),
+  "pageable": zod.object({
+  "page": zod.number().min(list1QueryPageablePageMin).optional(),
+  "size": zod.number().min(1).optional(),
+  "sort": zod.array(zod.string()).optional()
+})
+})
+

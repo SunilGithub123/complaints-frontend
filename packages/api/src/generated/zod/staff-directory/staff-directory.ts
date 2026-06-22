@@ -12,12 +12,23 @@ import * as zod from 'zod';
  * Unknown ids are silently dropped. Order of the response is not guaranteed.
  * @summary Batch-resolve up to 50 staff ids in one round-trip
  */
-export const getManyQueryIdsMax = 50;
+export const searchQueryPageablePageMin = 0;
+
+
+export const searchQueryIdsMax = 50;
 
 
 
-export const getManyQueryParams = zod.object({
-  "ids": zod.array(zod.number()).min(1).max(getManyQueryIdsMax)
+export const searchQueryParams = zod.object({
+  "role": zod.enum(['ADMIN', 'ENGINEER', 'TECHNICIAN']).optional(),
+  "distributionCenterId": zod.number().optional(),
+  "active": zod.boolean().optional(),
+  "pageable": zod.object({
+  "page": zod.number().min(searchQueryPageablePageMin).optional(),
+  "size": zod.number().min(1).optional(),
+  "sort": zod.array(zod.string()).optional()
+}),
+  "ids": zod.array(zod.number()).min(1).max(searchQueryIdsMax)
 })
 
 /**

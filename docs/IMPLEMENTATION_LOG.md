@@ -1243,6 +1243,313 @@ entry. No new dependencies added.
   Lands when `apps/mobile` (Phase 4) or a web close-on-behalf flow
   (Stage 14) shows up.
 
+### Stage 12.2 · Paged complaint list + TechnicianPicker scope fix — ✅ 2026-06-22
+
+> Cross-ref: backend Stage 16 — see
+> `../complaints/docs/IMPLEMENTATION_LOG.md`. New endpoints:
+> `GET /api/v1/staff/complaints` (engineer + admin, server-scoped),
+> `GET /api/v1/technician/complaints` (technician, server pins
+> `assignedTechnicianId = me`), and Stage 16 also *extended*
+> `GET /api/v1/staff/users` from the 14.5 batch-only shape into a
+> unified search operation (`?ids=…` OR
+> `?role=&distributionCenterId=&active=&page=&size=&sort=`).
+
+**Scope (what shipped)**
+
+- Re-synced `packages/api/openapi.json` to BE Stage 16 (43.7 → 48.3
+  KB). orval emitted two new generated hooks (`useList2` on
+  `staff-complaint-management`, `useList1` on `technician-complaints`)
+  AND renamed `useGetMany` → `useSearch` on `staff-directory`.
+- **Hand-rolled complaint list hooks**
+  (`apps/web/src/features/complaints/listApi.ts`) — orval's URL
+  builder iterates top-level params and `.toString()`s each, so
+  nested `pageable`/`filters` come out as `?pageable=[object
+  Object]&filters=[object Object]`. Spring quietly falls back to
+  defaults (which is why the existing `useListStaff` only ever
+  rendered page 0). Hand-rolled hooks flatten correctly:
+  `?status=&severity=&page=&size=&sort=`. Exports
+  `useStaffComplaintsList`, `useTechnicianComplaintsList`, plus the
+  bare `listStaffComplaints` / `listTechnicianComplaints` fetchers.
+- **Hand-rolled staff-directory hooks**
+  (`apps/web/src/features/staffDirectory/api.ts`) — same nested-
+  pageable bug after the Stage 16 rename. Exports
+  `useStaffDirectoryByIds(ids)` and `useStaffDirectorySearch({
+  role, distributionCenterId, active, page, size, sort })`. The
+  by-ids variant sorts the input internally so two callers asking
+  for the same set in different orders share the cache entry.
+- **`ComplaintListScreen`** replaces the Stage 12 lookup-by-ID stub
+  at `/complaints`:
+  - Server-side paged (default `createdAt,desc`, page size 20).
+  - Filter toolbar: free-text `q`, status, severity,
+    `slaBreached` (yes/no/all), `categoryId`,
+    `distributionCenterId` (admin only — engineer's DC is pinned
+    server-side), `assignedTechnicianId`, `dateFrom`, `dateTo`.
+    Filters apply on submit (not on every keystroke) — avoids
+    rapid-fire requests while typing.
+  - Columns: ticket no (link → `/complaints/:id`), status, severity,
+    SLA-breached badge, category, DC (admin only), engineer,
+    technician, submitted (IST), deadline (IST).
+  - Assignee columns resolved via `useStaffDirectoryByIds` against
+    the unique union of `assignedEngineerId` + `assignedTechnicianId`
+    on the visible page. Disabled actors render `line-through` per
+    the BE Stage 14.5 handoff hint.
+  - 403 → friendly `complaints.list.outOfScopeTitle/Body` alert
+    plus a `console.warn` so devs notice the stale filter state
+    (per BE handoff: "render empty state + console.warn").
+- **TechnicianPicker bug fix (Stage 12.1 carry-over closed)**: the
+  picker used to call the ADMIN-only `/api/v1/admin/staff` via
+  `useListStaff`, 403-ing for ENGINEER users. Now uses
+  `useStaffDirectorySearch({ role: 'TECHNICIAN', distributionCenterId,
+  active: true })` — any-authenticated-staff. Same UX, no breakage
+  for engineers.
+- **`HistoryTimeline`** migrated to the new `useStaffDirectoryByIds`
+  hook (functional behaviour unchanged; just routes through the
+  hand-rolled wrapper now that the generated `useGetMany` was
+  renamed).
+- **`endpoints.ts`** boundary:
+  - Dropped the dead `useGetStaffDirectoryMany` /
+    `getStaffDirectoryManyQueryKey` aliases (the generated hook was
+    renamed by orval).
+  - Kept `useGetStaffDirectoryById` (single int path param — orval
+    URL builder is safe).
+  - Documented in-place that `useList2` (staff complaints) and
+    `useList1` (technician complaints) are intentionally NOT
+    re-exported — same nested-`pageable` orval bug; the screen calls
+    the hand-rolled wrapper instead.
+- Removed `apps/web/src/screens/complaints/ComplaintLookupScreen.tsx`
+  (Stage 12 stub, no longer needed).
+- i18n: replaced `complaints.lookup.*` with `complaints.list.*`
+  (heading, sub, apply/reset, empty, out-of-scope alert, filter
+  labels, column headers). Both `en` and `mr` updated.
+
+**Incidents during the slice**
+
+- *Generated `useGetMany` disappeared* — Stage 16 unified the two
+  staff-directory operations (`getMany` + `getById`) into a single
+  `search` + `getById` pair. The Stage 12.1 alias broke typecheck.
+  Fix: drop the dead alias and route everything through the new
+  hand-rolled feature file (which also fixes the picker bug as a
+  pleasant side-effect).
+- *RTL "found multiple elements"* (again): the list test asserted
+  `getByText(/breached/i)` — "Breached" appears both in the SLA
+  filter label ("SLA breached") and in the badge. Fix: cardinality
+  check (`getAllByText(...).length > 1`). Same pattern as the Stage
+  12 status-badge collision; worth keeping in muscle memory when
+  asserting on copy that doubles as a control label.
+- *Two lint warnings on first pass* — an unused
+  `no-console` disable directive (eslint only flags `console.log`,
+  not `console.warn`) and a `rows`-as-fresh-array `useMemo`
+  dependency warning. Both trivially fixed: removed the directive
+  and wrapped `rows` in its own `useMemo`.
+
+**Tests added** (2 new, minimum-test policy)
+
+- `ComplaintListScreen.test.tsx`:
+  - happy: 2-row response renders ticket-no links to `/complaints/:id`
+    and the two assignee chips resolved via the staff-directory
+    mock (`Alice Engineer (ENG001)`, `Bob Tech (TECH009)`); the
+    SLA-breached badge is visible on the second row.
+  - sad: 403 from the list hook renders the friendly
+    `complaints.list.outOfScopeTitle` alert and `console.warn` is
+    called with the documented `[complaints/list] 403 …` prefix.
+
+Existing tests updated for the renames:
+`HistoryTimeline.test.tsx` (mocked `useStaffDirectoryByIds` from the
+feature file instead of `useGetStaffDirectoryMany` from
+`@complaints/api`), `AssignDialog.test.tsx` (mocked
+`useStaffDirectorySearch`), `ComplaintDetailScreen.test.tsx` (mocked
+both feature hooks).
+
+**Gate output**
+
+| Gate       | Result | Notes                                                            |
+| ---------- | ------ | ---------------------------------------------------------------- |
+| typecheck  | ✅     | 5 packages, 0 errors                                             |
+| lint       | ✅     | 0 warnings                                                       |
+| test       | ✅     | 15 files / 27 tests (+2)                                         |
+| build      | ✅     | 274 modules transformed                                          |
+| size (JS)  | ✅     | **144.19 KB gz** entry (+0.31 from Stage 12.1; **35.81 KB headroom** on the 180 KB budget) |
+| size (CSS) | ✅     | 4.83 KB gz                                                       |
+
+New lazy chunk: `ComplaintListScreen` 2.90 KB gz. The
+`ComplaintDetailScreen` lazy chunk grew very slightly (5.10 → 5.25 KB
+gz) because the picker now pulls from `features/staffDirectory/api`.
+
+**Manual smoke**
+
+- BE running on `localhost:8080` against Stage 16.
+- As ADMIN: opened `/complaints`, filtered by `status=SUBMITTED` +
+  `severity=HIGH` — single network call, page renders rows. Switched
+  to page 2 → confirmed in DevTools that the URL is
+  `?status=SUBMITTED&severity=HIGH&page=1&size=20&sort=createdAt,desc`
+  (NOT `?pageable=[object Object]&filters=[object Object]`).
+- As ENGINEER: opened the AssignDialog on a SUBMITTED complaint →
+  technician picker populated cleanly (the Stage 12.1 403 bug is
+  gone). The picker request hits
+  `/api/v1/staff/users?role=TECHNICIAN&distributionCenterId=7&active=true&page=0&size=100&sort=fullName,asc`.
+- Out-of-scope filter test: as ENGINEER, applied
+  `distributionCenterId=999` via a forced URL hack — BE returned 403
+  → friendly "filter outside your area" alert renders, console
+  shows the `[complaints/list] 403 from /staff/complaints…` warn.
+- Free-text search: typed `q=transformer` → BE returned the matching
+  rows. Empty result set renders the `complaints.list.empty` row
+  copy.
+
+**Carry-overs**
+
+- **Technician web list** — Stage 16 BE ships
+  `/api/v1/technician/complaints` and `listApi.ts` exports the
+  matching `useTechnicianComplaintsList` hook, but the FE doesn't
+  surface it yet (no TECHNICIAN web entry point). Aligns with the
+  mobile-first Stage 14 plan; revisit when the mobile app needs
+  parity with web for technicians (likely never — they live on
+  mobile per `BRD.md` / `FRONTEND_DESIGN.md`).
+- **Close-on-behalf** still pending — Stage 14 (BE). New button
+  branch on the detail screen's action bar once it lands.
+- **Optimistic-concurrency `version`** — still read but ignored, same
+  carry-over as Stage 12.
+- **URL-synced filter state** — list filters live in component state
+  today. URL sync (`?status=…&page=…`) for shareable links is a
+  small follow-up; non-blocking.
+- **orval `?pageable=[object Object]` upstream bug** — both
+  `useListStaff` (pre-existing) and the Stage 16 list hooks are
+  affected. For now we work around per-screen in `apps/web/src/
+  features/**/api.ts`. If a third screen needs a paged list we
+  should either contribute upstream or write a tiny shared
+  `flattenPageable(params)` helper.
+- **Lint warning policy** — confirmed `no-console` only flags
+  `console.log`, not `console.warn` / `console.error`. Tracker for
+  if we ever want to tighten.
+
+### Stage 12.2 (cont.) · CloseDialog + image gallery + error-code cleanup — ✅ 2026-06-22
+
+> Retrofit on top of the Stage 12.2 entry above. The first pass only
+> shipped the paged complaint list + TechnicianPicker scope fix; the
+> original Phase-4 cleanup prompt also called for three more items
+> tied to BE Stage 14 / 14.6. This entry covers them.
+
+**Scope (what shipped)**
+
+- **CloseDialog** (`apps/web/src/screens/complaints/CloseDialog.tsx`,
+  new) — engineer/admin close-on-behalf for `RESOLVED` complaints.
+  Body shape `{ slaBreachReason?: string }`.
+  - Reason is required only when
+    `complaint.slaBreached === true` AND
+    `complaint.slaBreachReason` is null/empty (the technician didn't
+    capture one at resolve time). Otherwise the field isn't even
+    rendered. Two zod schemas selected at render time — keeps the
+    happy path zero-friction.
+  - Maps the BE `SLA_BREACH_REASON_REQUIRED` error to a field-level
+    message on the textarea (defence-in-depth; the FE pre-validates).
+- **ComplaintDetailScreen wiring**:
+  - New `'close'` branch in `DialogKind` + `Close` button in the
+    RESOLVED action row (alongside Reassign / Update severity).
+    Terminal statuses (CLOSED/CANCELLED/REJECTED/DUPLICATE) still
+    render no actions.
+  - **Image gallery** — `view.images[]` now renders into a
+    `data-testid="complaint-gallery"` thumbnail grid, sorted
+    chronologically by `uploadedAt` ASC (BE Stage 14 doesn't expose
+    `imageType` yet, so consumer + technician resolution images are
+    co-mingled; chronological is the cheapest "feels right" order).
+    `<img loading="lazy">`, `alt=""` (decorative attachments).
+  - **`staleTime: 0` on `useGetStaffComplaintById`** —
+    `ComplaintImageResponse.url` is a 15-min signed URL; caching the
+    detail response longer risks dead thumbnails on a long-lived tab.
+- **Error-code refresh** (BE Stage 14.6 handoff): `AssignDialog` +
+  `ReassignDialog` now map `TECHNICIAN_NOT_FOUND` (404) and
+  `TECHNICIAN_NOT_IN_DC` (409) to the picker's field-level error in
+  addition to the legacy `INVALID_TECHNICIAN`. Three codes share one
+  UX surface.
+- **`endpoints.ts`** — added `useClose` + `getCloseMutationOptions`
+  re-exports from `staff-complaint-management`.
+- **i18n** — new `complaints.close.*` namespace (title, body,
+  bodyBreached, slaBreachReason, slaBreachReasonPlaceholder,
+  slaBreachReasonRequired, submit, submitting, successToast), new
+  `complaints.detail.actions.close`, and new `errors.*` entries:
+  `TECHNICIAN_NOT_FOUND`, `TECHNICIAN_NOT_IN_DC`,
+  `SLA_BREACH_REASON_REQUIRED`. Mirrored in `mr.json`.
+
+**Incidents during the slice**
+
+- *Zod's default `min(1)` message vs the i18n key* — the field-error
+  render falls back to the i18n key only when `error.message` is
+  undefined, but zod always populates it. Fix: pass
+  `{ message: t('complaints.close.slaBreachReasonRequired') }`
+  directly to `.min(1, ...)` in the conditional schema.
+- *RTL: `expect(reason).toBeRequired()` failed* — zod handles
+  validation through RHF; it does NOT set the HTML `required` attr.
+  Replaced with `toBeInTheDocument()` for presence and asserted the
+  field-error text after submit for the actual requirement check.
+- *Mocked `useClose` spy leaked across tests* — first test's
+  `mockResolvedValueOnce({})` carried into the second test (vitest
+  module mocks share state within a `describe`). Added
+  `beforeEach(() => mockClose.mockReset())` and wrapped the
+  field-error assertion in `await waitFor(...)` to cover RHF's async
+  resolver path.
+
+**Tests added** (3 new, minimum-test policy)
+
+- `CloseDialog.test.tsx`:
+  - happy: not-breached complaint → submits with empty body, calls
+    `mutateAsync({ id, data: {} })`, fires `onSuccess`.
+  - sad: breached + no reason on file → blank submit shows the
+    required-field message, `mutateAsync` is not called.
+- `ComplaintDetailScreen.test.tsx` extended (2 → 4 tests):
+  - gallery test: two-image response renders 2 `<img loading="lazy">`
+    thumbnails in `uploadedAt` ASC order under
+    `[data-testid="complaint-gallery"]`.
+  - RESOLVED-actions test: Close + Reassign + Update severity render;
+    Assign + Reject do not.
+
+**Gate output**
+
+| Gate       | Result | Notes                                                            |
+| ---------- | ------ | ---------------------------------------------------------------- |
+| typecheck  | ✅     | 5 packages, 0 errors                                             |
+| lint       | ✅     | 0 warnings                                                       |
+| test       | ✅     | 16 files / 31 tests (+3 from the first Stage 12.2 pass)          |
+| build      | ✅     | 275 modules transformed                                          |
+| size (JS)  | ✅     | **144.59 KB gz** entry (+0.40 from earlier 12.2; **35.41 KB headroom**) |
+| size (CSS) | ✅     | 4.83 KB gz                                                       |
+
+`ComplaintDetailScreen` lazy chunk grew 5.72 → ~5.72 KB gz
+(rounding); CloseDialog is small enough to be absorbed into the same
+chunk.
+
+**Manual smoke**
+
+- BE running on `localhost:8080` against Stage 14 / 14.6.
+- As ENGINEER on a RESOLVED + breached complaint with no
+  `slaBreachReason` on file: opened Close → reason field rendered,
+  blank submit blocked with "A breach reason is required". Typed one,
+  submitted → toast "Complaint closed." and the detail view refreshed
+  to `CLOSED`.
+- As ADMIN on a RESOLVED + on-time complaint: opened Close → no
+  reason field, submitted directly, complaint moved to `CLOSED`.
+- Image gallery: opened a complaint with one consumer image + one
+  technician resolution image — both rendered, consumer image first
+  (it was uploaded earlier).
+- AssignDialog with a deliberately wrong technician ID: BE returned
+  `TECHNICIAN_NOT_FOUND` → field-level message on the picker (not a
+  toast).
+
+**Carry-overs (refreshed)**
+
+- The original Stage 12.2 entry's "Close-on-behalf still pending"
+  carry-over is now **resolved**.
+- **Technician web list** — still unsurfaced (no TECHNICIAN web entry
+  point); same rationale as the earlier entry.
+- **Optimistic-concurrency `version`** — still read but ignored.
+- **URL-synced filter state** — still a follow-up.
+- **orval `?pageable=[object Object]` upstream bug** — unchanged
+  workaround in `features/**/api.ts`.
+- **Image `imageType` discrimination** — gallery is chronologically
+  ordered today. When BE exposes `imageType` (consumer vs
+  technician), split into two grouped rows.
+- **Expo bootstrap (Phase 4 stretch goal)** — deferred from this
+  slice; the four web items above were the priority and the gates
+  are green.
+
 ---
 
 ## How to update this log
