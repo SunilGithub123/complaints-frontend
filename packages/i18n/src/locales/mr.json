@@ -57,6 +57,7 @@
       "navDistributionCenters": "वितरण केंद्रे",
       "navCategories": "तक्रार श्रेण्या",
       "navStaff": "कर्मचारी",
+      "navComplaints": "तक्रारी",
       "navProfile": "प्रोफाइल",
       "homeHeading": "डॅशबोर्ड",
       "homeBody": "मास्टर डेटा आणि कर्मचारी खाती व्यवस्थापित करण्यासाठी डाव्या मेनूचा वापर करा."
@@ -226,7 +227,14 @@
     "IMAGE_UPLOAD_FAILED": "एक प्रतिमा अपलोड होऊ शकली नाही. कृपया पुन्हा प्रयत्न करा.",
     "IMAGE_COMPRESSION_FAILED": "ही प्रतिमा संकुचित करता आली नाही. कृपया दुसरा फोटो निवडा.",
     "CATEGORY_INACTIVE": "ही श्रेणी आता तक्रारी स्वीकारत नाही. दुसरी निवडा.",
-    "COMPLAINT_NOT_OWNED_BY_CONSUMER": "हे तिकीट तुमच्या पडताळलेल्या मोबाईल क्रमांकाशी संबंधित नाही."
+    "COMPLAINT_NOT_OWNED_BY_CONSUMER": "हे तिकीट तुमच्या पडताळलेल्या मोबाईल क्रमांकाशी संबंधित नाही.",
+    "COMPLAINT_NOT_FOUND": "त्या आयडीची तक्रार सापडली नाही.",
+    "COMPLAINT_OUT_OF_SCOPE": "ही तक्रार तुमच्या क्षेत्राबाहेर आहे.",
+    "COMPLAINT_NOT_SUBMITTED": "ही क्रिया फक्त नव्याने नोंदवलेल्या तक्रारींवर शक्य आहे.",
+    "COMPLAINT_TERMINAL": "ही तक्रार बंद झाली आहे — आणखी बदल शक्य नाहीत.",
+    "INVALID_TECHNICIAN": "या वितरण केंद्रात सक्रिय तंत्रज्ञ निवडा.",
+    "DUPLICATE_PARENT_NOT_FOUND": "त्या मूळ तिकीट क्रमांकाची तक्रार सापडली नाही.",
+    "SELF_REFERENCING_DUPLICATE": "तक्रार स्वतःचीच डुप्लिकेट म्हणून चिन्हांकित करता येणार नाही."
   },
   "consumer": {
     "landing": {
@@ -293,6 +301,125 @@
       "notYoursTitle": "हे तिकीट तुमचे नाही",
       "notYoursBody": "हे तिकीट वेगळ्या ग्राहक आयडी अंतर्गत नोंदवले आहे. स्वतःच्या तक्रारी पाहण्यासाठी पुन्हा पडताळणी करा.",
       "startOver": "नवीन तक्रार नोंदवा"
+    }
+  },
+  "complaints": {
+    "lookup": {
+      "heading": "तक्रारी",
+      "subheading": "आयडीद्वारे तक्रार उघडा. शोध-यादी पुढील टप्प्यात येईल.",
+      "label": "तक्रार आयडी",
+      "placeholder": "उदा. 1234",
+      "open": "उघडा",
+      "outOfScopeTitle": "तुमच्या क्षेत्राबाहेर",
+      "outOfScopeBody": "ही तक्रार वेगळ्या वितरण केंद्र किंवा उपविभागातील आहे."
+    },
+    "detail": {
+      "loading": "तक्रार लोड होत आहे…",
+      "notFoundTitle": "तक्रार सापडली नाही",
+      "notFoundBody": "त्या आयडीची तक्रार सापडली नाही. ती हटवली असू शकते.",
+      "outOfScopeTitle": "तुमच्या क्षेत्राबाहेर",
+      "outOfScopeBody": "ही तक्रार वेगळ्या वितरण केंद्र किंवा उपविभागातील आहे.",
+      "back": "तक्रारींकडे परत",
+      "ticket": "तिकीट",
+      "status": "स्थिती",
+      "severity": "तीव्रता",
+      "slaDeadline": "एसएलए मुदत",
+      "slaBreached": "एसएलए ओलांडली",
+      "submittedAt": "नोंदवले",
+      "updatedAt": "शेवटचा बदल",
+      "resolvedAt": "निराकरण",
+      "closedAt": "बंद",
+      "category": "श्रेणी",
+      "distributionCenter": "वितरण केंद्र",
+      "consumerMaster": "ग्राहक आयडी",
+      "contactMobile": "संपर्क मोबाईल",
+      "assignedEngineer": "अभियंता",
+      "assignedTechnician": "तंत्रज्ञ",
+      "parent": "मूळ तक्रार",
+      "description": "वर्णन",
+      "location": "स्थान",
+      "images": "जोडलेले फोटो",
+      "noImages": "फोटो जोडलेले नाहीत.",
+      "reasons": "कारणे",
+      "rejectionReason": "नकाराचे कारण",
+      "cancellationReason": "रद्द करण्याचे कारण",
+      "slaBreachReason": "एसएलए ओलांडल्याचे कारण",
+      "resolutionNotes": "निराकरणाच्या नोंदी",
+      "historyHeading": "इतिहास",
+      "historyEmpty": "अद्याप इतिहास नाही.",
+      "historyInitial": "प्रारंभिक नोंद",
+      "historyChangedBy": "वापरकर्ता #{{userId}} द्वारे",
+      "historySystem": "प्रणालीद्वारे",
+      "actions": {
+        "heading": "क्रिया",
+        "noneTerminal": "ही तक्रार बंद झाली आहे — आणखी बदल शक्य नाहीत.",
+        "assign": "सोपवा",
+        "reassign": "पुनःसोपवा",
+        "severity": "तीव्रता अद्ययावत",
+        "reject": "नाकारा",
+        "markDuplicate": "डुप्लिकेट म्हणून चिन्हांकित करा"
+      }
+    },
+    "status": {
+      "SUBMITTED": "नोंदवली",
+      "ASSIGNED": "सोपवली",
+      "IN_PROGRESS": "सुरू",
+      "RESOLVED": "निराकरण",
+      "CLOSED": "बंद",
+      "CANCELLED": "रद्द",
+      "REJECTED": "नाकारली",
+      "DUPLICATE": "डुप्लिकेट"
+    },
+    "severity": {
+      "LOW": "कमी",
+      "MEDIUM": "मध्यम",
+      "HIGH": "उच्च"
+    },
+    "assign": {
+      "title": "तक्रार सोपवा",
+      "technician": "तंत्रज्ञ",
+      "technicianPlaceholder": "तंत्रज्ञ निवडा",
+      "severityLabel": "तीव्रता",
+      "noTechnicians": "या वितरण केंद्रात सक्रिय तंत्रज्ञ नाहीत.",
+      "submit": "सोपवा",
+      "submitting": "सोपवत आहे…",
+      "successToast": "तक्रार सोपवली."
+    },
+    "reassign": {
+      "title": "तक्रार पुनःसोपवा",
+      "technician": "नवीन तंत्रज्ञ",
+      "reason": "कारण (पर्यायी)",
+      "reasonPlaceholder": "का पुनःसोपवत आहात?",
+      "submit": "पुनःसोपवा",
+      "submitting": "पुनःसोपवत आहे…",
+      "successToast": "तक्रार पुनःसोपवली."
+    },
+    "severityDialog": {
+      "title": "तीव्रता अद्ययावत",
+      "submit": "अद्ययावत",
+      "submitting": "अद्ययावत होत आहे…",
+      "successToast": "तीव्रता अद्ययावत."
+    },
+    "reject": {
+      "title": "तक्रार नाकारा",
+      "reason": "कारण",
+      "reasonPlaceholder": "का नाकारत आहात?",
+      "reasonRequired": "कारण आवश्यक आहे.",
+      "reasonTooLong": "कारण 500 अक्षरांच्या आत ठेवा.",
+      "submit": "नाकारा",
+      "submitting": "नाकारत आहे…",
+      "successToast": "तक्रार नाकारली."
+    },
+    "markDuplicate": {
+      "title": "डुप्लिकेट म्हणून चिन्हांकित करा",
+      "parentTicket": "मूळ तिकीट क्रमांक",
+      "parentTicketPlaceholder": "उदा. CMP-2026-00001",
+      "parentTicketRequired": "मूळ तिकीट क्रमांक आवश्यक आहे.",
+      "reason": "कारण (पर्यायी)",
+      "reasonPlaceholder": "पर्यायी नोंद",
+      "submit": "डुप्लिकेट म्हणून चिन्हांकित करा",
+      "submitting": "चिन्हांकित करत आहे…",
+      "successToast": "डुप्लिकेट म्हणून चिन्हांकित."
     }
   },
   "notFound": {

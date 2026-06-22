@@ -29,6 +29,12 @@ const CategoriesAdminScreen = lazy(
   () => import('@/screens/masterdata/CategoriesAdminScreen'),
 );
 const StaffListScreen = lazy(() => import('@/screens/admin-staff/StaffListScreen'));
+const ComplaintLookupScreen = lazy(
+  () => import('@/screens/complaints/ComplaintLookupScreen'),
+);
+const ComplaintDetailScreen = lazy(
+  () => import('@/screens/complaints/ComplaintDetailScreen'),
+);
 const ProfileScreen = lazy(() => import('@/screens/profile/ProfileScreen'));
 const NotFoundScreen = lazy(() => import('@/screens/not-found/NotFoundScreen'));
 
@@ -87,6 +93,20 @@ export const router = createBrowserRouter([
               { index: true, element: wrap(<HomeScreen />) },
               // Open to every authenticated, password-cleared staff member.
               { path: 'profile', element: wrap(<ProfileScreen />) },
+              {
+                // Phase 3 Stage 12: engineer + admin complaint management.
+                // Scope-checked server-side; ENGINEER sees their DC,
+                // ADMIN sees their subdivision. TECHNICIAN handled by
+                // the mobile flow (Stage 14).
+                element: <RequireRole roles={['ADMIN', 'ENGINEER']} />,
+                children: [
+                  { path: 'complaints', element: wrap(<ComplaintLookupScreen />) },
+                  {
+                    path: 'complaints/:id',
+                    element: wrap(<ComplaintDetailScreen />),
+                  },
+                ],
+              },
               {
                 // Phase 2: master-data write screens + staff management,
                 // all admin-only. Gate the whole sub-tree once.

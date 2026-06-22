@@ -23,6 +23,7 @@ interface NavItem {
 
 const ADMIN_NAV: readonly NavItem[] = [
   { to: '/', labelKey: 'staff.dashboard.navHome' },
+  { to: '/complaints', labelKey: 'staff.dashboard.navComplaints' },
   { to: '/masterdata/subdivisions', labelKey: 'staff.dashboard.navSubdivisions' },
   {
     to: '/masterdata/distribution-centers',
@@ -30,6 +31,12 @@ const ADMIN_NAV: readonly NavItem[] = [
   },
   { to: '/masterdata/categories', labelKey: 'staff.dashboard.navCategories' },
   { to: '/admin/staff', labelKey: 'staff.dashboard.navStaff' },
+  { to: '/profile', labelKey: 'staff.dashboard.navProfile' },
+];
+
+const ENGINEER_NAV: readonly NavItem[] = [
+  { to: '/', labelKey: 'staff.dashboard.navHome' },
+  { to: '/complaints', labelKey: 'staff.dashboard.navComplaints' },
   { to: '/profile', labelKey: 'staff.dashboard.navProfile' },
 ];
 
@@ -46,7 +53,12 @@ export default function DashboardLayout(): React.JSX.Element {
   const clear = useAuthStore((s) => s.clear);
   const { mutateAsync: doLogout, isPending: loggingOut } = useLogout();
 
-  const navItems = staff?.role === 'ADMIN' ? ADMIN_NAV : NON_ADMIN_NAV;
+  const navItems =
+    staff?.role === 'ADMIN'
+      ? ADMIN_NAV
+      : staff?.role === 'ENGINEER'
+        ? ENGINEER_NAV
+        : NON_ADMIN_NAV;
 
   async function handleLogout(): Promise<void> {
     try {

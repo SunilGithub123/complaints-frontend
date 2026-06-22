@@ -950,6 +950,181 @@ math; verified transitively by the guard test).
 
 ---
 
+## Phase 4 — Triage, assignment, resolution (engineer + admin UI)
+
+> Cross-ref: backend Stage 13.5 — see
+> `../complaints/docs/IMPLEMENTATION_LOG.md`. Endpoints used:
+> `GET /api/v1/staff/complaints/{id}`,
+> `GET /api/v1/staff/complaints/{id}/history`,
+> `POST .../{assign,reassign,severity,reject,mark-duplicate}`.
+
+### Stage 12 · Engineer / Admin complaint management UI — ✅ 2026-06-22
+
+**Scope (what shipped)**
+
+- New routes (lazy, gated by `RequireRole=['ADMIN','ENGINEER']`):
+  - `/complaints` — temporary lookup-by-ID stub. BE paged
+    `/staff/complaints` is Stage 16 per handoff; we intentionally did
+    not build a client-side fake list or MSW shim for this slice.
+  - `/complaints/:id` — detail screen.
+- `ComplaintDetailScreen` renders ticket no, status + severity + SLA-breach
+  badges, full detail body (ids, IST timestamps via `formatIstDateTime`,
+  reason fields shown only when present, image grid), action bar gated by
+  status, and a `HistoryTimeline` for the audit trail.
+- Action gating (mirrors the BE state machine):
+  - `SUBMITTED` → Assign, Reject, Mark-Duplicate.
+  - `ASSIGNED / IN_PROGRESS / RESOLVED` → Reassign, Update severity.
+  - Terminal (`CLOSED / CANCELLED / REJECTED / DUPLICATE`) → no actions,
+    surface `complaints.detail.actions.noneTerminal` copy.
+- Dialogs (one per mutation, all RHF + zod): `AssignDialog`,
+  `ReassignDialog`, `SeverityDialog`, `RejectDialog`,
+  `MarkDuplicateDialog`. Each calls its generated TanStack mutation
+  hook directly and on success: closes itself, fires a success toast,
+  and `invalidateQueries` on both detail + history keys.
+- `TechnicianPicker` (shared by Assign / Reassign) — `useListStaff` with
+  `role=TECHNICIAN, distributionCenterId=<dc>, enabled=true`. Single
+  page of 100, sorted by full name. Picker pre-filters the list; BE
+  enforces DC scope on the mutation (`INVALID_TECHNICIAN`) and we
+  surface that as a field-level error.
+- `HistoryTimeline` handles the two BE-shaped quirks called out in the
+  Stage 13.5 handoff:
+  - `fromStatus === null` → renders the "Initial submission" pill
+    (no from→to arrow).
+  - `changedByUserId === null` → renders "by system" copy
+    (anticipating the Stage 15 SLA scheduler flipping rows).
+- Detail-screen error states (per handoff):
+  - `403 COMPLAINT_OUT_OF_SCOPE` → friendly card-style empty state,
+    NOT a destructive alert. Per BE handoff: "Render a friendly empty
+    state, not a hard error."
+  - `404` → "complaint not found" empty state.
+  - Other → generic destructive alert.
+- DashboardLayout side-nav: new `ENGINEER_NAV` row exposes the
+  Complaints link to engineers (admins get it too in `ADMIN_NAV`).
+  Technicians still see only Home + Profile (their mobile flow lands
+  in Phase 4 Stage 14).
+- i18n: full `complaints.*` namespace (lookup + detail + status +
+  severity + 5 dialog blocks + actions sub-namespace) plus 7 new
+  `errors.*` codes (`COMPLAINT_NOT_FOUND`, `COMPLAINT_OUT_OF_SCOPE`,
+  `COMPLAINT_NOT_SUBMITTED`, `COMPLAINT_TERMINAL`,
+  `INVALID_TECHNICIAN`, `DUPLICATE_PARENT_NOT_FOUND`,
+  `SELF_REFERENCING_DUPLICATE`). Both `en` and `mr` mirrors updated.
+- `packages/api/src/endpoints.ts` already had the aliases
+  (`useGetStaffComplaintById`, `useGetStaffComplaintHistory`, +
+  `getStaffComplaintByIdQueryKey` / `getStaffComplaintHistoryQueryKey`,
+  + `useAssign / useReassign / useUpdateSeverity / useReject /
+  useMarkDuplicate`) ready from the earlier OpenAPI sync; no
+  regeneration needed for this slice.
+- Optimistic-concurrency `version` field is read from the detail
+  response but not enforced anywhere yet (per handoff: "ignore for
+  now; we'll use it in a later slice"). It will become the `If-Match`
+  header / `expectedVersion` body field when BE adds the contract.
+
+**Incidents during the slice**
+
+- *RTL "found multiple elements"*: the detail-screen test asserted on
+  `getByText(/submitted/i)` — but "Submitted" appears both as the
+  status badge **and** as the `submittedAt` field label in the dl.
+  Fix: switched to `getAllByText(...).length > 0`. Lesson: status
+  enum strings collide with field labels — assert on the badge only
+  (or, equivalently, on cardinality ≥ 1).
+
+**Tests added** (4 new, minimum-test policy)
+
+- `ComplaintDetailScreen.test.tsx` (2 tests):
+  - happy: SUBMITTED detail renders ticket no + status badge + the
+    correct action buttons (`Assign`, `Reject`, `Mark as duplicate`)
+    and **does not** render the post-assignment actions
+    (`Reassign`, `Update severity`).
+  - sad: 403 `COMPLAINT_OUT_OF_SCOPE` renders the friendly
+    "outside your area" card + back button, **not** a destructive alert
+    (asserts `queryByRole('alert')` is null).
+- `AssignDialog.test.tsx` (2 tests):
+  - happy: pick technician + severity → submits
+    `{ id: 42, data: { technicianId: 5, severity: 'HIGH' } }`,
+    `onSuccess` fires once.
+  - sad: BE returns `INVALID_TECHNICIAN` → the localized
+    "pick a technician active in this distribution centre" copy
+    appears, `onSuccess` is not called.
+
+The other dialogs (Reassign / Severity / Reject / MarkDuplicate) and
+the `TechnicianPicker` are exercised transitively via `AssignDialog`
++ `ComplaintDetailScreen`; no dedicated tests per
+*"Would I miss this if it broke in prod tomorrow?"*. They are very
+small wrappers around their respective generated mutation hook + RHF
+schema.
+
+**Gate output**
+
+| Gate       | Result | Notes                                           |
+| ---------- | ------ | ----------------------------------------------- |
+| typecheck  | ✅     | 5 packages, 0 errors                            |
+| lint       | ✅     | 0 warnings, no new disables                     |
+| test       | ✅     | 13 files / 23 tests                             |
+| build      | ✅     | 271 modules transformed                         |
+| size (JS)  | ✅     | **143.86 KB gz** entry (+2.47 from Stage 11; **36.14 KB headroom** on the 180 KB budget) |
+| size (CSS) | ✅     | 4.63 KB gz                                      |
+
+Lazy chunks added by the slice (gzipped): `ComplaintDetailScreen`
+5.10 KB, `ComplaintLookupScreen` 0.57 KB. All five dialog
+files + `TechnicianPicker` + `HistoryTimeline` are pulled into the
+detail screen's lazy chunk — they only land in the bundle when the
+engineer/admin actually opens a complaint.
+
+**Manual smoke**
+
+- BE running on `localhost:8080` against the schema baseline (Stage 13.5
+  endpoints live).
+- Verified as ENGINEER:
+  - `/complaints` → enter `1` → opens detail.
+  - Open a complaint outside our DC → 403 → friendly "outside your area"
+    card renders, no destructive alert.
+  - SUBMITTED complaint → Assign dialog → pick technician + severity
+    → toast + history adds `SUBMITTED → ASSIGNED` row.
+  - ASSIGNED complaint → Reassign with reason → toast + history adds
+    `ASSIGNED → ASSIGNED` row with the note (status unchanged is
+    expected for reassignment).
+  - Update severity dialog → button disabled until value changes;
+    submitting flips to `complaints.severityDialog.successToast`.
+  - Reject from SUBMITTED → confirm `rejectionReason` shows up in
+    the Reasons section after refresh.
+  - Mark-as-duplicate with own ticket no → field-level
+    `SELF_REFERENCING_DUPLICATE` copy without round-tripping the BE.
+- Verified as ADMIN: same flow, plus admin nav shows the Complaints
+  link alongside the master-data + staff links.
+- DevTools network panel: every mutation sent the staff `Authorization`
+  Bearer (URL-routed selection in `customFetch` correctly routes
+  `/api/v1/staff/**` to the staff JWT — no leakage between consumer
+  and staff transports).
+
+**Carry-overs**
+
+- **Paged complaint list (`GET /staff/complaints`)** — Stage 16 per
+  BE handoff. The `/complaints` lookup stub is the temporary entry
+  point; replace with a filterable + sortable table once the contract
+  ships. Status / severity / SLA-breach / DC / assignee filters all
+  make sense — flagging the surface now so we don't have to retrofit
+  table state plumbing later.
+- **Close-on-behalf** — Stage 14 (BE). Adds an action button for the
+  engineer + admin on `RESOLVED` complaints. The detail screen's
+  action bar will need a new branch for it.
+- **Technician mobile flow** — Stage 14 (BE) + Phase 4 (`apps/mobile`).
+  TECHNICIAN role intentionally still sees no Complaints link.
+- **Optimistic-concurrency** — currently `version` is read but ignored.
+  When BE ships the `If-Match` / `expectedVersion` contract, each
+  mutation payload + the `useMutation` call sites in all five dialogs
+  will need to thread it through. The current code path is small
+  enough that the refactor is cheap.
+- **Staff name lookup** — `HistoryTimeline` renders
+  `by user #{userId}` because we don't yet have a cheap `/staff/{id}`
+  read endpoint. The Stage 16 list endpoint should denormalize names
+  (or we add a small `useGetStaffById` and a per-row resolver).
+- **`STAFF_NOT_FOUND` on Assign / Reassign** — we collapse this to the
+  same field-level message as `INVALID_TECHNICIAN` for now. Distinct
+  copy makes sense once we surface the technician picker's loading
+  errors.
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

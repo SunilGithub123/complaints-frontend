@@ -57,6 +57,7 @@
       "navDistributionCenters": "Distribution centres",
       "navCategories": "Complaint categories",
       "navStaff": "Staff",
+      "navComplaints": "Complaints",
       "navProfile": "Profile",
       "homeHeading": "Dashboard",
       "homeBody": "Use the side navigation to manage master data and staff accounts."
@@ -226,7 +227,14 @@
     "IMAGE_UPLOAD_FAILED": "One of the images failed to upload. Please try again.",
     "IMAGE_COMPRESSION_FAILED": "Could not compress this image. Please try a different photo.",
     "CATEGORY_INACTIVE": "This category is no longer accepting complaints. Pick another one.",
-    "COMPLAINT_NOT_OWNED_BY_CONSUMER": "This ticket doesn't belong to your verified mobile number."
+    "COMPLAINT_NOT_OWNED_BY_CONSUMER": "This ticket doesn't belong to your verified mobile number.",
+    "COMPLAINT_NOT_FOUND": "We couldn't find a complaint with that ID.",
+    "COMPLAINT_OUT_OF_SCOPE": "This complaint is outside your assigned area.",
+    "COMPLAINT_NOT_SUBMITTED": "Only newly submitted complaints can take this action.",
+    "COMPLAINT_TERMINAL": "This complaint is closed — no further changes are allowed.",
+    "INVALID_TECHNICIAN": "Pick a technician active in this distribution centre.",
+    "DUPLICATE_PARENT_NOT_FOUND": "We couldn't find a complaint with that parent ticket number.",
+    "SELF_REFERENCING_DUPLICATE": "A complaint can't be marked as a duplicate of itself."
   },
   "consumer": {
     "landing": {
@@ -293,6 +301,125 @@
       "notYoursTitle": "This ticket isn't yours",
       "notYoursBody": "This ticket was registered under a different Consumer ID. Verify again to view your own complaints.",
       "startOver": "Lodge another complaint"
+    }
+  },
+  "complaints": {
+    "lookup": {
+      "heading": "Complaints",
+      "subheading": "Open a complaint by ID. A searchable list lands in a later stage.",
+      "label": "Complaint ID",
+      "placeholder": "e.g. 1234",
+      "open": "Open",
+      "outOfScopeTitle": "Outside your area",
+      "outOfScopeBody": "This complaint is in a different distribution centre or subdivision than yours."
+    },
+    "detail": {
+      "loading": "Loading complaint…",
+      "notFoundTitle": "Complaint not found",
+      "notFoundBody": "We couldn't find a complaint with that ID. It may have been deleted.",
+      "outOfScopeTitle": "Outside your area",
+      "outOfScopeBody": "This complaint is in a different distribution centre or subdivision than yours.",
+      "back": "Back to complaints",
+      "ticket": "Ticket",
+      "status": "Status",
+      "severity": "Severity",
+      "slaDeadline": "SLA deadline",
+      "slaBreached": "SLA breached",
+      "submittedAt": "Submitted",
+      "updatedAt": "Last update",
+      "resolvedAt": "Resolved",
+      "closedAt": "Closed",
+      "category": "Category",
+      "distributionCenter": "Distribution centre",
+      "consumerMaster": "Consumer ID",
+      "contactMobile": "Contact mobile",
+      "assignedEngineer": "Engineer",
+      "assignedTechnician": "Technician",
+      "parent": "Parent complaint",
+      "description": "Description",
+      "location": "Location",
+      "images": "Attached photos",
+      "noImages": "No photos attached.",
+      "reasons": "Reasons",
+      "rejectionReason": "Rejection reason",
+      "cancellationReason": "Cancellation reason",
+      "slaBreachReason": "SLA breach reason",
+      "resolutionNotes": "Resolution notes",
+      "historyHeading": "History",
+      "historyEmpty": "No history yet.",
+      "historyInitial": "Initial submission",
+      "historyChangedBy": "by user #{{userId}}",
+      "historySystem": "by system",
+      "actions": {
+        "heading": "Actions",
+        "noneTerminal": "This complaint is closed — no further changes are allowed.",
+        "assign": "Assign",
+        "reassign": "Reassign",
+        "severity": "Update severity",
+        "reject": "Reject",
+        "markDuplicate": "Mark as duplicate"
+      }
+    },
+    "status": {
+      "SUBMITTED": "Submitted",
+      "ASSIGNED": "Assigned",
+      "IN_PROGRESS": "In progress",
+      "RESOLVED": "Resolved",
+      "CLOSED": "Closed",
+      "CANCELLED": "Cancelled",
+      "REJECTED": "Rejected",
+      "DUPLICATE": "Duplicate"
+    },
+    "severity": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High"
+    },
+    "assign": {
+      "title": "Assign complaint",
+      "technician": "Technician",
+      "technicianPlaceholder": "Select a technician",
+      "severityLabel": "Severity",
+      "noTechnicians": "No active technicians in this distribution centre.",
+      "submit": "Assign",
+      "submitting": "Assigning…",
+      "successToast": "Complaint assigned."
+    },
+    "reassign": {
+      "title": "Reassign complaint",
+      "technician": "New technician",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "Why is this being reassigned?",
+      "submit": "Reassign",
+      "submitting": "Reassigning…",
+      "successToast": "Complaint reassigned."
+    },
+    "severityDialog": {
+      "title": "Update severity",
+      "submit": "Update",
+      "submitting": "Updating…",
+      "successToast": "Severity updated."
+    },
+    "reject": {
+      "title": "Reject complaint",
+      "reason": "Reason",
+      "reasonPlaceholder": "Why is this being rejected?",
+      "reasonRequired": "A reason is required.",
+      "reasonTooLong": "Keep the reason under 500 characters.",
+      "submit": "Reject",
+      "submitting": "Rejecting…",
+      "successToast": "Complaint rejected."
+    },
+    "markDuplicate": {
+      "title": "Mark as duplicate",
+      "parentTicket": "Parent ticket number",
+      "parentTicketPlaceholder": "e.g. CMP-2026-00001",
+      "parentTicketRequired": "Parent ticket number is required.",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "Optional note",
+      "submit": "Mark as duplicate",
+      "submitting": "Marking…",
+      "successToast": "Marked as duplicate."
     }
   },
   "notFound": {
