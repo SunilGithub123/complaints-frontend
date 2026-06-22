@@ -6,6 +6,9 @@
  * OpenAPI spec version: v1
  */
 
+/**
+ * Source of the image: consumer-submitted vs technician-uploaded at resolution.
+ */
 export type ComplaintImageResponseImageType = typeof ComplaintImageResponseImageType[keyof typeof ComplaintImageResponseImageType];
 
 

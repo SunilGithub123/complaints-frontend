@@ -9,7 +9,8 @@ import type { ComplaintImageResponseImageType } from './complaintImageResponseIm
 
 export interface ComplaintImageResponse {
   id?: number;
-  imageType?: ComplaintImageResponseImageType;
+  /** Source of the image: consumer-submitted vs technician-uploaded at resolution. */
+  imageType: ComplaintImageResponseImageType;
   contentType?: string;
   sizeBytes?: number;
   url?: string;
