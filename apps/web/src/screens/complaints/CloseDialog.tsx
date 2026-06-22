@@ -32,7 +32,13 @@ export interface CloseDialogProps {
   slaBreached: boolean;
   /** Reason captured at technician-resolve time (Stage 14). */
   existingSlaBreachReason: string | null;
-  onSuccess: () => void;
+  /**
+   * Called after a successful close. The `detail` arg is the
+   * post-close `ComplaintStaffDetailResponse` (BE Stage 16.1) so the
+   * parent can seed its cache instead of refetching. May be undefined
+   * on older BE versions or in tests that don't supply the envelope.
+   */
+  onSuccess: (detail?: Schemas.ComplaintStaffDetailResponse) => void;
 }
 
 export function CloseDialog({
@@ -86,8 +92,14 @@ export function CloseDialog({
         : {}),
     };
     try {
-      await mutateAsync({ id: complaintId, data });
-      onSuccess();
+      const res = await mutateAsync({ id: complaintId, data });
+      // BE Stage 16.1: close now returns the post-close detail envelope.
+      // Defensive optional chaining keeps the dialog working against
+      // older BE responses (and mocked tests that return `{}`).
+      const detail = (
+        res as { data?: Schemas.ApiResponseComplaintStaffDetailResponse } | undefined
+      )?.data?.data;
+      onSuccess(detail);
     } catch (err) {
       const mapped = mapApiError(err, t);
       if (mapped.code === 'SLA_BREACH_REASON_REQUIRED') {

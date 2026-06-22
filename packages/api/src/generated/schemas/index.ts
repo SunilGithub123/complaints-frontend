@@ -42,6 +42,7 @@ export * from './complaintHistoryEntryResponse';
 export * from './complaintHistoryEntryResponseFromStatus';
 export * from './complaintHistoryEntryResponseToStatus';
 export * from './complaintImageResponse';
+export * from './complaintImageResponseImageType';
 export * from './complaintListItemResponse';
 export * from './complaintListItemResponseSeverity';
 export * from './complaintListItemResponseStatus';

@@ -71,7 +71,6 @@ export function ReassignDialog({
     } catch (err) {
       const mapped = mapApiError(err, t);
       if (
-        mapped.code === 'INVALID_TECHNICIAN' ||
         mapped.code === 'TECHNICIAN_NOT_FOUND' ||
         mapped.code === 'TECHNICIAN_NOT_IN_DC'
       ) {

@@ -29,13 +29,14 @@ export function TechnicianPicker({
   invalid,
 }: TechnicianPickerProps): React.JSX.Element {
   const t = useT();
+  // BE Stage 14.7+ pins `fullName,asc` as the server default on
+  // /staff/users — no need to send it from the client.
   const { data, isLoading } = useStaffDirectorySearch({
     role: 'TECHNICIAN',
     distributionCenterId,
     active: true,
     page: 0,
     size: 100,
-    sort: ['fullName,asc'],
   });
 
   const options = useMemo(() => {

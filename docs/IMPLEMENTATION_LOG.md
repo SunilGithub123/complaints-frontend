@@ -1552,6 +1552,119 @@ chunk.
 
 ---
 
+### Stage 12.2 (BE-followup) · BE Stage 14.7 / 16.1 follow-ups — ✅ 2026-06-22
+
+> Reactive entry: after the previous Stage 12.2 (cont.) commit, the BE
+> team shipped four small contract refinements and pinged us to apply
+> them on the FE side. No new user-visible features — this is purely
+> bringing the FE in line with the now-canonical BE contract.
+
+**What shipped**
+
+1. **`ComplaintImageResponse.imageType` is now a real enum.** Orval
+   regenerated against the refreshed `packages/api/openapi.json`
+   (copied from sibling `../complaints/docs/openapi.json` — backend
+   port 8080 was offline at the time, sibling spec is the
+   source-of-truth fallback). New file
+   `schemas/complaintImageResponseImageType.ts` exports
+   `{ COMPLAINT, RESOLUTION }`.
+2. **Image gallery splits by `imageType`.** `ImageGallery` in
+   `ComplaintDetailScreen.tsx` now partitions `view.images` into
+   `COMPLAINT` (consumer photos) + `RESOLUTION` (technician
+   proof-of-fix) sections, each sorted by `uploadedAt` ASC. A
+   defensive third bucket for untyped images is rendered without a
+   heading (covers stale RQ cache + future-proofs against BE
+   omitting the field). Two new i18n keys —
+   `complaints.detail.imagesConsumer` + `imagesResolution` — landed
+   in `en.json` + `mr.json`.
+3. **Close mutation seeds the cache instead of refetching.** BE's
+   `POST /staff/complaints/{id}/close` now returns the post-close
+   `ComplaintStaffDetailResponse` (orval'd as
+   `closeResponse200.data: ApiResponseComplaintStaffDetailResponse`).
+   `CloseDialog` forwards the decoded detail via
+   `onSuccess(detail?)`; `ComplaintDetailScreen` calls
+   `queryClient.setQueryData(getStaffComplaintByIdQueryKey(id), ...)`
+   then triggers `onActionSuccess` with `skipDetailRefetch: true`
+   so we don't burn a follow-up GET. History query still
+   invalidates (BE doesn't return the history rows alongside).
+4. **Image URL TTL relaxed.** With BE Stage 16.1 bumping the signed
+   image-URL TTL from 15 min → 1 h, `useGetStaffComplaintById` drops
+   the previous `staleTime: 0` and uses `staleTime: 30 * 60_000`
+   (30 min) — keeps the gallery snappy on tab revisits while staying
+   well inside the 1 h TTL.
+5. **TechnicianPicker drops `?sort=fullName,asc`.** BE pinned
+   `fullName,asc` as the server-side default on
+   `GET /staff/users`, so the FE no longer needs to send it.
+6. **AssignDialog / ReassignDialog drop `INVALID_TECHNICIAN`.** BE
+   confirmed it only ever returns `TECHNICIAN_NOT_FOUND` (picker
+   gone stale) or `TECHNICIAN_NOT_IN_DC` (cross-DC pick) today.
+   Matcher trimmed to those two; legacy i18n key removed from
+   `en.json` + `mr.json`. Test renamed + updated to use
+   `TECHNICIAN_NOT_IN_DC` + the new "not active in this
+   distribution centre" copy.
+
+**What bit us**
+
+- Zod's default English `.min(1)` message ("String must contain at
+  least 1 character(s)") was leaking through to the rendered field
+  error because the form's i18n fallback only fires when
+  `error.message` is undefined. Fix: pass the i18n key directly as
+  the `message` option on `.min(1, { message: requiredMessage })`.
+  (Caught earlier in the cont. pass; calling it out here because
+  it's the kind of thing the next form will repeat.)
+- Vitest module-mock state leaks across tests in a `describe`
+  block. `mockClose.mockResolvedValueOnce(...)` from test 1 was
+  still consumable in test 2's blank submit, causing a phantom
+  call. `beforeEach(() => mockClose.mockReset())` fixed it.
+
+**What we tested**
+
+- `CloseDialog.test.tsx` — happy path now asserts that `onSuccess`
+  receives the post-close detail envelope (`id: 42`,
+  `status: 'CLOSED'`, `version: 2`); unhappy path uses
+  `waitFor(...)` around the field-error assertion to ride out the
+  async zod resolver.
+- `ComplaintDetailScreen.test.tsx` — gallery test now seeds two
+  images (one `COMPLAINT`, one `RESOLUTION`) and asserts both
+  `[data-testid="complaint-gallery-consumer"]` +
+  `[data-testid="complaint-gallery-resolution"]` render with one
+  `<img>` each; the untyped bucket is asserted absent.
+- `AssignDialog.test.tsx` — error test renamed
+  `surfaces TECHNICIAN_NOT_IN_DC as a field error and does not
+  fire onSuccess`, payload code + status updated (409 not 422),
+  expected copy updated to "that technician is not active in this
+  distribution centre".
+
+**Gate output**
+
+| Gate       | Result | Notes                                                                     |
+| ---------- | ------ | ------------------------------------------------------------------------- |
+| typecheck  | ✅     | 5 packages, 0 errors                                                      |
+| lint       | ✅     | 0 warnings                                                                |
+| test       | ✅     | 16 files / 31 tests (no count delta — gallery + close tests rewritten in place) |
+| build      | ✅     | 299 modules transformed                                                   |
+| size (JS)  | ✅     | **144.59 KB gz** entry (no delta from 12.2 cont.; **35.41 KB headroom**)  |
+| size (CSS) | ✅     | 4.83 KB gz                                                                |
+
+**Manual smoke**
+
+- Sibling BE spec `../complaints/docs/openapi.json` confirmed to
+  contain `ComplaintImageResponse.imageType` as a typed enum;
+  orval regenerated cleanly; the `data?:` optional marker on
+  `imageType` still leaks through (orval's read of
+  `additionalProperties=false` is loose) but the gallery's
+  `=== 'COMPLAINT'` / `=== 'RESOLUTION'` filter handles undefined.
+
+**Carry-overs (refreshed)**
+
+- **`imageType` schema optionality** — BE's spec marks it
+  required-non-null in prose, orval still emits it as `?:`. Either
+  patch the orval transform or accept the runtime narrowing in
+  the gallery (chosen path for now; cheap fix later).
+- All other carry-overs from the (cont.) entry remain unchanged.
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

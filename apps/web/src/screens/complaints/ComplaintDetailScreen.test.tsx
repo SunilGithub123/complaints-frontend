@@ -9,8 +9,9 @@
  *     friendly "outside your area" empty state, NOT a hard error. Per
  *     BE Stage 13.5 handoff: `COMPLAINT_OUT_OF_SCOPE` is expected when
  *     an engineer/admin opens a complaint outside their scope.
- *  3. Image gallery (Stage 12.2): non-empty `images[]` renders a
- *     thumbnail per row, sorted chronologically by `uploadedAt`.
+ *  3. Image gallery (Stage 12.2 / 12.3): non-empty `images[]` renders
+ *     grouped sections by `imageType` (BE Stage 16.1), each sorted by
+ *     `uploadedAt` ASC.
  *  4. RESOLVED status exposes the Close action button (Stage 14 BE).
  */
 import { describe, expect, it, vi } from 'vitest';
@@ -132,7 +133,7 @@ describe('ComplaintDetailScreen', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the image gallery chronologically when images are attached', () => {
+  it('renders the image gallery grouped by imageType (consumer / resolution)', () => {
     mockDetail.mockReturnValue({
       data: {
         data: {
@@ -148,15 +149,24 @@ describe('ComplaintDetailScreen', () => {
             images: [
               {
                 id: 2,
+                imageType: 'RESOLUTION',
                 url: 'https://signed/two.jpg',
                 contentType: 'image/jpeg',
                 uploadedAt: '2026-06-22T05:00:00Z',
               },
               {
                 id: 1,
+                imageType: 'COMPLAINT',
                 url: 'https://signed/one.jpg',
                 contentType: 'image/jpeg',
                 uploadedAt: '2026-06-22T03:00:00Z',
+              },
+              {
+                id: 3,
+                imageType: 'COMPLAINT',
+                url: 'https://signed/three.jpg',
+                contentType: 'image/jpeg',
+                uploadedAt: '2026-06-22T03:30:00Z',
               },
             ],
             version: 1,
@@ -173,13 +183,29 @@ describe('ComplaintDetailScreen', () => {
 
     renderAt(7);
 
-    const gallery = screen.getByTestId('complaint-gallery');
-    const thumbs = gallery.querySelectorAll('img');
-    expect(thumbs).toHaveLength(2);
-    // Sorted ascending by uploadedAt → "one.jpg" (03:00Z) first.
-    expect(thumbs[0]?.getAttribute('src')).toBe('https://signed/one.jpg');
-    expect(thumbs[1]?.getAttribute('src')).toBe('https://signed/two.jpg');
-    expect(thumbs[0]?.getAttribute('loading')).toBe('lazy');
+    // Two grouped sections render, each with its own testid.
+    const consumer = screen.getByTestId('complaint-gallery-consumer');
+    const resolution = screen.getByTestId('complaint-gallery-resolution');
+    const consumerThumbs = consumer.querySelectorAll('img');
+    const resolutionThumbs = resolution.querySelectorAll('img');
+    expect(consumerThumbs).toHaveLength(2);
+    expect(resolutionThumbs).toHaveLength(1);
+    // Within each group, ascending by uploadedAt — "one.jpg" (03:00Z)
+    // before "three.jpg" (03:30Z).
+    expect(consumerThumbs[0]?.getAttribute('src')).toBe('https://signed/one.jpg');
+    expect(consumerThumbs[1]?.getAttribute('src')).toBe(
+      'https://signed/three.jpg',
+    );
+    expect(resolutionThumbs[0]?.getAttribute('src')).toBe(
+      'https://signed/two.jpg',
+    );
+    // Lazy loading still in effect.
+    expect(consumerThumbs[0]?.getAttribute('loading')).toBe('lazy');
+    // The "untyped" fallback group must NOT appear once BE provides
+    // imageType on every row.
+    expect(
+      screen.queryByTestId('complaint-gallery-untyped'),
+    ).not.toBeInTheDocument();
   });
 
   it('exposes the Close action on RESOLVED complaints', () => {

@@ -53,7 +53,20 @@ function renderDialog(props: {
 
 describe('CloseDialog', () => {
   it('closes an on-time complaint without asking for a breach reason', async () => {
-    mockClose.mockResolvedValueOnce({});
+    // BE Stage 16.1 — `close` returns the post-close detail envelope so
+    // the dialog can hand it to `onSuccess` for cache-seeding.
+    mockClose.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        success: true,
+        data: {
+          id: 42,
+          status: 'CLOSED',
+          version: 2,
+          slaBreached: false,
+        },
+      },
+    });
     const onSuccess = vi.fn();
     renderDialog({
       slaBreached: false,
@@ -71,7 +84,12 @@ describe('CloseDialog', () => {
 
     expect(mockClose).toHaveBeenCalledTimes(1);
     expect(mockClose).toHaveBeenCalledWith({ id: 42, data: {} });
+    // onSuccess receives the post-close detail so the parent can
+    // setQueryData and skip a follow-up GET (Stage 16.1 contract).
     expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 42, status: 'CLOSED', version: 2 }),
+    );
   });
 
   it('requires a breach reason when the complaint is breached and BE has none on file', async () => {

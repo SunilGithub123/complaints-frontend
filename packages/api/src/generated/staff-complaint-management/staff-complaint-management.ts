@@ -382,10 +382,11 @@ export const useMarkDuplicate = <TError = unknown,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Returns the post-close detail (status=CLOSED + bumped version) so the FE can update its cache in one round-trip without a follow-up GET.
  * @summary Engineer / Admin close-on-behalf of a RESOLVED complaint
  */
 export type closeResponse200 = {
-  data: ApiResponseVoid
+  data: ApiResponseComplaintStaffDetailResponse
   status: 200
 }
     

@@ -5,9 +5,11 @@
  * Backend API for the Maharashtra State Electricity Board Complaint Resolution System.
  * OpenAPI spec version: v1
  */
+import type { ComplaintImageResponseImageType } from './complaintImageResponseImageType';
 
 export interface ComplaintImageResponse {
   id?: number;
+  imageType?: ComplaintImageResponseImageType;
   contentType?: string;
   sizeBytes?: number;
   url?: string;

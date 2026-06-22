@@ -80,10 +80,10 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
   const { show: toast } = useToast();
   const [dialog, setDialog] = useState<DialogKind>(null);
 
-  // staleTime: 0 — `ComplaintImageResponse.url` is a signed read URL
-  // with a ~15-min TTL (BE Stage 13.5 + 10c). Caching the detail
-  // response long-term risks showing dead image links after the user
-  // returns from a long break. The detail screen is cheap to refetch.
+  // BE Stage 16.1 bumped the signed-image-URL TTL from 15 min → 1 h, so
+  // we no longer need `staleTime: 0` to keep gallery thumbnails alive.
+  // 30 min leaves a comfortable safety margin under the 1 h TTL while
+  // still feeling fresh on a tab the user revisits.
   const detail = useGetStaffComplaintById<
     { data?: Schemas.ApiResponseComplaintStaffDetailResponse },
     unknown
@@ -91,7 +91,7 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
     query: {
       retry: false,
       enabled: Number.isFinite(id) && id > 0,
-      staleTime: 0,
+      staleTime: 30 * 60_000,
     },
   });
   const history = useGetStaffComplaintHistory<
@@ -102,17 +102,24 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
   const view = detail.data?.data?.data;
   const historyRows = history.data?.data?.data ?? [];
 
-  function refetch(): void {
-    void queryClient.invalidateQueries({ queryKey: getStaffComplaintByIdQueryKey(id) });
+  function refetch(opts?: { skipDetail?: boolean }): void {
+    if (!opts?.skipDetail) {
+      void queryClient.invalidateQueries({
+        queryKey: getStaffComplaintByIdQueryKey(id),
+      });
+    }
     void queryClient.invalidateQueries({
       queryKey: getStaffComplaintHistoryQueryKey(id),
     });
   }
 
-  function onActionSuccess(toastKey: string): void {
+  function onActionSuccess(
+    toastKey: string,
+    opts?: { skipDetailRefetch?: boolean },
+  ): void {
     setDialog(null);
     toast(t(toastKey), 'success');
-    refetch();
+    refetch({ skipDetail: opts?.skipDetailRefetch });
   }
 
   // --- Error states --------------------------------------------------
@@ -282,37 +289,7 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
           <section className="flex flex-col gap-2 border-t border-[var(--color-muted-200)] pt-3">
             <h3 className="text-sm font-medium">{t('complaints.detail.images')}</h3>
             {view.images && view.images.length > 0 ? (
-              <ul
-                className="grid grid-cols-3 gap-2"
-                data-testid="complaint-gallery"
-              >
-                {/*
-                  Sort by `uploadedAt` ascending — BE Stage 14 doesn't
-                  expose `imageType` so consumer-submitted and
-                  technician-resolution images are co-mingled. A
-                  chronological gallery is the right default until /
-                  unless we ask BE to surface the type.
-                */}
-                {[...view.images]
-                  .sort((a, b) =>
-                    (a.uploadedAt ?? '').localeCompare(b.uploadedAt ?? ''),
-                  )
-                  .map((img) => (
-                    <li
-                      key={img.id ?? img.url}
-                      className="overflow-hidden rounded-md border border-[var(--color-muted-200)]"
-                    >
-                      {img.url ? (
-                        <img
-                          src={img.url}
-                          alt=""
-                          loading="lazy"
-                          className="h-24 w-full object-cover"
-                        />
-                      ) : null}
-                    </li>
-                  ))}
-              </ul>
+              <ImageGallery images={view.images} t={t} />
             ) : (
               <p className="text-sm text-[var(--color-muted-500)]">
                 {t('complaints.detail.noImages')}
@@ -424,7 +401,18 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
             complaintId={view.id}
             slaBreached={view.slaBreached === true}
             existingSlaBreachReason={view.slaBreachReason ?? null}
-            onSuccess={() => onActionSuccess('complaints.close.successToast')}
+            onSuccess={(detail) => {
+              // BE Stage 16.1 — `close` now returns the post-close
+              // detail. Seed the cache directly so we don't refetch.
+              if (detail) {
+                queryClient.setQueryData(getStaffComplaintByIdQueryKey(view.id!), {
+                  data: { success: true, data: detail },
+                } satisfies { data: Schemas.ApiResponseComplaintStaffDetailResponse });
+              }
+              onActionSuccess('complaints.close.successToast', {
+                skipDetailRefetch: detail !== undefined,
+              });
+            }}
           />
         </>
       ) : null}
@@ -438,6 +426,98 @@ function hasAnyReason(v: Schemas.ComplaintStaffDetailResponse): boolean {
     v.cancellationReason ||
     v.slaBreachReason ||
     v.resolutionNotes
+  );
+}
+
+/**
+ * Renders the complaint's images grouped by `imageType` (BE Stage 16.1).
+ *
+ * - `COMPLAINT` images (consumer-submitted) → top group.
+ * - `RESOLUTION` images (technician proof-of-fix) → bottom group.
+ * - Anything missing `imageType` falls into an unlabeled group
+ *   (defensive — old responses still in some caches before the BE bump).
+ *
+ * Inside each group, images are sorted by `uploadedAt` ASC for a stable,
+ * chronological gallery.
+ */
+function ImageGallery({
+  images,
+  t,
+}: {
+  images: Schemas.ComplaintImageResponse[];
+  t: (key: string) => string;
+}): React.JSX.Element {
+  const byTime = (
+    a: Schemas.ComplaintImageResponse,
+    b: Schemas.ComplaintImageResponse,
+  ): number => (a.uploadedAt ?? '').localeCompare(b.uploadedAt ?? '');
+  const consumer = images.filter((i) => i.imageType === 'COMPLAINT').sort(byTime);
+  const resolution = images
+    .filter((i) => i.imageType === 'RESOLUTION')
+    .sort(byTime);
+  const untyped = images.filter((i) => i.imageType === undefined).sort(byTime);
+
+  return (
+    <div className="flex flex-col gap-4" data-testid="complaint-gallery">
+      {consumer.length > 0 ? (
+        <ImageGroup
+          heading={t('complaints.detail.imagesConsumer')}
+          images={consumer}
+          testId="complaint-gallery-consumer"
+        />
+      ) : null}
+      {resolution.length > 0 ? (
+        <ImageGroup
+          heading={t('complaints.detail.imagesResolution')}
+          images={resolution}
+          testId="complaint-gallery-resolution"
+        />
+      ) : null}
+      {untyped.length > 0 ? (
+        <ImageGroup
+          heading={null}
+          images={untyped}
+          testId="complaint-gallery-untyped"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ImageGroup({
+  heading,
+  images,
+  testId,
+}: {
+  heading: string | null;
+  images: Schemas.ComplaintImageResponse[];
+  testId: string;
+}): React.JSX.Element {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {heading ? (
+        <h4 className="text-xs uppercase tracking-wide text-[var(--color-muted-500)]">
+          {heading}
+        </h4>
+      ) : null}
+      <ul className="grid grid-cols-3 gap-2" data-testid={testId}>
+        {images.map((img) => (
+          <li
+            key={img.id ?? img.url}
+            className="overflow-hidden rounded-md border border-[var(--color-muted-200)]"
+          >
+            {img.url ? (
+              <img
+                src={img.url}
+                alt=""
+                loading="lazy"
+                className="h-24 w-full object-cover"
+              />
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -504,4 +584,3 @@ function EmptyState({
     </section>
   );
 }
-

@@ -4,7 +4,7 @@
  *  1. Happy path: pick a technician, change severity, submit → useAssign
  *     mutation fires with the expected `{ id, data }` payload and
  *     `onSuccess` is called.
- *  2. Unhappy path: BE returns INVALID_TECHNICIAN → the field-level
+ *  2. Unhappy path: BE returns TECHNICIAN_NOT_IN_DC → the field-level
  *     error is surfaced under the technician picker and `onSuccess` is
  *     NOT called.
  *
@@ -87,12 +87,12 @@ describe('AssignDialog', () => {
     expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 
-  it('surfaces INVALID_TECHNICIAN as a field error and does not fire onSuccess', async () => {
+  it('surfaces TECHNICIAN_NOT_IN_DC as a field error and does not fire onSuccess', async () => {
     mockAssign.mockRejectedValueOnce(
       new ApiError({
-        code: 'INVALID_TECHNICIAN',
+        code: 'TECHNICIAN_NOT_IN_DC',
         message: 'wrong dc',
-        status: 422,
+        status: 409,
       }),
     );
     const onSuccess = vi.fn();
@@ -103,7 +103,7 @@ describe('AssignDialog', () => {
     await user.click(screen.getByRole('button', { name: /^assign$/i }));
 
     expect(
-      (await screen.findAllByText(/pick a technician active in this distribution centre/i))
+      (await screen.findAllByText(/that technician is not active in this distribution centre/i))
         .length,
     ).toBeGreaterThan(0);
     expect(onSuccess).not.toHaveBeenCalled();

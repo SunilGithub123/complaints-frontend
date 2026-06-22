@@ -73,6 +73,7 @@ export const markDuplicateBody = zod.object({
 })
 
 /**
+ * Returns the post-close detail (status=CLOSED + bumped version) so the FE can update its cache in one round-trip without a follow-up GET.
  * @summary Engineer / Admin close-on-behalf of a RESOLVED complaint
  */
 export const closeParams = zod.object({
