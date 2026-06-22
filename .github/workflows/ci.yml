@@ -103,7 +103,7 @@ jobs:
       #    belt-and-braces for the same case.
       - name: Publish test report
         if: always() && hashFiles('apps/web/junit.xml', 'packages/api/junit.xml') != ''
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: Vitest
           path: |
