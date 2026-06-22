@@ -364,6 +364,9 @@ These mirror the BE answers so the two pipelines stay consistent.
 - Implementation log (tracks the 180 KB budget per stage + the
   carry-overs this CI closes):
   [`IMPLEMENTATION_LOG.md`](IMPLEMENTATION_LOG.md)
+- **CI/CD implementation log** (what's shipped per CI PR, incidents +
+  fixes, decision log — the running counterpart to *this* design doc):
+  [`CI_CD_IMPLEMENTATION_LOG.md`](CI_CD_IMPLEMENTATION_LOG.md)
 - Delivery phases (which checks gate which phase):
   [`ROADMAP.md`](ROADMAP.md)
 - Repo conventions enforced by lint + typecheck:
