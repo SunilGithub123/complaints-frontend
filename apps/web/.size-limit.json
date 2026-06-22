@@ -1,0 +1,15 @@
+[
+  {
+    "name": "apps/web entry chunk (gzipped)",
+    "path": "dist/assets/index-*.js",
+    "limit": "180 KB",
+    "gzip": true
+  },
+  {
+    "name": "apps/web entry CSS (gzipped)",
+    "path": "dist/assets/index-*.css",
+    "limit": "20 KB",
+    "gzip": true
+  }
+]
+

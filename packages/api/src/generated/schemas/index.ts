@@ -9,6 +9,7 @@
 export * from './apiResponseComplaintCategoryResponse';
 export * from './apiResponseDistributionCenterResponse';
 export * from './apiResponseLoginResponse';
+export * from './apiResponseOtpVerifyResponse';
 export * from './apiResponsePageResponseComplaintCategoryResponse';
 export * from './apiResponsePageResponseDistributionCenterResponse';
 export * from './apiResponsePageResponseStaffListItemResponse';
@@ -35,6 +36,9 @@ export * from './listRole';
 export * from './listSubdivisionsParams';
 export * from './loginRequest';
 export * from './loginResponse';
+export * from './otpSendRequest';
+export * from './otpVerifyRequest';
+export * from './otpVerifyResponse';
 export * from './pageResponseComplaintCategoryResponse';
 export * from './pageResponseDistributionCenterResponse';
 export * from './pageResponseStaffListItemResponse';

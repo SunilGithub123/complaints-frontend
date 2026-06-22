@@ -1,0 +1,90 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Dependabot — weekly dependency PRs for every npm workspace + GitHub Actions
+# pins. See docs/CI_CD_DESIGN.md §4.
+#
+# Auto-merge for security + semver-patch PRs lives in the (future)
+# `.github/workflows/dependabot-auto-merge.yml` workflow shipped with CI PR #3.
+# ─────────────────────────────────────────────────────────────────────────────
+version: 2
+updates:
+  # ── Workspace roots ───────────────────────────────────────────────────────
+  # Dependabot doesn't auto-discover pnpm workspaces yet (as of mid-2026), so
+  # we list every package.json explicitly. Each one gets its own weekly PR
+  # batch — usually only the apps/web batch is non-trivial.
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Kolkata }
+    open-pull-requests-limit: 5
+    rebase-strategy: auto
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      # Group internal dev tooling so we don't churn 6 PRs every week.
+      tooling:
+        patterns: ["turbo", "typescript", "vite*", "vitest*", "eslint*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Kolkata }
+    open-pull-requests-limit: 5
+    rebase-strategy: auto
+    commit-message:
+      prefix: build(web)
+      include: scope
+    groups:
+      react:
+        patterns: ["react", "react-dom", "@types/react*", "react-*"]
+        update-types: [minor, patch]
+      tailwind:
+        patterns: ["tailwindcss", "@tailwindcss/*", "tailwind-merge"]
+      tanstack:
+        patterns: ["@tanstack/*"]
+      testing:
+        patterns: ["@testing-library/*", "vitest*", "jsdom"]
+      eslint:
+        patterns: ["eslint*", "@eslint/*", "typescript-eslint", "globals"]
+
+  - package-ecosystem: npm
+    directory: /packages/api
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Kolkata }
+    open-pull-requests-limit: 3
+    rebase-strategy: auto
+    commit-message:
+      prefix: build(api)
+
+  - package-ecosystem: npm
+    directory: /packages/i18n
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Kolkata }
+    open-pull-requests-limit: 3
+    rebase-strategy: auto
+    commit-message:
+      prefix: build(i18n)
+
+  - package-ecosystem: npm
+    directory: /packages/ui-tokens
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Kolkata }
+    open-pull-requests-limit: 3
+    rebase-strategy: auto
+    commit-message:
+      prefix: build(ui-tokens)
+
+  - package-ecosystem: npm
+    directory: /packages/utils
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Kolkata }
+    open-pull-requests-limit: 3
+    rebase-strategy: auto
+    commit-message:
+      prefix: build(utils)
+
+  # ── GitHub Actions version pins ──────────────────────────────────────────
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Kolkata }
+    open-pull-requests-limit: 5
+    rebase-strategy: auto
+    commit-message:
+      prefix: ci
+      include: scope
+

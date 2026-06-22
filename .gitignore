@@ -34,3 +34,6 @@ android/build/
 *.apk
 *.ipa
 
+
+# CI artefacts (JUnit XML produced by vitest --reporter=junit in CI)
+junit.xml

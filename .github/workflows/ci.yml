@@ -1,0 +1,173 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CI — typecheck + lint + unit tests + build + bundle-size budget + OpenAPI
+# drift check against the sibling backend repo.
+#
+# Design contract: docs/CI_CD_DESIGN.md §3.1.
+# Required for merge into `main`. Average duration: ~2 min cached.
+# ─────────────────────────────────────────────────────────────────────────────
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Default to read-only; jobs escalate per-step if they need more.
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: build-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # pnpm must come before setup-node so setup-node's `cache: pnpm`
+      # can find the binary on PATH.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        # Version is taken from the root `packageManager` field — no
+        # need to repeat it here.
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 1. Static contract — runs first because it's the cheapest signal.
+      - name: Typecheck
+        run: pnpm -w typecheck
+
+      # 2. Style + hard-rule enforcement (banned imports, etc. — see
+      #    apps/web/eslint.config.js).
+      - name: Lint
+        run: pnpm -w lint
+
+      # 3. Unit tests. We invoke vitest directly per workspace (not via
+      #    turbo) because turbo's task-arg forwarding strips extra
+      #    reporter flags — same JUnit XMLs need to land at known paths
+      #    for the dorny/test-reporter step below. Both vitest runs are
+      #    fast and cache-irrelevant; total ≈ 5 s.
+      - name: Unit tests — apps/web
+        run: |
+          pnpm --filter web exec vitest run \
+            --reporter=default \
+            --reporter=junit \
+            --outputFile.junit=./junit.xml
+
+      - name: Unit tests — @complaints/api
+        run: |
+          pnpm --filter @complaints/api exec vitest run \
+            --reporter=default \
+            --reporter=junit \
+            --outputFile.junit=./junit.xml
+
+      # 4. Production build. Also produces the artefacts size-limit
+      #    measures in step 5.
+      - name: Build
+        run: pnpm -w build
+
+      # 5. Bundle-size budget (the 180 KB gzipped entry-chunk number is
+      #    a hard gate per docs/CI_CD_DESIGN.md §3.2 / IMPLEMENTATION_LOG.md).
+      - name: Bundle size (size-limit)
+        run: pnpm --filter web size
+
+      # 6. PR-friendly test annotations. `always()` so we still surface
+      #    failed tests when an earlier step (e.g. size) errored.
+      - name: Publish test report
+        if: always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: Vitest
+          path: |
+            apps/web/junit.xml
+            packages/api/junit.xml
+          reporter: jest-junit
+          fail-on-error: false
+
+      # 7. Keep the dist/ artefact around for the image / lighthouse
+      #    workflows that don't need to rebuild. 7-day retention is
+      #    plenty for PR review windows.
+      - name: Upload web dist
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist-${{ github.sha }}
+          path: apps/web/dist
+          retention-days: 7
+          if-no-files-found: error
+
+  openapi-drift:
+    name: openapi-drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Runs in parallel with build-test — both jobs are quick and the
+    # drift signal is independent. A drift failure is "FE forgot to
+    # re-sync after a BE OpenAPI change" — surfaces clearly without
+    # being buried under build-test logs.
+
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      # Pulls the BE's committed OpenAPI snapshot from `main`. The BE's
+      # own CI catches *uncommitted* spec changes; this job catches
+      # *unsynced* ones on the FE side.
+      - name: Checkout sibling backend (complaints @ main)
+        uses: actions/checkout@v4
+        with:
+          repository: SunilGithub123/complaints
+          ref: main
+          path: .sibling/complaints
+          # Public repo — default GITHUB_TOKEN is enough. If we ever
+          # switch the BE to private, add a fine-grained PAT here.
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Re-sync BE OpenAPI snapshot
+        run: cp .sibling/complaints/docs/openapi.json packages/api/openapi.json
+
+      - name: Regenerate API bindings
+        run: pnpm api:gen
+
+      # Any change under packages/api/ — modified tracked files OR newly
+      # generated untracked files — means the FE branch is behind the BE
+      # main spec. `git diff` alone misses untracked files (the common
+      # case when a new tag lands), so we check `git status --porcelain`
+      # which covers both.
+      - name: Assert no drift
+        run: |
+          STATUS="$(git status --porcelain -- packages/api)"
+          if [ -n "$STATUS" ]; then
+            echo "::error::Frontend is out of sync with the backend OpenAPI snapshot."
+            echo "::error::Run \`cp ../complaints/docs/openapi.json packages/api/openapi.json && pnpm api:gen\` and commit the result."
+            echo "Details:"
+            echo "$STATUS"
+            exit 1
+          fi
+
+
+
+

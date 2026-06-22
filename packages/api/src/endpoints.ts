@@ -18,6 +18,7 @@ export * from './generated/master-data-admin-—-subdivisions/master-data-admin-
 export * from './generated/master-data-admin-—-distribution-centers/master-data-admin-—-distribution-centers';
 export * from './generated/master-data-admin-—-categories/master-data-admin-—-categories';
 export * from './generated/admin-staff/admin-staff';
+export * from './generated/consumer-auth/consumer-auth';
 
 /*
  * Intention-revealing aliases.
