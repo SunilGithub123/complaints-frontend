@@ -24,6 +24,9 @@ CardHeader.displayName = 'CardHeader';
 
 export const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
+    // Heading content is always provided by the caller via `children` /
+    // `...props`; ESLint can't see that through the spread.
+    // eslint-disable-next-line jsx-a11y/heading-has-content
     <h2
       ref={ref}
       className={cn('text-xl font-semibold tracking-tight', className)}

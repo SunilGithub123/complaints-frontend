@@ -56,6 +56,12 @@ export function Dialog({
   }, [onClose]);
 
   return (
+    // Native <dialog> already handles Esc-to-close (we intercept it via
+    // the `cancel` event in the effect above) and focus-trap. The
+    // backdrop-click handler below is a UX nicety; the keyboard path is
+    // covered by the native Esc handling, so jsx-a11y's keyboard /
+    // non-interactive warnings don't apply here.
+    /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */
     <dialog
       ref={ref}
       aria-labelledby="dialog-title"
@@ -83,6 +89,7 @@ export function Dialog({
       </header>
       <div className="px-6 py-4">{children}</div>
     </dialog>
+    /* eslint-enable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */
   );
 }
 

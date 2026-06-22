@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- co-located constant / hook exports are intentional; HMR isn't meaningful for these files (route wiring / cva variants / store) */
 /**
  * shadcn-style `Button` primitive (hand-authored — we explicitly did NOT
  * `npx shadcn add` the kitchen sink). Variants are intentionally minimal;
@@ -51,4 +52,3 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export { buttonVariants };
-

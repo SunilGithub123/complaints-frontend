@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- co-located constant / hook exports are intentional; HMR isn't meaningful for these files (route wiring / cva variants / store) */
 /**
  * Route-level guards (the "decorator-equivalent" called out in
  * .github/copilot-instructions.md → Pattern hints). Per-component role
@@ -146,4 +147,3 @@ export function RequireRole({ roles }: RequireRoleProps): ReactElement {
   }
   return <Outlet />;
 }
-

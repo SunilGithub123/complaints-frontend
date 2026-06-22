@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- co-located constant / hook exports are intentional; HMR isn't meaningful for these files (route wiring / cva variants / store) */
 /**
  * Tiny toast system. The Zustand store + a single mounted Viewport is
  * enough for our needs (non-blocking confirm-style messages). We did
@@ -106,4 +107,3 @@ export function ToastViewport(): React.JSX.Element {
     </div>
   );
 }
-

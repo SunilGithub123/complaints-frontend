@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- co-located constant / hook exports are intentional; HMR isn't meaningful for these files (route wiring / cva variants / store) */
 /**
  * App router. Three guards layered as outlet wrappers:
  *   RequireAuth → RequirePasswordChanged → DashboardLayout → screens
@@ -86,4 +87,3 @@ export const router = createBrowserRouter([
   },
   { path: '*', element: wrap(<NotFoundScreen />) },
 ]);
-

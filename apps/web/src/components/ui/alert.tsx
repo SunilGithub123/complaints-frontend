@@ -37,6 +37,9 @@ export const AlertTitle = forwardRef<
   HTMLHeadingElement,
   HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
+  // Heading content is always provided by the caller via `children` /
+  // `...props`; ESLint can't see that through the spread.
+  // eslint-disable-next-line jsx-a11y/heading-has-content
   <h3
     ref={ref}
     className={cn('mb-1 font-medium leading-none tracking-tight', className)}
