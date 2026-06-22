@@ -195,6 +195,13 @@ function Row({
           {row.slaBreached ? (
             <Badge tone="danger">{t('consumer.tracking.slaBreached')}</Badge>
           ) : null}
+          {status === 'CLOSED' ? (
+            <Badge tone={row.feedbackSubmitted ? 'muted' : 'success'}>
+              {row.feedbackSubmitted
+                ? t('consumer.tracking.rated')
+                : t('consumer.tracking.awaitingFeedback')}
+            </Badge>
+          ) : null}
         </div>
       </TableCell>
       <TableCell>{row.submittedAt ? formatIstDateTime(row.submittedAt) : '—'}</TableCell>

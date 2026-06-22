@@ -319,6 +319,8 @@
       "submitted": "Submitted",
       "deadline": "Resolve by",
       "slaBreached": "SLA breached",
+      "rated": "Rated",
+      "awaitingFeedback": "Awaiting feedback",
       "empty": "You haven't lodged any complaints yet.",
       "prev": "Previous",
       "next": "Next",

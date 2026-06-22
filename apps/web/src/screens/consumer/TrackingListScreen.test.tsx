@@ -48,6 +48,7 @@ describe('TrackingListScreen', () => {
                 slaBreached: false,
                 submittedAt: '2026-06-22T10:00:00Z',
                 slaDeadline: '2026-06-25T10:00:00Z',
+                feedbackSubmitted: false,
               },
             ],
             page: 0,

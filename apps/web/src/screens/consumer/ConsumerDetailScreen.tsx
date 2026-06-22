@@ -323,13 +323,21 @@ export default function ConsumerDetailScreen(): React.JSX.Element {
         open={dialog === 'feedback'}
         onClose={() => setDialog(null)}
         ticketNo={ticketNo}
-        onSubmitted={() => {
+        onSubmitted={(saved) => {
           setDialog(null);
           toast(t('consumer.feedback.successToast'), 'success');
-          // BE Stage 19.x: feedbackSubmitted is on detail, plus GET
-          // /feedback now exists. Invalidate both so the read-only
-          // panel renders without a manual refresh.
-          invalidate({ feedback: true });
+          // BE Stage 20.2: POST returns the persisted row. Seed the
+          // GET cache directly so the read-only panel renders without
+          // a follow-up network call. Fall back to invalidate on the
+          // 409 path (saved === null).
+          if (saved) {
+            queryClient.setQueryData(getGetFeedbackQueryKey(ticketNo), {
+              data: { success: true, data: saved },
+            } satisfies { data: Schemas.ApiResponseFeedbackResponse });
+            invalidate();
+          } else {
+            invalidate({ feedback: true });
+          }
         }}
       />
     </main>

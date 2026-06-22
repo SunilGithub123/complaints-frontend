@@ -19,4 +19,6 @@ export interface ConsumerComplaintListItemResponse {
   slaDeadline?: string;
   resolvedAt?: string;
   closedAt?: string;
+  /** True iff feedback has been submitted for this complaint. Lets the tracking list render a Rated / Awaiting feedback hint without a per-row probe. */
+  feedbackSubmitted: boolean;
 }

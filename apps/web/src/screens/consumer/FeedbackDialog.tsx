@@ -1,21 +1,18 @@
-/* eslint-disable react-refresh/only-export-components -- co-located storage helpers (rememberSubmitted / wasSubmittedThisSession) are exported alongside the dialog component; splitting them into a separate file would be over-engineering for two one-liner getters. */
 /**
  * Feedback dialog — visible only when status === 'CLOSED' (BE Stage 19).
  *
  * Body: { rating: 1-5 (required), comment?: string (≤1000) }.
  *
- * BE deferred:
- *  - "Has the consumer already submitted feedback?" is not on the
- *    detail response (TODO BE follow-up — see IMPLEMENTATION_LOG
- *    carry-overs). Today we discover it via the 409
- *    FEEDBACK_ALREADY_SUBMITTED response and remember locally for the
- *    rest of the session.
- *  - GET /feedback also deferred — we can't render the persisted
- *    comment on a returning visit. The dialog shows a generic "thanks,
- *    feedback already received" state in that case.
- *
- * Local cache key: `complaints:feedback-submitted:<ticketNo>` in
- * sessionStorage. Cleared when the consumer "starts over".
+ * BE Stage 19.x + 20.2:
+ *  - Detail carries `feedbackSubmitted: boolean`, so the parent
+ *    suppresses this dialog cleanly without the FE tracking it.
+ *  - POST /feedback returns the persisted `FeedbackResponse` row;
+ *    the dialog forwards it via `onSubmitted(saved)` so the parent
+ *    can `setQueryData(getGetFeedbackQueryKey(ticketNo), saved)` and
+ *    skip the follow-up GET.
+ *  - 409 `FEEDBACK_ALREADY_SUBMITTED` still possible (stale tab),
+ *    handled by swapping to the "thanks, already received" panel and
+ *    nudging the parent to refetch.
  */
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -39,8 +36,15 @@ export interface FeedbackDialogProps {
   open: boolean;
   onClose: () => void;
   ticketNo: string;
-  /** Called after a successful submit OR a 409 (idempotent at BE level). */
-  onSubmitted: () => void;
+  /**
+   * Fired after a successful POST. `saved` is the persisted
+   * `FeedbackResponse` from the BE — the parent should seed
+   * `getGetFeedbackQueryKey(ticketNo)` with it.
+   *
+   * On a 409 (already submitted) `saved` is `null` and the parent
+   * should refetch instead of seeding.
+   */
+  onSubmitted: (saved: Schemas.FeedbackResponse | null) => void;
 }
 
 export function FeedbackDialog({
@@ -77,13 +81,17 @@ export function FeedbackDialog({
       ...(values.comment ? { comment: values.comment } : {}),
     };
     try {
-      await mutateAsync({ ticketNo, data });
-      rememberSubmitted(ticketNo);
-      onSubmitted();
+      const res = await mutateAsync({ ticketNo, data });
+      // BE Stage 20.2: POST returns the persisted FeedbackResponse so
+      // the parent can seed the GET cache directly. Defensive optional
+      // chaining keeps the dialog working in tests that mock with `{}`.
+      const saved =
+        (res as { data?: Schemas.ApiResponseFeedbackResponse } | undefined)
+          ?.data?.data ?? null;
+      onSubmitted(saved);
     } catch (err) {
       const mapped = mapApiError(err, t);
       if (mapped.code === 'FEEDBACK_ALREADY_SUBMITTED') {
-        rememberSubmitted(ticketNo);
         setAlreadySubmitted(true);
         return;
       }
@@ -97,7 +105,13 @@ export function FeedbackDialog({
         <div className="flex flex-col gap-4">
           <p className="text-sm">{t('consumer.feedback.alreadySubmitted')}</p>
           <div className="flex justify-end">
-            <Button type="button" onClick={() => { onClose(); onSubmitted(); }}>
+            <Button
+              type="button"
+              onClick={() => {
+                onClose();
+                onSubmitted(null);
+              }}
+            >
               {t('common.close')}
             </Button>
           </div>
@@ -203,25 +217,4 @@ function StarPicker({
       })}
     </div>
   );
-}
-
-const STORAGE_PREFIX = 'complaints:feedback-submitted:';
-
-export function rememberSubmitted(ticketNo: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.sessionStorage.setItem(`${STORAGE_PREFIX}${ticketNo}`, '1');
-  } catch {
-    /* sessionStorage may throw in private mode; the in-memory state in
-     * the parent screen is enough for the rest of the session. */
-  }
-}
-
-export function wasSubmittedThisSession(ticketNo: string): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    return window.sessionStorage.getItem(`${STORAGE_PREFIX}${ticketNo}`) === '1';
-  } catch {
-    return false;
-  }
 }

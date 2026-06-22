@@ -1905,6 +1905,82 @@ chunk via the consumer-flow lazy boundary.
 
 ---
 
+### Stage 13 (BE-followup 2) · feedbackSubmitted on list + setQueryData on POST — 2026-06-23
+
+> Second reactive pass after BE shipped the two follow-ups from the
+> Stage 13 (BE-followup) carry-over list.
+
+**What shipped**
+
+- **Spec re-pull + regen.** New required field
+  `ConsumerComplaintListItemResponse.feedbackSubmitted: boolean`.
+- **Tracking list hint.** `TrackingListScreen` renders a second
+  badge on every CLOSED row: `success`-toned "Awaiting feedback"
+  when the field is `false`, `muted`-toned "Rated" when `true`.
+  Zero extra network calls — the boolean is on the row.
+- **POST /feedback response now consumed.** BE's POST already
+  returns `ApiResponse<FeedbackResponse>` with the persisted row.
+  `FeedbackDialog.onSubmitted` switched from
+  `() => void` to `(saved: FeedbackResponse | null) => void` and
+  forwards the decoded row. `ConsumerDetailScreen` calls
+  `queryClient.setQueryData(getGetFeedbackQueryKey(ticketNo), {…})`
+  on the happy path — the read-only panel paints from cache,
+  no follow-up GET. 409 path falls back to invalidate (parent
+  receives `null`).
+- **Dead-code cleanup.** Dropped `rememberSubmitted` /
+  `wasSubmittedThisSession` from `FeedbackDialog`. With
+  `feedbackSubmitted` on detail and the cache seeded from the
+  POST response, the sessionStorage belt-and-suspenders is no
+  longer pulling weight.
+- **i18n** — two new keys: `consumer.tracking.rated` and
+  `consumer.tracking.awaitingFeedback` in en + mr.
+
+**What we tested**
+
+- `FeedbackDialog.test.tsx` rewritten: happy path now asserts
+  `onSubmitted` receives the persisted row
+  (`expect.objectContaining({ id: 7, rating: 4 })`); the 409 test
+  still confirms the dialog flips to the "already submitted"
+  state and `onSubmitted` is NOT fired until the consumer clicks
+  Close.
+- `TrackingListScreen.test.tsx` row fixture extended with
+  `feedbackSubmitted: false` (now a required field — TS would
+  reject the old fixture).
+- 37/37 tests continue to pass.
+
+**Gate output**
+
+| Gate       | Result | Notes                                                              |
+| ---------- | ------ | ------------------------------------------------------------------ |
+| typecheck  | ✅     | 5 packages, 0 errors                                               |
+| lint       | ✅     | 0 warnings                                                         |
+| test       | ✅     | 19 files / 37 tests (unchanged)                                    |
+| build      | ✅     | 299 modules transformed                                            |
+| size (JS)  | ✅     | **145.88 KB gz** entry (+0.02 from 13.fu; **34.12 KB headroom**)   |
+| size (CSS) | ✅     | 4.86 KB gz                                                         |
+
+**Manual smoke**
+
+- BE on `localhost:8080` post Stage 20.2.
+- Tracking list now shows "Awaiting feedback" on CLOSED rows
+  without feedback, "Rated" on rows with it. Hint flips
+  immediately after the dialog success — no refetch round-trip
+  visible in DevTools network panel for the new POST → cache
+  path. The detail-level invalidate still fires (we want history
+  to refresh).
+
+**Carry-overs (refreshed)**
+
+- Both BE asks from Stage 13 (BE-followup)'s carry-over list are
+  **closed**.
+- FE-owned: optimistic-concurrency `version`, URL-synced filter
+  state, orval `?pageable=[object Object]` upstream PR, Expo
+  bootstrap — all unchanged.
+- Push notifications (BE Stage 21) — still waiting on the
+  device-token contract draft.
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.
