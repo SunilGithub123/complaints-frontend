@@ -26,8 +26,8 @@ Per `docs/CI_CD_DESIGN.md §7`, three PRs land the pipeline:
 |-----|------|----------------|--------|
 | Prereq | ESLint 9 flat config + plugins | `pnpm lint` works | ✅ shipped |
 | #1  | `ci.yml` + Dependabot + `size-limit` | typecheck, lint, vitest, build, 180 KB JS / 20 KB CSS, OpenAPI drift | ✅ shipped |
-| #2  | `quality.yml` + `codeql.yml` + Gitleaks + Dependency Review | secret scan, SAST, vulnerable-dep gate | ⏳ next |
-| #3  | `e2e.yml` + `image.yml` + `lighthouse.yml` + `deploy-test.yml` stub | Playwright + axe, Docker image to GHCR, Lighthouse perf/a11y/PWA budgets | ⏳ planned |
+| #2  | `quality.yml` + `codeql.yml` + Gitleaks + Dependency Review | secret scan, SAST, vulnerable-dep gate | ✅ shipped |
+| #3  | `e2e.yml` + `image.yml` + `lighthouse.yml` + `deploy-test.yml` stub | Playwright + axe, Docker image to GHCR, Lighthouse perf/a11y/PWA budgets | ⏳ next |
 
 ---
 
@@ -138,15 +138,76 @@ Local-only at this point (`pnpm lint`). Wired into CI in PR #1.
 
 ---
 
-## PR #2 · quality.yml + codeql.yml + Gitleaks + Dependency Review — ⏳ planned
+## PR #2 · quality.yml + codeql.yml + Gitleaks + Dependency Review — ✅ 2026-06-22
 
-Scope per `docs/CI_CD_DESIGN.md §3.3–§3.5`. Will append an entry here on merge.
+### Scope delivered
+
+- **`.github/workflows/quality.yml`** — two jobs:
+  - **`gitleaks`** — runs on `pull_request` + `push:main`. Uses
+    `gitleaks/gitleaks-action@v2` with `fetch-depth: 0` to scan the full
+    commit-history slice included in the event. Any finding fails the job.
+    Allowlist for fixture tokens lives in `.gitleaks.toml` (path-scoped to
+    `*.test.{ts,tsx}` + `*.spec.{ts,tsx}`).
+  - **`dependency-review`** — PR-only (`if: github.event_name == 'pull_request'`).
+    Uses `actions/dependency-review-action@v4`. Fails on any *newly
+    introduced* HIGH or CRITICAL CVE against the base branch. Cannot run
+    on `push:main` (no base ref to diff against).
+- **`.github/workflows/codeql.yml`** — single job `analyze
+  (javascript-typescript)`. Triggers `pull_request` + `push:main` +
+  weekly `schedule` (Sundays 02:00 UTC). Uses `github/codeql-action@v3`
+  (`init` → `autobuild` → `analyze`). Queries: `security-extended` +
+  `security-and-quality`. SARIF uploaded to the GitHub Security tab
+  (`security-events: write`). Config file at
+  `.github/codeql/codeql-config.yml` scopes analysis to `apps/**/src` +
+  `packages/**/src` only.
+- **`.github/codeql/codeql-config.yml`** — paths include the five
+  `src/` trees; paths-ignore excludes `dist/`, `.turbo/`,
+  `packages/api/src/generated/` (orval output), test files, and
+  `node_modules/`.
+- **`.gitleaks.toml`** — extends the upstream default ruleset; allowlist
+  rules for:
+  - Fake Bearer tokens (`Bearer access-123`, `Bearer stale-token`, etc.)
+  - Fake `verify-jwt-*` verification-token fixtures
+  - 6-digit OTP inputs used in RTL tests (`123456`)
+  - Generic `mock|stub|fake|test`-prefixed variable values in
+    `apps/web/src/test/`
+
+### Incidents fixed
+
+_None during implementation — all three jobs were authored against the
+existing green test suite and clean codebase._
+
+### Gates added (now enforced on every PR + push to `main`)
+
+| Job | Trigger | Fails on |
+|-----|---------|----------|
+| `gitleaks` | PR + push:main | Any secret finding not in `.gitleaks.toml` allowlist |
+| `dependency-review` | PR only | Any newly introduced HIGH / CRITICAL CVE |
+| `analyze (javascript-typescript)` | PR + push:main + weekly | Any CodeQL finding with `error` severity (SARIF uploaded; Security tab shows all) |
+
+### Status at end of PR
+
+- `gitleaks` ✅ — no findings on `main` (fixture tokens are allowlisted).
+- `dependency-review` ✅ — no new HIGH/CRITICAL CVEs introduced.
+- `analyze (javascript-typescript)` ✅ — SARIF visible in Security tab.
+
+### Carry-overs / known follow-ups
+
+- **Branch protection (GitHub UI):** add `gitleaks`,
+  `dependency-review`, and `analyze (javascript-typescript)` to the
+  required-status-checks list once this PR is green at least once on
+  `main` (per `docs/CI_CD_DESIGN.md §6`).
+- **`ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` still temporary** — same
+  carry-over as PR #1. Remove on next quarterly action sweep.
+- **Gitleaks allowlist is conservative.** If a future test fixture looks
+  like a real secret pattern (e.g. a properly encoded JWT), add a
+  targeted regex in `.gitleaks.toml` rather than broadening paths.
 
 ---
 
-## PR #3 · e2e.yml + image.yml + lighthouse.yml + deploy-test.yml stub — ⏳ planned
+## PR #3 · e2e.yml + image.yml + lighthouse.yml + deploy-test.yml stub — ⏳ next
 
-Scope per `docs/CI_CD_DESIGN.md §3.6–§3.9`. Will append an entry here on merge.
+Scope per `docs/CI_CD_DESIGN.md §3.3 + §3.5–§3.7`. Will append an entry here on merge.
 
 ---
 
@@ -158,4 +219,7 @@ Scope per `docs/CI_CD_DESIGN.md §3.6–§3.9`. Will append an entry here on mer
 | 2026-06-22 | `git status --porcelain` over `git diff --exit-code` for OpenAPI drift | Catches *new* untracked files (new BE tag), not only modified ones. |
 | 2026-06-22 | Opt in to `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` rather than fork/replace actions | All pinned actions are on their latest major; cost of opting in < cost of forking. Revisit next quarter. |
 | 2026-06-22 | `dorny/test-reporter` only runs when JUnit XML exists | Prevents it from masking the *real* failing step. |
+| 2026-06-22 | `dependency-review` is PR-only (`if: github.event_name == 'pull_request'`) | The action diffs the PR's dependency graph against the base branch; there is no base ref on a `push:main` event. `gitleaks` covers `push:main`. |
+| 2026-06-22 | `.gitleaks.toml` allowlist is path-scoped to `*.test.*` / `*.spec.*` | Ensures the same synthetic token pattern in production code is still flagged; only test fixtures are whitelisted. |
+| 2026-06-22 | CodeQL autobuild instead of explicit `pnpm build` step in `codeql.yml` | JS/TS doesn't require a compiled binary for CodeQL; autobuild traces imports directly and avoids duplicating the build step. |
 

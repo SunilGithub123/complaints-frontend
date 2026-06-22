@@ -1,0 +1,46 @@
+# Gitleaks configuration — complaints-frontend
+#
+# Allowlist rules for known-safe fixture strings in test files.
+# These are clearly synthetic tokens used as vitest fixtures — not real
+# credentials.  The allowlist is path-scoped so the same string in a
+# non-test file would still be flagged.
+#
+# Referenced automatically by gitleaks/gitleaks-action@v2 when this file
+# is present at the repo root.
+
+title = "complaints-frontend gitleaks config"
+
+[extend]
+# Inherit the default ruleset (latest upstream rules).
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic Bearer tokens used in vitest fixtures"
+# Match only inside test files — the same pattern in production code
+# would still be caught.
+paths = [
+  '''.*\.test\.(ts|tsx)$''',
+  '''.*\.spec\.(ts|tsx)$''',
+  '''apps/web/src/test/.*''',
+]
+regexes = [
+  # Fake Bearer tokens: "Bearer access-123", "Bearer stale-token", etc.
+  '''Bearer\s+[a-z][-a-z0-9]+''',
+  # Fake JWT-ish strings used as verificationToken fixtures:
+  # "verify-jwt-xyz", "verify-jwt-abc", etc.
+  '''verify-jwt-[a-z0-9]+''',
+  # 6-digit OTP codes used as vitest input fixtures (e.g. "123456")
+  '''\b[0-9]{6}\b''',
+]
+
+[[allowlists]]
+description = "Mock/stub OTP and password strings in test helper files"
+paths = [
+  '''apps/web/src/test/.*''',
+]
+regexes = [
+  # Any string explicitly labelled "mock", "stub", "fake", or "test" in
+  # a variable name — belt-and-braces for future fixture additions.
+  '''(mock|stub|fake|test)[A-Za-z]*\s*[:=]\s*['"][^'"]{1,64}['"]''',
+]
+

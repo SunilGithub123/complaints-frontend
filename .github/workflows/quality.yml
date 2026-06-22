@@ -1,0 +1,75 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Quality — secret scanning (Gitleaks) + dependency CVE review.
+#
+# Design contract: docs/CI_CD_DESIGN.md §3.2.
+# Required for merge into `main`.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Least-privilege defaults; dependency-review escalates to contents: read
+# (already the default) — nothing needs write.
+permissions:
+  contents: read
+
+# Same Node-24 runner compatibility escape hatch as ci.yml.
+# Remove once upstream actions cut node-22+ releases.
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
+jobs:
+  # ── 1. Secret scanning ──────────────────────────────────────────────────────
+  # Gitleaks scans the full commit history slice included in this push /
+  # pull_request event. Any finding fails the job immediately.
+  # Allowlist for fixture tokens in test files lives in .gitleaks.toml.
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # dependency-review only runs on pull_request (needs a base to diff
+    # against); gitleaks runs on both PR and push:main.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history so Gitleaks can scan all commits in the push,
+          # not just the merge commit.
+          fetch-depth: 0
+
+      - name: Gitleaks — scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE is only required for organisations on the paid
+          # plan. Public repo with personal account = not needed.
+
+  # ── 2. Dependency CVE review ────────────────────────────────────────────────
+  # Fails the PR if any *newly introduced* dependency (vs the base branch)
+  # carries a HIGH or CRITICAL CVE. PR-only: the action requires a base ref
+  # to diff against and cannot run on push:main.
+  dependency-review:
+    name: dependency-review
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          # Fail on any newly introduced HIGH or CRITICAL CVE.
+          fail-on-severity: high
+          # Warn on LICENSE issues but don't fail (revisit if a copyleft
+          # dep sneaks in).
+          deny-licenses: ''
+

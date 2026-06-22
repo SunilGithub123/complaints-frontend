@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CodeQL — GitHub-native SAST for JavaScript / TypeScript.
+#
+# Design contract: docs/CI_CD_DESIGN.md §3.4.
+# Required for merge into `main`. Average duration: ~3 min.
+# SARIF results land in the GitHub Security tab for free on a public repo.
+# ─────────────────────────────────────────────────────────────────────────────
+name: CodeQL
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly scan every Sunday at 02:00 UTC (07:30 IST) — off-peak.
+    - cron: "0 2 * * 0"
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# CodeQL needs security-events:write to upload SARIF to the Security tab.
+# On a public repo this is free with no Advanced Security licence.
+permissions:
+  contents: read
+  security-events: write
+  actions: read         # needed for private repos; harmless on public
+
+# Same Node-24 runner compatibility escape hatch as ci.yml.
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
+jobs:
+  analyze:
+    name: analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Initialise CodeQL with our custom config that scopes paths to
+      # src/ directories only (skip dist/, generated/, fixtures, etc.).
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          config-file: .github/codeql/codeql-config.yml
+          # security-extended: CVE patterns for known dangerous API usage.
+          # security-and-quality: broader code-quality queries on top.
+          queries: security-extended, security-and-quality
+
+      # CodeQL can auto-build JS/TS from source — no explicit build step
+      # needed (it traces the Vite/TypeScript compilation automatically).
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+

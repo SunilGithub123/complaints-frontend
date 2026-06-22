@@ -1,0 +1,34 @@
+# CodeQL analysis configuration — complaints-frontend
+#
+# Limits the scan to the actual application source directories.
+# Skips generated code, build output, fixtures, and node_modules so
+# SARIF results reflect real authorship, not auto-generated boilerplate.
+#
+# Referenced by .github/workflows/codeql.yml via `config-file:`.
+
+name: "complaints-frontend CodeQL config"
+
+paths:
+  - apps/web/src
+  - packages/api/src
+  - packages/i18n/src
+  - packages/utils/src
+  - packages/ui-tokens/src
+
+paths-ignore:
+  # Build artefacts
+  - "**/dist/**"
+  - "**/.turbo/**"
+  # Auto-generated API bindings (orval output) — not authored code
+  - "packages/api/src/generated/**"
+  # Test setup / fixtures — analysed separately by Vitest, not CodeQL
+  - "**/test/**"
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  # pnpm store and lockfile
+  - "node_modules/**"
+  - "pnpm-lock.yaml"
+
