@@ -19,6 +19,17 @@ concurrency:
 # Default to read-only; jobs escalate per-step if they need more.
 permissions:
   contents: read
+  checks: write       # dorny/test-reporter needs this to publish the run
+  pull-requests: write # …and to annotate the PR with the summary
+
+# GitHub-hosted runners now ship Node 24 and reject actions whose
+# `action.yml` still declares `runs.using: node20` unless this flag
+# is set. All actions we pin are at their current latest major
+# (checkout@v4, setup-node@v4, pnpm/action-setup@v4, upload-artifact@v4,
+# dorny/test-reporter@v2) — none has a newer release yet, so we opt
+# in to the legacy runtime until upstream bumps.
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
 jobs:
   build-test:
