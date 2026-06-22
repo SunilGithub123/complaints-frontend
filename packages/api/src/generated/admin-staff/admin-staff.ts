@@ -29,7 +29,7 @@ import type {
   ApiResponseResetStaffPasswordResponse,
   ApiResponseStaffListItemResponse,
   CreateStaffRequest,
-  ListParams,
+  List1Params,
   UpdateStaffRequest
 } from '.././schemas';
 
@@ -239,19 +239,19 @@ export const useUpdate = <TError = unknown,
     /**
  * @summary List staff in the admin's subdivision (paged, filterable)
  */
-export type listResponse200 = {
+export type list1Response200 = {
   data: ApiResponsePageResponseStaffListItemResponse
   status: 200
 }
     
-export type listResponseSuccess = (listResponse200) & {
+export type list1ResponseSuccess = (list1Response200) & {
   headers: Headers;
 };
 ;
 
-export type listResponse = (listResponseSuccess)
+export type list1Response = (list1ResponseSuccess)
 
-export const getListUrl = (params: ListParams,) => {
+export const getList1Url = (params: List1Params,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -266,9 +266,9 @@ export const getListUrl = (params: ListParams,) => {
   return stringifiedParams.length > 0 ? `/api/v1/admin/staff?${stringifiedParams}` : `/api/v1/admin/staff`
 }
 
-export const list = async (params: ListParams, options?: RequestInit): Promise<listResponse> => {
+export const list1 = async (params: List1Params, options?: RequestInit): Promise<list1Response> => {
   
-  return customFetch<listResponse>(getListUrl(params),
+  return customFetch<list1Response>(getList1Url(params),
   {      
     ...options,
     method: 'GET'
@@ -281,69 +281,69 @@ export const list = async (params: ListParams, options?: RequestInit): Promise<l
 
 
 
-export const getListQueryKey = (params?: ListParams,) => {
+export const getList1QueryKey = (params?: List1Params,) => {
     return [
     `/api/v1/admin/staff`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListQueryOptions = <TData = Awaited<ReturnType<typeof list>>, TError = unknown>(params: ListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getList1QueryOptions = <TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(params: List1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getList1QueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof list>>> = () => list(params, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof list1>>> = () => list1(params, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type ListQueryResult = NonNullable<Awaited<ReturnType<typeof list>>>
-export type ListQueryError = unknown
+export type List1QueryResult = NonNullable<Awaited<ReturnType<typeof list1>>>
+export type List1QueryError = unknown
 
 
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = unknown>(
- params: ListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>> & Pick<
+export function useList1<TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(
+ params: List1Params, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list>>,
+          Awaited<ReturnType<typeof list1>>,
           TError,
-          Awaited<ReturnType<typeof list>>
+          Awaited<ReturnType<typeof list1>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = unknown>(
- params: ListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>> & Pick<
+export function useList1<TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(
+ params: List1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list>>,
+          Awaited<ReturnType<typeof list1>>,
           TError,
-          Awaited<ReturnType<typeof list>>
+          Awaited<ReturnType<typeof list1>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = unknown>(
- params: ListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useList1<TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(
+ params: List1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List staff in the admin's subdivision (paged, filterable)
  */
 
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = unknown>(
- params: ListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useList1<TData = Awaited<ReturnType<typeof list1>>, TError = unknown>(
+ params: List1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getListQueryOptions(params,options)
+  const queryOptions = getList1QueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 

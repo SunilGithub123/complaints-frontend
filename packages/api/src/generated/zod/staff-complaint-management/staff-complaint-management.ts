@@ -105,12 +105,12 @@ export const assignBody = zod.object({
  * Filters compose with caller-scope: engineer = own DC, admin = own subdivision. Default sort is createdAt,desc.
  * @summary Paged complaint search for engineer / admin
  */
-export const list2QueryPageablePageMin = 0;
+export const list3QueryPageablePageMin = 0;
 
 
 
 
-export const list2QueryParams = zod.object({
+export const list3QueryParams = zod.object({
   "filters": zod.object({
   "status": zod.enum(['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED', 'REJECTED', 'DUPLICATE']).optional(),
   "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
@@ -123,7 +123,7 @@ export const list2QueryParams = zod.object({
   "q": zod.string().optional()
 }),
   "pageable": zod.object({
-  "page": zod.number().min(list2QueryPageablePageMin).optional(),
+  "page": zod.number().min(list3QueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 })

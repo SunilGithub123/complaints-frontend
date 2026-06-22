@@ -1665,6 +1665,155 @@ chunk.
 
 ---
 
+### Stage 13 · Phase 5 consumer slice (tracking, cancel, feedback) — ✅ 2026-06-23
+
+> Wires the FE side of BE Phase 5 (Stages 17–19): consumer tracking
+> list, enriched detail (severity / slaBreached / resolvedAt /
+> closedAt), consumer-safe history, cancel-while-SUBMITTED, and
+> feedback-after-CLOSED. OpenAPI is now 51 paths; spec
+> re-synced from sibling `complaints/docs/openapi.json`.
+
+**What shipped**
+
+- **API regen + aliases** (`packages/api/src/endpoints.ts`):
+  - New consumer hooks re-exported under intention-revealing names:
+    `useCancelComplaint`, `useSubmitFeedback`,
+    `useGetConsumerComplaintHistory`,
+    `getConsumerComplaintHistoryQueryKey`.
+  - `useList` (consumer tracking list) is deliberately NOT re-exported
+    — same nested-`pageable` orval bug as the staff / technician
+    lists. Hand-rolled wrapper lives in
+    `apps/web/src/features/consumer/trackingApi.ts`
+    (`useConsumerComplaintsList`).
+  - **Numeric-suffix shift**: consumer-complaints `useList` took the
+    un-suffixed slot, bumping admin-staff `useList` → `useList1`
+    (with knock-on renames `ListParams` → `List1Params`,
+    `ListRole` → `List1Role`). Aliases updated; `StaffListScreen`
+    type references retargeted via `sed`.
+- **`/consumer/my-complaints`** — paged tracking list
+  (`TrackingListScreen`). Status filter dropdown, page 20, BE-pinned
+  `createdAt,desc` sort (FE does NOT send `?sort=`). Ticket-no link
+  → `/consumer/my-complaints/:ticketNo`. 401 mid-session clears the
+  consumer store and bounces to `/consumer`.
+- **`/consumer/my-complaints/:ticketNo`** — `ConsumerDetailScreen`.
+  Renders the enriched `ComplaintDetailResponse` (severity,
+  slaBreached, resolvedAt, closedAt). New `ConsumerHistoryTimeline`
+  (staff timeline pattern, sans actor-name lookup — BE doesn't expose
+  `changedByUserId` on the consumer view). 403 → "not yours" empty
+  state (mirrors ConfirmationScreen copy).
+- **`CancelDialog`** — visible only when status === 'SUBMITTED'.
+  Optional reason textarea (≤500). 403
+  `COMPLAINT_NOT_OWNED_BY_CONSUMER` → clear consumer store and
+  bubble `onSessionLost`. 409
+  `COMPLAINT_NOT_IN_SUBMITTED_STATE` → `onStaleStatus` (parent
+  refetches detail; the button vanishes on the new status).
+- **`FeedbackDialog`** — visible only when status === 'CLOSED'.
+  Required 1–5 star picker (hand-rolled `<radiogroup>`, accessible
+  labels `1`..`5`) + optional ≤1000-char comment. On 409
+  `FEEDBACK_ALREADY_SUBMITTED` the dialog switches to a "thanks,
+  already received" state and writes
+  `complaints:feedback-submitted:<ticketNo>` into sessionStorage so
+  the detail screen can hide the button without a server round-trip
+  (BE deferred a `feedbackSubmitted` flag on detail — see
+  carry-overs).
+- **`ConfirmationScreen` link** — added "Track all my complaints"
+  next to the existing refresh/start-over actions; same lazy chunk.
+- **Router** — two new lazy routes under
+  `ConsumerRequireVerification`, so the 5-min OTP gate covers them.
+- **i18n** — new sub-trees `consumer.tracking`, `consumer.detail`,
+  `consumer.cancel`, `consumer.feedback` + `consumer.confirmation.viewAll`
+  in en + mr. New error codes
+  `COMPLAINT_NOT_IN_SUBMITTED_STATE`, `FEEDBACK_ALREADY_SUBMITTED`,
+  `COMPLAINT_NOT_CLOSED` mirrored in both locales.
+
+**What bit us**
+
+- **Star picker accessibility.** Started as a styled `<input
+  type="radio">` group but the visual hit-target / starred-fill
+  state was ugly to wrangle. Switched to buttons with
+  `role="radio"` + `aria-checked` inside an `aria-labelled`
+  `role="radiogroup"`. Axe sweep is green on the dialog.
+- **Vitest module-mock leak** on the cancel / feedback dialogs (same
+  pattern as Stage 12.2). `beforeEach(() => mock.mockReset())` from
+  the start this time.
+- **Status badge collision in tests.** The tracking list filter
+  dropdown renders every status as an `<option>`, so
+  `getByText(/in progress/i)` matched the option AND the row badge.
+  Test narrowed to `getAllByRole('cell')` + `.some(...)` filter.
+
+**What we tested**
+
+- `TrackingListScreen.test.tsx` — happy: row renders with badge +
+  detail link; unhappy: BE error → destructive alert.
+- `CancelDialog.test.tsx` — happy: blank-reason submit fires `useCancel`
+  with `{ data: {} }`; unhappy: 409
+  `COMPLAINT_NOT_IN_SUBMITTED_STATE` routes to `onStaleStatus` and
+  NOT `onSuccess`.
+- `FeedbackDialog.test.tsx` — happy: 4-star submit fires
+  `useSubmitFeedback` with `{ rating: 4 }`, ticket remembered in
+  sessionStorage; unhappy: 409 `FEEDBACK_ALREADY_SUBMITTED` flips to
+  the "thanks" state and persists the ticket marker.
+
+**Gate output**
+
+| Gate       | Result | Notes                                                                |
+| ---------- | ------ | -------------------------------------------------------------------- |
+| typecheck  | ✅     | 5 packages, 0 errors                                                 |
+| lint       | ✅     | 0 warnings                                                           |
+| test       | ✅     | 19 files / 37 tests (+3 files / +6 tests)                            |
+| build      | ✅     | 299 modules transformed                                              |
+| size (JS)  | ✅     | **145.84 KB gz** entry (+1.25 from Stage 12.2; **34.16 KB headroom**) |
+| size (CSS) | ✅     | 4.85 KB gz                                                           |
+
+`ConsumerDetailScreen` carves a new 11.28 KB / 3.43 KB gz lazy chunk
+(detail + cancel + feedback dialogs + history timeline all in one).
+`TrackingListScreen` is small enough to be absorbed into the entry
+chunk via the consumer-flow lazy boundary.
+
+**Manual smoke**
+
+- BE on `localhost:8080` against Stage 17–19.
+- Verified consumer (OTP'd as `CN-00012345`), submitted a fresh
+  complaint, then opened `/consumer/my-complaints` — row visible,
+  badge "Submitted". Clicked Cancel → typed a reason → toast
+  "Complaint cancelled.", status flipped to CANCELLED on refresh.
+- Opened a second complaint already in IN_PROGRESS — Cancel button
+  not rendered (correct).
+- Closed a complaint via the staff side, switched back to the
+  consumer tab, refreshed → Feedback button visible. Submitted
+  3-star + a comment → toast "Thanks for the feedback!". Re-opened
+  the dialog (without refreshing): the button was gone (sessionStorage
+  guard). Force-clicked via DevTools → 409 path showed "we've already
+  received your feedback".
+- 403 path (re-OTP'd as a different consumer, opened the previous
+  ticket) → "not yours" card rendered, no leak of detail.
+
+**BE carry-overs (flagged for the next BE slice)**
+
+- **Feedback discoverability on detail.** Today the FE depends on a
+  409 to know feedback was already submitted, and sessionStorage to
+  avoid a second pointless POST. A `feedbackSubmitted: boolean` (or
+  the persisted `FeedbackResponse`) on `ComplaintDetailResponse` would
+  let us hide the button on first paint after a tab restore, and
+  render the submitted comment verbatim. ~10 lines on the BE side.
+- **`GET /feedback` endpoint.** Same motivation as above. If BE adds
+  it standalone, the FE can render the rating/comment in a read-only
+  panel on the detail screen for closed complaints.
+- **`ConsumerComplaintHistoryEntryResponse.note`** is currently free-form
+  text — the FE renders it verbatim. If BE ever needs to translate
+  these (e.g. system notes for SLA breach), a `noteKey: string` +
+  `noteArgs: Record<string,string>` would be cleaner than i18n-key
+  parsing on the FE.
+
+**Out of scope (deliberately)**
+
+- Mobile / Expo bootstrap — still deferred from Stage 12.2.
+- Push notifications — BE Phase 6 has not landed yet.
+- URL-synced filter state on the tracking list — same carry-over as
+  the staff list; no consumer is asking for shareable URLs today.
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

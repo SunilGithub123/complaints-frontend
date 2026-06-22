@@ -44,7 +44,7 @@ import { TempPasswordDialog } from './TempPasswordDialog';
 
 const PAGE_SIZE = 20;
 
-type RoleFilter = '' | Schemas.ListRole;
+type RoleFilter = '' | Schemas.List1Role;
 
 interface Filters {
   role: RoleFilter;
@@ -71,8 +71,8 @@ export default function StaffListScreen(): React.JSX.Element {
     enabled: '',
   });
 
-  const listParams: Schemas.ListParams = useMemo(() => {
-    const params: Schemas.ListParams = {
+  const listParams: Schemas.List1Params = useMemo(() => {
+    const params: Schemas.List1Params = {
       pageable: { page, size: PAGE_SIZE, sort: ['employeeId,asc'] },
     };
     if (filters.role) params.role = filters.role;

@@ -50,12 +50,12 @@ export const addImagesBody = zod.object({
  * Server pins assigned_technician_id = caller.userId(). Optional filters: status, severity, slaBreached, dateFrom/dateTo, q.
  * @summary Paged list of complaints assigned to the calling technician
  */
-export const list1QueryPageablePageMin = 0;
+export const list2QueryPageablePageMin = 0;
 
 
 
 
-export const list1QueryParams = zod.object({
+export const list2QueryParams = zod.object({
   "filters": zod.object({
   "status": zod.enum(['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED', 'REJECTED', 'DUPLICATE']).optional(),
   "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
@@ -68,7 +68,7 @@ export const list1QueryParams = zod.object({
   "q": zod.string().optional()
 }),
   "pageable": zod.object({
-  "page": zod.number().min(list1QueryPageablePageMin).optional(),
+  "page": zod.number().min(list2QueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 })

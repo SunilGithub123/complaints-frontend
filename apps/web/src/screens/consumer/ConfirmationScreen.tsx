@@ -230,6 +230,13 @@ export default function ConfirmationScreen(): React.JSX.Element {
                 ? t('consumer.confirmation.refreshing')
                 : t('consumer.confirmation.refresh')}
             </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate('/consumer/my-complaints')}
+            >
+              {t('consumer.confirmation.viewAll')}
+            </Button>
             <Button type="button" variant="ghost" onClick={onStartOver}>
               {t('consumer.confirmation.startOver')}
             </Button>

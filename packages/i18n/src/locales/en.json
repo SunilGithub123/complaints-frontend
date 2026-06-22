@@ -236,7 +236,10 @@
     "TECHNICIAN_NOT_IN_DC": "That technician is not active in this distribution centre.",
     "SLA_BREACH_REASON_REQUIRED": "A breach reason is required to close this complaint.",
     "DUPLICATE_PARENT_NOT_FOUND": "We couldn't find a complaint with that parent ticket number.",
-    "SELF_REFERENCING_DUPLICATE": "A complaint can't be marked as a duplicate of itself."
+    "SELF_REFERENCING_DUPLICATE": "A complaint can't be marked as a duplicate of itself.",
+    "COMPLAINT_NOT_IN_SUBMITTED_STATE": "This complaint can no longer be cancelled — an engineer has already picked it up.",
+    "FEEDBACK_ALREADY_SUBMITTED": "We've already received feedback for this complaint.",
+    "COMPLAINT_NOT_CLOSED": "Feedback can only be submitted after a complaint is closed."
   },
   "consumer": {
     "landing": {
@@ -302,7 +305,66 @@
       "refreshing": "Refreshing…",
       "notYoursTitle": "This ticket isn't yours",
       "notYoursBody": "This ticket was registered under a different Consumer ID. Verify again to view your own complaints.",
-      "startOver": "Lodge another complaint"
+      "startOver": "Lodge another complaint",
+      "viewAll": "Track all my complaints"
+    },
+    "tracking": {
+      "heading": "My complaints",
+      "subheading": "Every complaint you've lodged under this verified mobile.",
+      "lodgeAnother": "Lodge another",
+      "status": "Status",
+      "statusAny": "Any status",
+      "ticket": "Ticket",
+      "statusCol": "Status",
+      "submitted": "Submitted",
+      "deadline": "Resolve by",
+      "slaBreached": "SLA breached",
+      "empty": "You haven't lodged any complaints yet.",
+      "prev": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{page}} of {{total}}"
+    },
+    "detail": {
+      "back": "Back",
+      "ticket": "Ticket",
+      "slaBreached": "SLA breached",
+      "description": "Description",
+      "location": "Location",
+      "contactMobile": "Contact mobile",
+      "submittedAt": "Submitted",
+      "slaDeadline": "Resolution expected by",
+      "resolvedAt": "Resolved",
+      "closedAt": "Closed",
+      "images": "Attached photos",
+      "actions": "Actions",
+      "cancel": "Cancel complaint",
+      "feedback": "Leave feedback",
+      "historyHeading": "Status history",
+      "historyEmpty": "No status changes recorded yet.",
+      "historyInitial": "Submitted"
+    },
+    "cancel": {
+      "title": "Cancel this complaint",
+      "body": "Once cancelled the complaint won't be acted on. You can lodge a new one any time.",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "Tell us why you're cancelling (optional)",
+      "submit": "Cancel complaint",
+      "submitting": "Cancelling…",
+      "keep": "Keep it open",
+      "successToast": "Complaint cancelled.",
+      "staleToast": "An engineer just picked this up — cancel is no longer available."
+    },
+    "feedback": {
+      "title": "How did we do?",
+      "body": "Rate this resolution (and tell us anything you'd like the team to know).",
+      "rating": "Rating",
+      "ratingRequired": "Please pick a rating from 1 to 5.",
+      "comment": "Comment (optional)",
+      "commentPlaceholder": "What worked, what didn't",
+      "submit": "Submit feedback",
+      "submitting": "Submitting…",
+      "successToast": "Thanks for the feedback!",
+      "alreadySubmitted": "Thanks — we've already received your feedback for this complaint."
     }
   },
   "complaints": {

@@ -41,17 +41,17 @@ export const updateBody = zod.object({
 /**
  * @summary List staff in the admin's subdivision (paged, filterable)
  */
-export const listQueryPageablePageMin = 0;
+export const list1QueryPageablePageMin = 0;
 
 
 
 
-export const listQueryParams = zod.object({
+export const list1QueryParams = zod.object({
   "role": zod.enum(['ADMIN', 'ENGINEER', 'TECHNICIAN']).optional(),
   "distributionCenterId": zod.number().optional(),
   "enabled": zod.boolean().optional(),
   "pageable": zod.object({
-  "page": zod.number().min(listQueryPageablePageMin).optional(),
+  "page": zod.number().min(list1QueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 })

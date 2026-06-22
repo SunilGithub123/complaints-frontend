@@ -50,6 +50,12 @@ const ConsumerSubmitScreen = lazy(
 const ConsumerConfirmationScreen = lazy(
   () => import('@/screens/consumer/ConfirmationScreen'),
 );
+const ConsumerTrackingListScreen = lazy(
+  () => import('@/screens/consumer/TrackingListScreen'),
+);
+const ConsumerDetailScreen = lazy(
+  () => import('@/screens/consumer/ConsumerDetailScreen'),
+);
 
 function PageFallback(): ReactElement {
   return (
@@ -76,6 +82,14 @@ export const router = createBrowserRouter([
       {
         path: '/consumer/submitted/:ticketNo',
         element: wrap(<ConsumerConfirmationScreen />),
+      },
+      {
+        path: '/consumer/my-complaints',
+        element: wrap(<ConsumerTrackingListScreen />),
+      },
+      {
+        path: '/consumer/my-complaints/:ticketNo',
+        element: wrap(<ConsumerDetailScreen />),
       },
     ],
   },

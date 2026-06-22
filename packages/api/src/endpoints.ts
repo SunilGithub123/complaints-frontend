@@ -29,10 +29,32 @@ export * from './generated/consumer-master-data-read/consumer-master-data-read';
 // JSON body in a `Blob` with `type: 'application/json'`. We re-export
 // the names below for type-only access; if BE patterns elsewhere want
 // the hook, they can import it directly from the generated path.
+//
+// Phase 5 (BE Stages 17–19) adds:
+//   useCancel          → cancel-while-SUBMITTED (alias: useCancelComplaint)
+//   useSubmitFeedback  → feedback-after-CLOSED  (alias: useSubmitFeedback…
+//                        kept as-is, name is already intention-revealing)
+//   useGetHistory1     → consumer-safe history  (alias: useGetConsumerComplaintHistory)
+//   useList            → consumer tracking list — NOT re-exported. The
+//                        ListParams type has a nested `pageable` object;
+//                        orval's URL builder serialises it as
+//                        `[object Object]`. Same upstream bug as the
+//                        staff list. The web app uses the hand-rolled
+//                        `useConsumerComplaintsList` in
+//                        `apps/web/src/features/consumer/trackingApi.ts`.
+//
+// `useGetHistory1`: the `1` suffix exists because staff has
+// `useGetHistory` (un-suffixed). Re-verify after every `pnpm api:gen`.
 export {
   useGetByTicket as useGetComplaintByTicket,
   getGetByTicketQueryKey as getGetComplaintByTicketQueryKey,
   getByTicket as getComplaintByTicket,
+  useCancel as useCancelComplaint,
+  getCancelMutationOptions as getCancelComplaintMutationOptions,
+  useSubmitFeedback,
+  getSubmitFeedbackMutationOptions,
+  useGetHistory1 as useGetConsumerComplaintHistory,
+  getGetHistory1QueryKey as getConsumerComplaintHistoryQueryKey,
 } from './generated/consumer-complaints/consumer-complaints';
 
 /*
@@ -73,15 +95,19 @@ export {
 // admin-staff hooks already have unique names but are too generic — rename
 // at the boundary so screens never accidentally import `useList` from the
 // staff tag when they meant masterdata.
+//
+// Numeric suffix shift (BE Stage 17 — consumer `list` took the un-suffixed
+// slot, bumping admin-staff list from `useList` → `useList1`).
+// Re-verify after every `pnpm api:gen`.
 export {
-  useList as useListStaff,
+  useList1 as useListStaff,
   useGet as useGetStaff,
   useCreate as useCreateStaff,
   useUpdate as useUpdateStaff,
   useActivate as useActivateStaff,
   useDeactivate as useDeactivateStaff,
   useResetPassword as useResetStaffPassword,
-  getListQueryKey as getListStaffQueryKey,
+  getList1QueryKey as getListStaffQueryKey,
 } from './generated/admin-staff/admin-staff';
 
 // Staff Complaint Management — assign, reassign, severity, reject,

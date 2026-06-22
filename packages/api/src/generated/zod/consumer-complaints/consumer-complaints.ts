@@ -9,6 +9,24 @@ import * as zod from 'zod';
 
 
 /**
+ * Server pins consumer_master_id = caller.consumerMasterId(). Optional ?status=… filter. Default sort is createdAt,desc (latest first).
+ * @summary Paged tracking list of every complaint the verified consumer has raised
+ */
+export const listQueryPageablePageMin = 0;
+
+
+
+
+export const listQueryParams = zod.object({
+  "status": zod.enum(['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED', 'REJECTED', 'DUPLICATE']).optional(),
+  "pageable": zod.object({
+  "page": zod.number().min(listQueryPageablePageMin).optional(),
+  "size": zod.number().min(1).optional(),
+  "sort": zod.array(zod.string()).optional()
+})
+})
+
+/**
  * Multipart contract: one JSON part named `complaint` (SubmitComplaintRequest) plus 0..3 image parts named `images` (image/jpeg or image/png, each ≤ 1 MB). Ticket number, SLA deadline and signed image URLs are returned in one response — no follow-up calls required for the confirmation screen.
  * @summary Submit a new complaint with up to 3 images in a single multipart request
  */
@@ -36,10 +54,55 @@ export const submitBody = zod.object({
 }).describe('multipart\/form-data layout for POST \/api\/v1\/consumer\/complaints')
 
 /**
- * Stage 10b scope: confirmation / refresh-safe read of a just-submitted complaint. Lifecycle history, technician identity and feedback land in Phase 5.
+ * Rating is 1..5; comment is optional. Allowed only after the complaint is CLOSED → 409 FEEDBACK_NOT_ALLOWED_YET while it's still open. One row per complaint (UNIQUE on complaint_id) → 409 FEEDBACK_ALREADY_SUBMITTED on a second attempt.
+ * @summary Submit feedback for a CLOSED complaint (one-shot, idempotent at DB level)
+ */
+export const submitFeedbackParams = zod.object({
+  "ticketNo": zod.string()
+})
+
+export const submitFeedbackBodyRatingMax = 5;
+
+export const submitFeedbackBodyCommentMin = 0;
+export const submitFeedbackBodyCommentMax = 1000;
+
+
+
+export const submitFeedbackBody = zod.object({
+  "rating": zod.number().min(1).max(submitFeedbackBodyRatingMax),
+  "comment": zod.string().min(submitFeedbackBodyCommentMin).max(submitFeedbackBodyCommentMax).optional()
+})
+
+/**
+ * Consumer-driven withdrawal. Once an engineer has assigned the complaint, MSEB owns the workflow and the consumer can no longer cancel — that's a 409 COMPLAINT_NOT_IN_SUBMITTED_STATE. Body carries an optional free-text reason.
+ * @summary Cancel an owned complaint (only while status = SUBMITTED)
+ */
+export const cancelParams = zod.object({
+  "ticketNo": zod.string()
+})
+
+export const cancelBodyReasonMin = 0;
+export const cancelBodyReasonMax = 500;
+
+
+
+export const cancelBody = zod.object({
+  "reason": zod.string().min(cancelBodyReasonMin).max(cancelBodyReasonMax).optional()
+})
+
+/**
+ * Owner-checked. Stage 17 enriched the payload with severity, slaBreached, resolvedAt, closedAt. Staff identities and internal reason fields remain on the staff-side DTO only.
  * @summary Fetch the verified consumer's own complaint by ticket number
  */
 export const getByTicketParams = zod.object({
+  "ticketNo": zod.string()
+})
+
+/**
+ * Same chronological ordering as the staff endpoint, but without changedByUserId — consumers don't see staff IDs.
+ * @summary Consumer-safe status-change history for an owned complaint
+ */
+export const getHistory1Params = zod.object({
   "ticketNo": zod.string()
 })
 

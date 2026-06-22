@@ -6,11 +6,11 @@
  * OpenAPI spec version: v1
  */
 
-export type ListRole = typeof ListRole[keyof typeof ListRole];
+export type List1Role = typeof List1Role[keyof typeof List1Role];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ListRole = {
+export const List1Role = {
   ADMIN: 'ADMIN',
   ENGINEER: 'ENGINEER',
   TECHNICIAN: 'TECHNICIAN',
