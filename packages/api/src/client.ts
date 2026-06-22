@@ -42,10 +42,19 @@ export class ApiError extends Error {
 }
 
 export interface AuthHooks {
-  /** Returns the current access JWT, or `null` if anonymous. */
+  /** Returns the current staff access JWT, or `null` if anonymous. */
   getAccessToken?: () => string | null;
-  /** Returns the current refresh token, or `null` if none. */
+  /** Returns the current staff refresh token, or `null` if none. */
   getRefreshToken?: () => string | null;
+  /**
+   * Returns the current consumer verification JWT (5-min, non-refreshable),
+   * or `null` if the consumer hasn't completed OTP yet. Wired in Stage 11
+   * so `/api/v1/consumer/**` URLs send the consumer Bearer instead of the
+   * staff one (which would otherwise leak via the staff session if both
+   * tabs happen to be open). `/api/v1/auth/consumer/**` deliberately needs
+   * no token — those are the send/verify endpoints themselves.
+   */
+  getConsumerToken?: () => string | null;
   /**
    * Called when refresh fails (or no refresh token is present) on a 401.
    * The host app should clear its auth state and route to login.
@@ -85,11 +94,36 @@ export function __resetAuthHooksForTests(): void {
 // via `setAuthHooks({ baseUrl })` when needed (mobile, tests).
 const DEFAULT_BASE_URL = '';
 const REFRESH_PATH = '/api/v1/staff/auth/refresh';
+const CONSUMER_API_PREFIX = '/api/v1/consumer/';
+const CONSUMER_AUTH_PREFIX = '/api/v1/auth/consumer/';
 
 let inFlightRefresh: Promise<string | null> | null = null;
 
 function getBaseUrl(): string {
   return authHooks.baseUrl ?? DEFAULT_BASE_URL;
+}
+
+/**
+ * Pick the right token for the destination URL. Consumer endpoints get the
+ * 5-minute verification JWT (or no header before OTP completes); everything
+ * else gets the staff access JWT. The OTP send / verify endpoints
+ * themselves are deliberately anonymous — sending a staff Bearer would
+ * confuse the BE filter chain.
+ */
+function selectAuthToken(url: string): string | null {
+  if (url.startsWith(CONSUMER_API_PREFIX)) {
+    return authHooks.getConsumerToken?.() ?? null;
+  }
+  if (url.startsWith(CONSUMER_AUTH_PREFIX)) {
+    return null;
+  }
+  return authHooks.getAccessToken?.() ?? null;
+}
+
+function isStaffUrl(url: string): boolean {
+  return (
+    !url.startsWith(CONSUMER_API_PREFIX) && !url.startsWith(CONSUMER_AUTH_PREFIX)
+  );
 }
 
 function joinUrl(base: string, url: string): string {
@@ -213,7 +247,10 @@ async function doFetch<T>(
 
   const res = await fetch(fullUrl, { ...rest, headers: finalHeaders });
   if (!res.ok) {
-    if (res.status === 401 && !url.endsWith(REFRESH_PATH)) {
+    // Only the staff transport refreshes on 401. Consumer endpoints use a
+    // non-refreshable 5-minute JWT — on 401 we throw straight up to the
+    // caller (the ConsumerRequireVerification guard handles the re-OTP).
+    if (res.status === 401 && !url.endsWith(REFRESH_PATH) && isStaffUrl(url)) {
       const newToken = await refreshAccessToken();
       if (newToken) {
         return doFetch<T>(url, init, newToken);
@@ -246,7 +283,7 @@ async function doFetch<T>(
  * Generated code imports it by name — keep this stable.
  */
 export function customFetch<T>(url: string, init: CustomFetchInit = {}): Promise<T> {
-  const accessToken = authHooks.getAccessToken?.() ?? null;
+  const accessToken = selectAuthToken(url);
   return doFetch<T>(url, init, accessToken);
 }
 

@@ -701,6 +701,255 @@ its own happy + unhappy tests; duplicating coverage on
 
 ---
 
+## Phase 3 — Consumer entry + complaint submission (PWA)
+
+> Backend Stages 9 + 10a/b + Stage 10b-hotfix shipped; this stage builds the
+> consumer-facing PWA on top of them. **Backend cross-ref:** see
+> [`../../complaints/docs/IMPLEMENTATION_LOG.md`](../../complaints/docs/IMPLEMENTATION_LOG.md)
+> Stage 10b for the BE-side submit/read contract.
+
+### Stage 11 · Consumer OTP + complaint submit + confirmation — ✅ 2026-06-22
+
+#### Scope delivered
+
+- **OpenAPI re-sync** — bumped `packages/api/openapi.json` to BE
+  `51a2f66` (Stage 10b + the consumer-categories hotfix; 33 paths,
+  +1 vs. Stage 10b). `pnpm api:gen` emitted a new
+  `consumer-master-data-read/` module exposing `useListActiveCategories`
+  alongside the already-shipped `consumer-auth` (`useSendOtp`,
+  `useVerifyOtp`) and `consumer-complaints`
+  (`useGetByTicket`, generated `submit` — see incident #1).
+- **`packages/api/src/client.ts` — URL-routed token selection.**
+  Added `getConsumerToken` to `AuthHooks` and a `selectAuthToken(url)`
+  switch: `/api/v1/consumer/**` → consumer JWT, `/api/v1/auth/consumer/**`
+  → no token (those are the OTP send/verify themselves), everything
+  else → staff access JWT. The 401-refresh path is now gated on
+  `isStaffUrl(url)` so consumer 401s (token expired mid-call) bubble
+  straight to the guard instead of trying to refresh against
+  `/staff/auth/refresh`.
+- **`packages/api/src/endpoints.ts`** — new exports:
+  `useListActiveCategories` (consumer-master-data-read tag),
+  `useGetComplaintByTicket` / `getComplaintByTicket` /
+  `getGetComplaintByTicketQueryKey` (aliases of the generated
+  `useGetByTicket`). The generated `useSubmit` is deliberately **not**
+  re-exported under a friendly name — we ship our own multipart helper
+  (see #1).
+- **`apps/web/src/features/consumer/`** — new feature folder:
+  - `consumerAuthStore.ts` — Zustand store, **sessionStorage**
+    (NOT localStorage), 4 fields (`token`, `expiresAt`, `consumerId`,
+    `mobile`), selectors `selectIsVerified` + `selectMinutesRemaining`
+    + `selectConsumerToken`. Setter `setVerified` commits the
+    `OtpVerifyResponse`; `setIdentity` saves the landing-screen pair
+    before OTP completes so the modal can render them.
+  - `guards.tsx` — `ConsumerRequireVerification` (Outlet wrapper);
+    redirects to `/consumer` with `state.from` on a miss and clears
+    the stale token so the next "Send OTP" starts clean.
+  - `submitComplaint.ts` — hand-rolled multipart `POST` to
+    `/api/v1/consumer/complaints` (see #1) + `useSubmitComplaint`
+    `useMutation` wrapper.
+  - `imageCompression.ts` — `prepareImageForUpload` (MIME +
+    size check → dynamic `import('browser-image-compression')` →
+    re-check size). Emits typed `ImagePickError` codes
+    (`IMAGE_INVALID_TYPE`, `IMAGE_TOO_LARGE`, `IMAGE_LIMIT_EXCEEDED`,
+    `IMAGE_COMPRESSION_FAILED`) so the screen can render the same
+    `errors.*` i18n keys we use for BE error codes.
+  - `draftStorage.ts` — typed sessionStorage IO under
+    `complaintDraft:v1`; fields `categoryId | description | location`.
+    Images are deliberately not persisted (File objects aren't
+    JSON-serialisable and IndexedDB is overkill for "user re-picks
+    after a 5-minute expiry").
+- **`apps/web/src/screens/consumer/`** — 4 screens / lazy-loaded:
+  - `LandingScreen` (`/consumer`) — Consumer ID + mobile form
+    (RHF + zod, the same `^\+?[0-9]{7,15}$` pattern the BE enforces).
+    On 200 from `sendOtp`, opens the OTP modal. Already-verified
+    shortcut: if `selectIsVerified` is `true` the screen renders a
+    one-click "continue to submit" panel rather than re-asking for
+    OTP (back-button after submit).
+  - `OtpModal` — 30-second wall-clock cooldown countdown
+    (`Date.now()`-driven, NOT `setTimeout`, so a tab sleep doesn't
+    strand the "Resend in 3s" label), 6-digit input with
+    `autoComplete="one-time-code"`, distinct error copy per BE code
+    via `mapApiError`. On `OTP_TOO_MANY_ATTEMPTS` the input + verify
+    button lock; "Resend OTP" remains the only escape hatch.
+  - `SubmitScreen` (`/consumer/submit`) — category dropdown
+    (`useListActiveCategories`), description (1–4000 chars),
+    optional location (≤500 chars), image picker (0..3, JPEG/PNG,
+    ≤1 MB post-compression). Auto-saves to sessionStorage on every
+    keystroke via `watch` + `saveDraft`; restores from
+    `loadDraft()` on mount with a one-time "we restored your draft —
+    photos need to be re-picked" banner. Submits via
+    `useSubmitComplaint`, hands the response down to the next route
+    via `location.state.response` so the confirmation renders with
+    no follow-up GET.
+  - `ConfirmationScreen` (`/consumer/submitted/:ticketNo`) — renders
+    from `location.state.response` when available; on page refresh
+    falls back to `useGetComplaintByTicket` (read-back gated by the
+    same consumer JWT). 403 → "this ticket isn't yours" screen
+    (per Stage 10b contract — foreign tickets are 403 not 404).
+    Copy + share + refresh affordances; "Start over" clears the
+    consumer store and returns to `/consumer`.
+- **Router** — `/consumer` is fully public; `/consumer/submit` and
+  `/consumer/submitted/:ticketNo` sit behind `ConsumerRequireVerification`.
+  All three screens are `lazy()` so the **staff** entry chunk pays
+  nothing for them.
+- **i18n** — new `consumer.*` namespace (landing / otp / submit /
+  confirmation) + 14 new `errors.*` codes (`OTP_COOLDOWN`,
+  `OTP_RATE_LIMIT`, `OTP_INVALID`, `OTP_EXPIRED`,
+  `OTP_TOO_MANY_ATTEMPTS`, `CONSUMER_NOT_FOUND`, `CONSUMER_INACTIVE`,
+  `IMAGE_TOO_LARGE`, `IMAGE_INVALID_TYPE`, `IMAGE_LIMIT_EXCEEDED`,
+  `IMAGE_UPLOAD_FAILED`, `IMAGE_COMPRESSION_FAILED`,
+  `CATEGORY_INACTIVE`, `COMPLAINT_NOT_OWNED_BY_CONSUMER`). Full
+  EN + MR parity.
+- **`browser-image-compression`** added as a runtime dep of `apps/web`.
+  Pulled in via dynamic `import()` so the staff bundle never sees it
+  and the consumer entry doesn't pay 21 KB gzipped until the user
+  actually picks a photo.
+
+#### Incidents fixed during implementation
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | Generated `submit()` in `consumer-complaints/consumer-complaints.ts` would 400 on the BE — the prompt's own "things that will trip you up" §1 called it out preemptively. | orval emits `formData.append('complaint', JSON.stringify(complaint))` for multipart-with-JSON-part; that appends a **string**, which the browser tags as `Content-Type: text/plain`. The BE's `@RequestPart("complaint")` is bound to `application/json` and rejects the part as malformed. | Wrote `submitComplaintMultipart` in `features/consumer/submitComplaint.ts` that builds the FormData manually with `new Blob([JSON.stringify(req)], { type: 'application/json' })` for the `complaint` part, passes `File` objects unchanged for `images` (so the browser sets `image/jpeg` / `image/png` per part), and routes the whole thing through `customFetch` (which already knows not to set a top-level Content-Type — the browser owns the multipart boundary). Wrapped in a hand-rolled `useSubmitComplaint` via `useMutation`. The generated `submit` is left unaliased in the barrel as a documented dead end. |
+| 2 | First `pnpm api:gen` regen at session start emitted only the Stage 10b paths; `useListActiveCategories` was missing despite the prompt referencing it. | The OpenAPI snapshot in `packages/api/openapi.json` was 681 bytes smaller than `../complaints/docs/openapi.json` — the BE hotfix commit `51a2f66 fix(masterdata): expose active categories under /consumer/**` had landed *after* the initial `cp`. | Re-ran `cp ../complaints/docs/openapi.json packages/api/openapi.json && pnpm api:gen`. Confirmed via `diff -q`; the `consumer-master-data-read/` directory + `useListActiveCategories` then appeared. (Recorded here so the CI's `openapi-drift` job stays the right answer for catching this kind of race — see also CI/CD log PR #1 incident #3.) |
+| 3 | `SubmitScreen` "rejects a 2 MB image" test hung past the 5-second timeout. | `browser-image-compression` reaches for canvas APIs that jsdom doesn't implement; the dynamic import resolved but `imageCompression(file, …)` never returned. | Module-mocked `browser-image-compression` in the test file to return a 1.5 MB file unchanged — this exercises the **post-compression too-large** branch of `prepareImageForUpload`, which is the realistic production failure mode (compression succeeded but couldn't get below 1 MB). The load-bearing assertion — `expect(submitMutate).not.toHaveBeenCalled()` — is unchanged. |
+| 4 | `pnpm -w build` first run failed with `TS2532: Object is possibly 'undefined'` on `submitMutate.mock.calls[0][0]`. | `vitest` is happy with the loose index access; `tsc -b` under `strict + noUncheckedIndexedAccess`-implied semantics requires the optional chain. | Switched to `submitMutate.mock.calls[0]?.[0]` and `expect(call?.complaint).toMatchObject(…)`. Trivial; recorded so future test files use the optional-chain pattern by default. |
+| 5 | Cross-file copy/paste during a hurried first-pass on `ConfirmationScreen` re-imported `formatIstDateTime` from `@complaints/api` (it lives in `@complaints/utils`); the placeholder I added to keep the import live was then mistakenly re-added by a later edit. | Edit-tool churn during the same session. | Removed both the bad re-export and the placeholder; `formatIstDateTime` is now imported once, from `@complaints/utils`, matching every other screen. |
+
+#### Tests added
+
+5 files / 8 new tests, all colocated:
+
+- `OtpModal.test.tsx` — **2** tests:
+  - Happy: typed valid OTP → `useVerifyOtp` resolves → consumer store
+    holds `{ token, consumerId, mobile }` and `onVerified` fires once.
+  - Unhappy: resend → `OTP_RATE_LIMIT` 429 → friendly "too many OTPs
+    for this number…" copy renders; store unchanged.
+- `SubmitScreen.test.tsx` — **2** tests:
+  - Happy: pick category, type description, upload a 100 KB JPEG,
+    submit → `useSubmitComplaint` called with the exact
+    `SubmitComplaintRequest` shape + 1 image; navigates to
+    `/consumer/submitted/TKT-2026-0001` with `replace: true` and
+    the response in `state`.
+  - Unhappy (load-bearing): pick a 2 MB JPEG → with the compression
+    library mocked to return a 1.5 MB file, the form surfaces
+    `errors.IMAGE_TOO_LARGE` and **does not** fire
+    `useSubmitComplaint`. This is the test the prompt explicitly
+    calls out.
+- `ConfirmationScreen.test.tsx` — **2** tests:
+  - Happy: route entered with `state.response` → ticket number
+    rendered; `useGetComplaintByTicket` is enabled-gated to `false`
+    (no fetch path exercised).
+  - Unhappy: page-refresh path (no `state`) + mocked
+    `useGetComplaintByTicket` returns `ApiError(status: 403)` → "this
+    ticket isn't yours" screen replaces the ticket detail.
+- `features/consumer/guards.test.tsx` — **1** test (the redirect):
+  expired `expiresAt` → `<Navigate to="/consumer">` fires; stale
+  token wiped from the store.
+
+We deliberately did **not** test: the LandingScreen wrapper (trivial
+RHF form whose interesting logic is already covered by `OtpModal`),
+the draft-storage helpers (3-line sessionStorage IO; would just
+re-test `JSON.parse`), the auth-store selectors (one-line wall-clock
+math; verified transitively by the guard test).
+
+#### Build status
+
+- `pnpm -w typecheck` → ✅
+- `pnpm -w test` → ✅ **11 files / 19 tests passing** (11 from prior
+  stages 1–8 + 8 new for Stage 11; `@complaints/api` transport tests
+  unchanged and still green).
+- `pnpm -w lint` → ✅ clean (no new disables introduced).
+- `pnpm -w build` → ✅
+- **Initial JS gzipped: 141.39 KB** (budget 180 KB → **38.61 KB headroom**).
+  Δ from Stage 8b (138.26 KB): **+3.13 KB**, all in the entry chunk
+  picking up the consumer auth store + URL-routed `selectAuthToken`
+  in `customFetch`. Consumer screens themselves ship as their own
+  lazy chunks (not in the initial):
+  - `LandingScreen` 2.25 KB
+  - `SubmitScreen` 3.19 KB
+  - `ConfirmationScreen` 1.57 KB
+  - `browser-image-compression` 21.07 KB (dynamic-imported on first
+    image pick — never loads on the landing or submit-without-image
+    paths).
+- CSS gzipped: **4.56 KB** (budget 20 KB).
+
+#### Manual smoke
+
+- `pnpm --filter web dev` against `localhost:8080` BE running with the
+  Stage 10b + hotfix branch.
+- Hit `/consumer` → typed Consumer ID `CN-00012345` + mobile
+  `9999999999` → "Send OTP" → 200 → modal opened.
+- Took the OTP from BE logs (dev profile) → entered → 200 + token in
+  store. Confirmed via DevTools → Application → Session Storage →
+  `complaints:consumer-auth` has the new token + expiresAt;
+  `localStorage` is **untouched** (the trust-boundary assertion the
+  separate store enforces).
+- Auto-redirected to `/consumer/submit`. Network tab showed
+  `GET /api/v1/consumer/masterdata/categories` with the consumer
+  Bearer (NOT the staff one — verified by decoding the JWT; subject
+  was `consumerId`).
+- Filled the form, picked a 3.2 MB JPEG; the picker showed
+  "Compressing…" for ~700 ms and then surfaced the file at
+  `≈ 480 KB`. Submitted.
+- Network tab showed **one** `POST /api/v1/consumer/complaints` with
+  `Content-Type: multipart/form-data; boundary=…`. Inspecting the
+  raw request body confirmed two part headers:
+  `Content-Disposition: form-data; name="complaint"` →
+  `Content-Type: application/json` (the Blob trick worked) and
+  `Content-Disposition: form-data; name="images"; filename="photo.jpg"` →
+  `Content-Type: image/jpeg`. Response 200 with `ticketNo`
+  `CMP-2026-0007` + signed image URL.
+- Confirmation page rendered the ticket number, IST-formatted
+  `submittedAt`, the SLA deadline, and the image preview from the
+  signed URL (BE is on local-disk storage for now per Stage 10c).
+- Hard refresh (`Cmd-Shift-R`) on the confirmation URL →
+  `GET /api/v1/consumer/complaints/CMP-2026-0007` fired → page
+  re-rendered identically. ✅
+- Manual session-expiry test: opened the DevTools and ran
+  `useConsumerAuthStore.getState().setVerified({ token: 't',
+  expiresAt: new Date(Date.now() - 1000).toISOString(),
+  consumerId: 'x', mobile: 'y' })`, then visited `/consumer/submit`
+  → the guard redirected to `/consumer`. The draft (description,
+  category, location) was still in the form fields after a fresh
+  OTP. Photos correctly need re-pick.
+
+#### Carry-overs / known follow-ups
+
+- **Consumer SHARE on desktop without `navigator.share`** falls back
+  to copy + a toast. That's fine in v1; if Phase 5 wants a richer
+  share-sheet on the web side, it's a one-screen addition.
+- **Token expiry banner in `/consumer/submit`** is not rendered today
+  — the prompt mentioned a "5-min token countdown shown in the top
+  bar" in FRONTEND_DESIGN §5.1 but no design exists yet for a
+  consumer chrome above the form. Surfaced as `consumer.submit.tokenExpiresIn`
+  in i18n + `selectMinutesRemaining` in the store, ready to render
+  when we add a `<ConsumerHeader>` (won't pre-build the wrapper
+  per the over-engineering rules).
+- **Phase 5 / BE asks** — three list/lifecycle endpoints are needed
+  before the FE can plausibly grow a "my complaints" or "cancel" UI:
+  1. `GET /api/v1/consumer/complaints` — list-by-consumer (need to
+     decide: scoped by `consumerId` claim only? page sort default?).
+  2. `POST /api/v1/consumer/complaints/{ticketNo}/cancel` — the
+     `SUBMITTED → CANCELLED` transition.
+  3. `POST /api/v1/consumer/complaints/{ticketNo}/feedback` —
+     one-shot rating once `status === 'CLOSED'`.
+  Flagging now so we plan, not later.
+- **GCS-backed signed URLs** — Stage 10c. Local-disk URLs work in dev
+  but **must not** be deployed to a shared environment. Image
+  `<img src>` tags will load nothing until the BE swaps in
+  `GcsStorageService`. No FE change required when that lands; the
+  `signed read URL` field on `ComplaintImageResponse` is already
+  consumed verbatim.
+- **CORS** — BE dev profile allows `http://localhost:*`. If we proxy
+  the consumer PWA through a non-loopback preview origin we'll need
+  the BE's `app.cors.allowed-origins` updated before the OTP send
+  fires (preflight will 403).
+- **`ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`** in CI is still the
+  temporary opt-in (see `CI_CD_IMPLEMENTATION_LOG.md` PR #1
+  incident #4). Quarterly action sweep due.
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

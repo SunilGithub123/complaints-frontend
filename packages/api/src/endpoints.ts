@@ -19,6 +19,21 @@ export * from './generated/master-data-admin-—-distribution-centers/master-dat
 export * from './generated/master-data-admin-—-categories/master-data-admin-—-categories';
 export * from './generated/admin-staff/admin-staff';
 export * from './generated/consumer-auth/consumer-auth';
+export * from './generated/consumer-master-data-read/consumer-master-data-read';
+// Consumer complaints: we re-export the read hook + raw `submit` helper.
+// `useSubmit` from this module is intentionally NOT used directly by the
+// web app — the generated multipart helper appends the `complaint` part
+// as a plain string (BE then sees `Content-Type: text/plain` and 400s
+// the request). The app calls a hand-rolled `submitComplaintMultipart`
+// in `apps/web/src/features/consumer/submitComplaint.ts` that wraps the
+// JSON body in a `Blob` with `type: 'application/json'`. We re-export
+// the names below for type-only access; if BE patterns elsewhere want
+// the hook, they can import it directly from the generated path.
+export {
+  useGetByTicket as useGetComplaintByTicket,
+  getGetByTicketQueryKey as getGetComplaintByTicketQueryKey,
+  getByTicket as getComplaintByTicket,
+} from './generated/consumer-complaints/consumer-complaints';
 
 /*
  * Intention-revealing aliases.

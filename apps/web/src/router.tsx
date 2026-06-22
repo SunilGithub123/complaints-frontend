@@ -11,6 +11,7 @@ import { lazy, Suspense, type ReactElement } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RequireAuth, RequirePasswordChanged, RequireRole } from '@/auth/guards';
+import { ConsumerRequireVerification } from '@/features/consumer/guards';
 
 const LoginScreen = lazy(() => import('@/screens/login/LoginScreen'));
 const ChangePasswordScreen = lazy(
@@ -31,6 +32,19 @@ const StaffListScreen = lazy(() => import('@/screens/admin-staff/StaffListScreen
 const ProfileScreen = lazy(() => import('@/screens/profile/ProfileScreen'));
 const NotFoundScreen = lazy(() => import('@/screens/not-found/NotFoundScreen'));
 
+// Consumer flow — lazy-loaded so staff bundles don't pay for them. The
+// `browser-image-compression` library is dynamically imported deeper
+// still (only when the picker fires).
+const ConsumerLandingScreen = lazy(
+  () => import('@/screens/consumer/LandingScreen'),
+);
+const ConsumerSubmitScreen = lazy(
+  () => import('@/screens/consumer/SubmitScreen'),
+);
+const ConsumerConfirmationScreen = lazy(
+  () => import('@/screens/consumer/ConfirmationScreen'),
+);
+
 function PageFallback(): ReactElement {
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
@@ -45,6 +59,20 @@ function wrap(node: ReactElement): ReactElement {
 
 export const router = createBrowserRouter([
   { path: '/login', element: wrap(<LoginScreen />) },
+  // Public consumer flow — no staff login required. Landing is fully
+  // open; the submit + confirmation screens sit behind the consumer
+  // verification guard (5-min OTP JWT).
+  { path: '/consumer', element: wrap(<ConsumerLandingScreen />) },
+  {
+    element: <ConsumerRequireVerification />,
+    children: [
+      { path: '/consumer/submit', element: wrap(<ConsumerSubmitScreen />) },
+      {
+        path: '/consumer/submitted/:ticketNo',
+        element: wrap(<ConsumerConfirmationScreen />),
+      },
+    ],
+  },
   {
     element: <RequireAuth />,
     children: [

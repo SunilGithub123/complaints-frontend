@@ -6,6 +6,10 @@
  */
 import { setAuthHooks } from '@complaints/api';
 import { useAuthStore } from '@/auth/authStore';
+import {
+  useConsumerAuthStore,
+  selectConsumerToken,
+} from '@/features/consumer/consumerAuthStore';
 
 // The OpenAPI snapshot already embeds the `/api/v1` prefix in every path,
 // so generated callsites pass `/api/v1/...` directly. We leave `baseUrl`
@@ -19,6 +23,10 @@ export function wireApi(): void {
     baseUrl: API_BASE_URL,
     getAccessToken: () => useAuthStore.getState().accessToken,
     getRefreshToken: () => useAuthStore.getState().refreshToken,
+    // Consumer endpoints (`/api/v1/consumer/**`) get the 5-min verification
+    // JWT. Returns null automatically once the token expires, so the BE
+    // gets no header rather than a known-bad Bearer.
+    getConsumerToken: () => selectConsumerToken(useConsumerAuthStore.getState()),
     onTokensRefreshed: ({ accessToken, refreshToken }) => {
       useAuthStore.getState().setTokens({ accessToken, refreshToken });
     },
