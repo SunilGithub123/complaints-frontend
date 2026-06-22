@@ -44,7 +44,7 @@ jobs:
       # pnpm must come before setup-node so setup-node's `cache: pnpm`
       # can find the binary on PATH.
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         # Version is taken from the root `packageManager` field — no
         # need to repeat it here.
 
@@ -153,7 +153,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node
         uses: actions/setup-node@v4
