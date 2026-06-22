@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useChangePassword, ApiError, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { useAuthStore } from '@/auth/authStore';
@@ -52,6 +52,11 @@ type ChangePasswordValues = z.infer<ReturnType<typeof buildSchema>>;
 export default function ChangePasswordScreen(): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // `?from=profile` is set by the "Change password" CTA on /profile
+  // (Stage 8b) so we can land back there on success instead of the
+  // dashboard root. Anything else (or absent) defaults to '/'.
+  const returnTo = searchParams.get('from') === 'profile' ? '/profile' : '/';
   const setSession = useAuthStore((s) => s.setSession);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -87,7 +92,7 @@ export default function ChangePasswordScreen(): React.JSX.Element {
         refreshToken: payload.refreshToken,
         staff: payload.staff,
       });
-      navigate('/', { replace: true });
+      navigate(returnTo, { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         setFormError(err.message || t('errors.generic'));

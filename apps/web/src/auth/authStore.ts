@@ -24,6 +24,13 @@ export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   staff: StaffSummary | null;
+  /**
+   * Epoch-ms of the last successful `GET /staff/me` revalidation. `null`
+   * after login / change-password / refresh so the boot-time guard fires
+   * again. Stage 8a — clears the Stage 4 carry-over "proactive useMe at
+   * boot is deferred".
+   */
+  lastValidatedAt: number | null;
   /** Set the full session triple after a successful login. */
   setSession: (input: {
     accessToken: string;
@@ -34,6 +41,8 @@ export interface AuthState {
   setTokens: (input: { accessToken: string; refreshToken: string }) => void;
   /** Update the cached staff profile (e.g. after change-password). */
   setStaff: (staff: StaffSummary) => void;
+  /** Mark a successful /me round-trip as the source-of-truth snapshot. */
+  setValidatedStaff: (staff: StaffSummary) => void;
   /** Wipe everything — used on logout and refresh failure. */
   clear: () => void;
 }
@@ -46,11 +55,15 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       staff: null,
+      lastValidatedAt: null,
       setSession: ({ accessToken, refreshToken, staff }) =>
-        set({ accessToken, refreshToken, staff }),
-      setTokens: ({ accessToken, refreshToken }) => set({ accessToken, refreshToken }),
+        set({ accessToken, refreshToken, staff, lastValidatedAt: null }),
+      setTokens: ({ accessToken, refreshToken }) =>
+        set({ accessToken, refreshToken, lastValidatedAt: null }),
       setStaff: (staff) => set({ staff }),
-      clear: () => set({ accessToken: null, refreshToken: null, staff: null }),
+      setValidatedStaff: (staff) => set({ staff, lastValidatedAt: Date.now() }),
+      clear: () =>
+        set({ accessToken: null, refreshToken: null, staff: null, lastValidatedAt: null }),
     }),
     {
       name: STORAGE_KEY,
@@ -69,4 +82,5 @@ export const selectAccessToken = (s: AuthState): string | null => s.accessToken;
 export const selectRefreshToken = (s: AuthState): string | null => s.refreshToken;
 export const selectStaff = (s: AuthState): StaffSummary | null => s.staff;
 export const selectIsAuthenticated = (s: AuthState): boolean => s.accessToken !== null;
+export const selectLastValidatedAt = (s: AuthState): number | null => s.lastValidatedAt;
 

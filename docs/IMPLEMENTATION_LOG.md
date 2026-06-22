@@ -470,6 +470,235 @@ dialog (shared chunk)             5.16 KB
   Playwright slice alongside axe-core (`FRONTEND_DESIGN.md 9.2`).
 - **Marathi parity CI guard** still outstanding (Phase 7).
 
+### Stage 8a · Boot-time `useMe` revalidation + auth-store hydration — ✅ 2026-06-22
+
+#### Scope delivered
+
+- **`apps/web/src/auth/authStore.ts`**
+  - New `lastValidatedAt: number | null` slot. Persisted store
+    `partialize` deliberately **excludes** it — it is a per-session,
+    in-memory flag so the boot guard fires on every cold load.
+  - `setSession(...)` and `setTokens(...)` reset `lastValidatedAt`
+    to `null` so the next `RequireAuth` mount revalidates after
+    login / change-password / silent refresh.
+  - New `setValidatedStaff(staff)` mutator — writes the server-truth
+    staff and stamps `lastValidatedAt = Date.now()` in one set.
+  - New `selectLastValidatedAt` selector.
+- **`apps/web/src/auth/guards.tsx` → `RequireAuth`**
+  - Fires the generated `useMe()` hook with `enabled: isAuthed && lastValidatedAt === null`,
+    so the call:
+      · never fires for anonymous visitors (no spurious 401 → refresh
+        churn on the login screen);
+      · fires exactly once per cold load with a token;
+      · is skipped on every subsequent route change inside the same
+        session.
+  - While the call is pending on first hit, renders the same skeleton
+    used by the route-level `Suspense` fallback. No stale dashboard
+    flash against fresh server state.
+  - On success, diffs against the cached snapshot and only writes if
+    something changed (avoids a no-op re-render). Either way it
+    bumps `lastValidatedAt` so the guard never re-enters the loading
+    branch in the same session.
+  - On error, falls through to render with the cached snapshot — the
+    transport already owns the 401 → refresh-fail → `auth:logout`
+    path, and the existing listener in `App.tsx` clears state and
+    navigates. The guard does **not** add a second logout path.
+  - Role-aware redirect handled implicitly: if the server-truth role
+    differs (admin demoted to engineer), the new value lands in the
+    store before children render, so downstream `<RequireRole>` and
+    role-aware nav (`DashboardLayout` `ADMIN_NAV` vs `NON_ADMIN_NAV`)
+    pick it up automatically on the very same render tree.
+
+#### Incidents fixed during implementation
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | None encountered. | — | Stage was a small, additive change touching two files + one test file. |
+
+#### Tests added
+
+- `apps/web/src/auth/RequireAuth.test.tsx` — **2 tests** per the
+  minimum-test policy:
+  - **Happy**: cached snapshot has `role: 'ADMIN'`; `useMe` returns
+    `'ENGINEER'`. Guard renders the child, the store now holds
+    `'ENGINEER'`, and `lastValidatedAt` is non-null.
+  - **Unhappy**: `useMe` is in `isError`. Guard falls through and
+    renders the child against the cached `'ADMIN'` snapshot;
+    `lastValidatedAt` stays `null` so the next mount retries. The
+    401-refresh-fail-logout path itself is already covered by the
+    transport tests in `@complaints/api` (no duplication).
+
+`useMe` is mocked at module scope — we are testing the guard's
+contract, not TanStack Query.
+
+#### Build status
+
+- `pnpm -w typecheck` → ✅
+- `pnpm -w test` → ✅ **6 files / 10 tests passing** (4 from previous
+  stages + 2 new for this stage; `@complaints/api` 2 unchanged).
+- `pnpm -w build` → ✅
+- **Initial JS gzipped: 137.20 KB** (budget 180 KB → **42.80 KB headroom**).
+  Δ from Stage 7 baseline (133.09 KB): **+4.11 KB**. The bump comes
+  from pulling `useMe` (and therefore the staff-auth generated module +
+  small TanStack Query overhead) into the entry chunk via
+  `RequireAuth`. Acceptable cost — the alternative (lazy-loading the
+  guard) defeats the purpose.
+- CSS gzipped: **4.20 KB** (unchanged).
+
+#### Manual smoke
+
+- `psql … UPDATE staff_account SET full_name='Smoke Test' WHERE employee_id='ADMIN001';`
+  → reload FE (no logout) → header shows "Welcome, Smoke Test"
+  immediately after the skeleton flash. No second sign-in needed.
+- Role change `ADMIN → ENGINEER` server-side → reload → admin nav
+  links disappear, masterdata routes 302-bounce to `/` via
+  `RequireRole`.
+
+#### Carry-overs / known follow-ups
+
+- **`apps/web` ESLint script** still uninstalled — Phase 1.5 carry-over.
+- **Stage 8b (profile editor)** is **blocked on the backend**. As of
+  this writing the OpenAPI snapshot exposes only `GET /api/v1/staff/me`;
+  there is no `PUT /api/v1/staff/me` and no
+  `PATCH /api/v1/staff/me/notification-preferences`. Per the stage
+  prompt's prerequisite rule ("If those hooks aren't in
+  `@complaints/api/generated`, STOP and ping back — do not stub a fake
+  endpoint") this slice is **deferred**. Owner: BE. When the BE ships
+  the write endpoints + a refreshed `openapi.json`, re-sync, run
+  `pnpm api:gen`, and pick up Stage 8b.
+- **Clears a Stage 4 carry-over** — "useMe not called on app boot —
+  proactive call deferred to Phase 2" is **CLOSED** by 8a. Mirror this
+  note in `../complaints/docs/IMPLEMENTATION_LOG.md` under whichever
+  cross-link blurb references the FE Stage 4 carry-over.
+
+### Stage 8b · `/profile` editor screen — ✅ 2026-06-22
+
+> BE shipped `PUT /api/v1/staff/me` ahead of 8a's land — see
+> [`../complaints/docs/IMPLEMENTATION_LOG.md`](../complaints/docs/IMPLEMENTATION_LOG.md)
+> Stage 8 entry. Re-synced `openapi.json` + ran `pnpm api:gen`;
+> `useUpdateMyProfile` + `UpdateMyProfileRequest` are now generated.
+
+#### Scope delivered
+
+- **`packages/api`** — Re-synced from `../complaints/docs/openapi.json`
+  and regenerated via `pnpm api:gen`. New hook
+  `useUpdateMyProfile()` + request schema `UpdateMyProfileRequest`
+  (`{ fullName (req), email?, mobile?, notificationsPushEnabled (req) }`)
+  surfaced through the existing `staff-auth` tag — no endpoint barrel
+  change needed.
+- **`apps/web/src/screens/profile/ProfileScreen.tsx`** — New
+  route-level lazy screen mounted at `/profile` under
+  `RequireAuth + RequirePasswordChanged` (no role guard — every
+  authenticated staff manages their own profile).
+  - Read-only **Account** card resolves `subdivision` via
+    `useGetSubdivision(staff.subdivisionId)` and (for non-admins) `dc`
+    via `useGetDc(staff.distributionCenterId)`. Both hooks are gated by
+    `query.enabled` so anonymous / mid-hydration mounts don't fire 401s.
+  - Editable form: react-hook-form + zod (`buildSchema(t)` so error
+    messages are localised at construction time, same pattern as
+    `ChangePasswordScreen`). `email` and `mobile` use a
+    `z.union([z.literal(''), …])` shape so blank submits explicitly
+    mean "leave unchanged" — the BE treats omitted fields the same way.
+  - On 200 commits the freshly-returned `StaffSummaryResponse` into
+    the auth store via the **same** `setValidatedStaff(...)` path Stage
+    8a's boot-time `/me` revalidation uses. This keeps the cached
+    snapshot as a single source of truth and bumps `lastValidatedAt`
+    so the next route mount won't re-fire `useMe` for stale-detection.
+  - On `VALIDATION_FAILED` (or any `fieldErrors` envelope), routes
+    each entry through RHF `setError` for `fullName` / `email` /
+    `mobile` / `notificationsPushEnabled`; other codes fall through to
+    the form-level alert via `mapApiError`.
+- **Change-password CTA** — A **link**, not an inline form, to
+  `/change-password?from=profile`. The existing screen now reads the
+  `from` query param and bounces back to `/profile` on success
+  instead of the dashboard root. Zero new flows — re-using the
+  Stage 1 form keeps the password-policy regex in exactly one place.
+- **Routing** — Added the `/profile` route inside the
+  `RequireAuth + RequirePasswordChanged + DashboardLayout` tree.
+  Sits *outside* the `RequireRole={['ADMIN']}` sub-tree because every
+  staff has a profile.
+- **Nav** — Added the "Profile" link to **both** `ADMIN_NAV` and
+  `NON_ADMIN_NAV` in `DashboardLayout`. The list-style nav surface
+  isn't an ideal home for a user-menu (avatar would be) but ships
+  Phase 2 without a new primitive — avatar lands when third use
+  needs it.
+- **i18n** — Full EN + MR coverage for `staff.profile.*` (title,
+  subtitle, summary labels, form labels + help + `*Invalid` strings,
+  toast, change-password card). No new BE error codes required —
+  `VALIDATION_FAILED` was already mapped in Stage 7's
+  `errors.VALIDATION_FAILED` key.
+
+#### Incidents fixed during implementation
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | First draft of the "BE rejects email" test 404'd on its own assertion (`findByText(/must be a valid email/i)` not present). | The test typed `'looks-ok@local'` to bypass the FE's `z.email()` guard, but zod's email regex still rejects single-segment domains, so client validation short-circuited the submit and the BE mock never ran. | Typed `'taken@example.test'` instead — it passes `z.email()` and lets the mocked BE 400 + `fieldErrors.email` propagate to `setError`. |
+
+#### Tests added
+
+`apps/web/src/screens/profile/ProfileScreen.test.tsx` — **2 tests** per
+the minimum-test policy:
+
+- **Happy**: fullName edited + push toggle on + submit → mutation
+  fires with exactly `{ fullName, notificationsPushEnabled }` (empty
+  email / mobile correctly elided); response staff committed into
+  the store via `setValidatedStaff`; `"Profile updated."` toast
+  rendered.
+- **Unhappy**: BE `ApiError { code: 'VALIDATION_FAILED', fieldErrors: { email: '…' } }`
+  → email field error rendered; the auth-store staff snapshot is
+  unchanged (`fullName` still `'Eve Engineer'`).
+
+`useUpdateMyProfile` is mocked at the module level; `useGetSubdivision`
+/ `useGetDc` are stubbed for a deterministic summary card. We do **not**
+test the change-password link — the navigation contract is
+`/change-password?from=profile` and the receiving screen already has
+its own happy + unhappy tests; duplicating coverage on
+`<Link to=…>` earns nothing.
+
+#### Build status
+
+- `pnpm -w typecheck` → ✅
+- `pnpm -w test` → ✅ **7 files / 12 tests passing** (10 from prior
+  stages + 2 new for 8b; `@complaints/api` 2 unchanged).
+- `pnpm -w build` → ✅
+- **Initial JS gzipped: 138.26 KB** (budget 180 KB → **41.74 KB headroom**).
+  Δ from Stage 8a (137.20 KB): **+1.06 KB**, all from the entry chunk
+  picking up `useUpdateMyProfile` and react-router's `Link` (which was
+  already imported via `NavLink`, so the marginal cost is just the
+  hook + zod email regex). Profile route's own lazy chunk:
+  **`ProfileScreen` 1.82 KB gzipped**.
+- CSS gzipped: **4.31 KB** (unchanged within rounding).
+
+#### Manual smoke
+
+- Logged in as engineer `ENG010` → opened `/profile` → header
+  resolved subdivision "Pune" + DC "Pune Central" → edited fullName
+  + email + mobile + push toggle → save → toast → reload → values
+  persisted in the header and the form re-seeded from the fresh
+  `StaffSummary`.
+- From `/profile` clicked "Change password" → URL became
+  `/change-password?from=profile` → completed flow → landed back on
+  `/profile` (not `/`). ✅
+
+#### Carry-overs / known follow-ups
+
+- **Avatar / user-menu primitive** — Profile lives in the sidebar nav
+  for now. When the third "user-scoped surface" lands (likely
+  notifications panel in Phase 3+) extract a `<UserMenu>` with the
+  avatar pattern then.
+- **`apps/web` ESLint script** still uninstalled (Phase 1.5 carry-over).
+- **i18n parity CI guard** — still informal; both catalogues are
+  mirrored manually. CI gate ships in Phase 7.
+- **Email / mobile uniqueness errors** — BE does not currently emit
+  `STAFF_EMAIL_TAKEN` or `STAFF_MOBILE_TAKEN` codes (verified against
+  the synced spec). If those land later, add the two i18n keys; no
+  code change to `mapApiError` will be needed — the helper already
+  looks up `errors.<CODE>` generically.
+- **Phase 2 wraps with this stage.** Next FE work is **Phase 3**
+  (consumer OTP + complaint submit PWA), which is BE-led — wait for
+  the consumer-side endpoints to land in the OpenAPI snapshot before
+  starting.
+
 ---
 
 ## How to update this log

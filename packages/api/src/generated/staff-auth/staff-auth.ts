@@ -30,7 +30,8 @@ import type {
   ApiResponseVoid,
   ChangePasswordRequest,
   LoginRequest,
-  RefreshTokenRequest
+  RefreshTokenRequest,
+  UpdateMyProfileRequest
 } from '.././schemas';
 
 import { customFetch } from '../../client';
@@ -41,6 +42,202 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Current staff profile
+ */
+export type meResponse200 = {
+  data: ApiResponseStaffSummaryResponse
+  status: 200
+}
+    
+export type meResponseSuccess = (meResponse200) & {
+  headers: Headers;
+};
+;
+
+export type meResponse = (meResponseSuccess)
+
+export const getMeUrl = () => {
+
+
+  
+
+  return `/api/v1/staff/me`
+}
+
+export const me = async ( options?: RequestInit): Promise<meResponse> => {
+  
+  return customFetch<meResponse>(getMeUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getMeQueryKey = () => {
+    return [
+    `/api/v1/staff/me`
+    ] as const;
+    }
+
+    
+export const getMeQueryOptions = <TData = Awaited<ReturnType<typeof me>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMeQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof me>>> = () => me(requestOptions);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type MeQueryResult = NonNullable<Awaited<ReturnType<typeof me>>>
+export type MeQueryError = unknown
+
+
+export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof me>>,
+          TError,
+          Awaited<ReturnType<typeof me>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof me>>,
+          TError,
+          Awaited<ReturnType<typeof me>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Current staff profile
+ */
+
+export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getMeQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Updates the caller's own mutable profile fields: fullName, email, mobile, notificationsPushEnabled. Scope fields (role, subdivisionId, distributionCenterId, employeeId) are immutable here — those are admin actions via PUT /api/v1/admin/staff/{id}.
+ * @summary Update my profile (self-service)
+ */
+export type updateMyProfileResponse200 = {
+  data: ApiResponseStaffSummaryResponse
+  status: 200
+}
+    
+export type updateMyProfileResponseSuccess = (updateMyProfileResponse200) & {
+  headers: Headers;
+};
+;
+
+export type updateMyProfileResponse = (updateMyProfileResponseSuccess)
+
+export const getUpdateMyProfileUrl = () => {
+
+
+  
+
+  return `/api/v1/staff/me`
+}
+
+export const updateMyProfile = async (updateMyProfileRequest: UpdateMyProfileRequest, options?: RequestInit): Promise<updateMyProfileResponse> => {
+  
+  return customFetch<updateMyProfileResponse>(getUpdateMyProfileUrl(),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateMyProfileRequest,)
+  }
+);}
+
+
+
+
+export const getUpdateMyProfileMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,{data: UpdateMyProfileRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,{data: UpdateMyProfileRequest}, TContext> => {
+
+const mutationKey = ['updateMyProfile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyProfile>>, {data: UpdateMyProfileRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateMyProfile(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyProfile>>>
+    export type UpdateMyProfileMutationBody = UpdateMyProfileRequest
+    export type UpdateMyProfileMutationError = unknown
+
+    /**
+ * @summary Update my profile (self-service)
+ */
+export const useUpdateMyProfile = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,{data: UpdateMyProfileRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyProfile>>,
+        TError,
+        {data: UpdateMyProfileRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateMyProfileMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Rotate refresh token; returns new access + refresh pair
  */
 export type refreshResponse200 = {
@@ -373,115 +570,4 @@ export const useChangePassword = <TError = unknown,
 
       return useMutation(mutationOptions, queryClient);
     }
-    /**
- * @summary Current staff profile
- */
-export type meResponse200 = {
-  data: ApiResponseStaffSummaryResponse
-  status: 200
-}
     
-export type meResponseSuccess = (meResponse200) & {
-  headers: Headers;
-};
-;
-
-export type meResponse = (meResponseSuccess)
-
-export const getMeUrl = () => {
-
-
-  
-
-  return `/api/v1/staff/me`
-}
-
-export const me = async ( options?: RequestInit): Promise<meResponse> => {
-  
-  return customFetch<meResponse>(getMeUrl(),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
-
-
-
-export const getMeQueryKey = () => {
-    return [
-    `/api/v1/staff/me`
-    ] as const;
-    }
-
-    
-export const getMeQueryOptions = <TData = Awaited<ReturnType<typeof me>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getMeQueryKey();
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof me>>> = () => me(requestOptions);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
-}
-
-export type MeQueryResult = NonNullable<Awaited<ReturnType<typeof me>>>
-export type MeQueryError = unknown
-
-
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me>>,
-          TError,
-          Awaited<ReturnType<typeof me>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me>>,
-          TError,
-          Awaited<ReturnType<typeof me>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-/**
- * @summary Current staff profile
- */
-
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
-
-  const queryOptions = getMeQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-

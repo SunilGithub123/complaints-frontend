@@ -27,6 +27,7 @@ const CategoriesAdminScreen = lazy(
   () => import('@/screens/masterdata/CategoriesAdminScreen'),
 );
 const StaffListScreen = lazy(() => import('@/screens/admin-staff/StaffListScreen'));
+const ProfileScreen = lazy(() => import('@/screens/profile/ProfileScreen'));
 const NotFoundScreen = lazy(() => import('@/screens/not-found/NotFoundScreen'));
 
 function PageFallback(): ReactElement {
@@ -55,6 +56,8 @@ export const router = createBrowserRouter([
             element: wrap(<DashboardLayout />),
             children: [
               { index: true, element: wrap(<HomeScreen />) },
+              // Open to every authenticated, password-cleared staff member.
+              { path: 'profile', element: wrap(<ProfileScreen />) },
               {
                 // Phase 2: master-data write screens + staff management,
                 // all admin-only. Gate the whole sub-tree once.

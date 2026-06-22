@@ -9,6 +9,26 @@ import * as zod from 'zod';
 
 
 /**
+ * Updates the caller's own mutable profile fields: fullName, email, mobile, notificationsPushEnabled. Scope fields (role, subdivisionId, distributionCenterId, employeeId) are immutable here — those are admin actions via PUT /api/v1/admin/staff/{id}.
+ * @summary Update my profile (self-service)
+ */
+export const updateMyProfileBodyFullNameMin = 0;
+export const updateMyProfileBodyFullNameMax = 200;
+
+export const updateMyProfileBodyEmailMin = 0;
+export const updateMyProfileBodyEmailMax = 200;
+
+export const updateMyProfileBodyMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
+
+
+export const updateMyProfileBody = zod.object({
+  "fullName": zod.string().min(updateMyProfileBodyFullNameMin).max(updateMyProfileBodyFullNameMax),
+  "email": zod.string().min(updateMyProfileBodyEmailMin).max(updateMyProfileBodyEmailMax).optional(),
+  "mobile": zod.string().regex(updateMyProfileBodyMobileRegExp).optional(),
+  "notificationsPushEnabled": zod.boolean()
+})
+
+/**
  * @summary Rotate refresh token; returns new access + refresh pair
  */
 export const refreshBody = zod.object({

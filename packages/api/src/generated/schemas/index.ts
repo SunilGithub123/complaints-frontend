@@ -48,4 +48,5 @@ export * from './staffSummaryResponse';
 export * from './staffSummaryResponseRole';
 export * from './subdivisionRequest';
 export * from './subdivisionResponse';
+export * from './updateMyProfileRequest';
 export * from './updateStaffRequest';

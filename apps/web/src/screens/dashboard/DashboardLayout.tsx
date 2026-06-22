@@ -30,10 +30,12 @@ const ADMIN_NAV: readonly NavItem[] = [
   },
   { to: '/masterdata/categories', labelKey: 'staff.dashboard.navCategories' },
   { to: '/admin/staff', labelKey: 'staff.dashboard.navStaff' },
+  { to: '/profile', labelKey: 'staff.dashboard.navProfile' },
 ];
 
 const NON_ADMIN_NAV: readonly NavItem[] = [
   { to: '/', labelKey: 'staff.dashboard.navHome' },
+  { to: '/profile', labelKey: 'staff.dashboard.navProfile' },
 ];
 
 export default function DashboardLayout(): React.JSX.Element {
