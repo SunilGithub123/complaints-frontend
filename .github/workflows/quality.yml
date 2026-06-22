@@ -38,7 +38,7 @@ jobs:
     # against); gitleaks runs on both PR and push:main.
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Fetch full history so Gitleaks can scan all commits in the push,
           # not just the merge commit.
@@ -62,7 +62,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
