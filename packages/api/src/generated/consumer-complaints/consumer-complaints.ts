@@ -256,6 +256,119 @@ export const useSubmit = <TError = unknown,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Returns 200 with data=null when no feedback has been submitted yet. Lets the FE render a read-only rating panel without try / catching the submit 409 to discover existence. Owner-checked; foreign ticket → 403.
+ * @summary Read-back the verified consumer's own feedback for a complaint (Stage 20.1)
+ */
+export type getFeedbackResponse200 = {
+  data: ApiResponseFeedbackResponse
+  status: 200
+}
+    
+export type getFeedbackResponseSuccess = (getFeedbackResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getFeedbackResponse = (getFeedbackResponseSuccess)
+
+export const getGetFeedbackUrl = (ticketNo: string,) => {
+
+
+  
+
+  return `/api/v1/consumer/complaints/${ticketNo}/feedback`
+}
+
+export const getFeedback = async (ticketNo: string, options?: RequestInit): Promise<getFeedbackResponse> => {
+  
+  return customFetch<getFeedbackResponse>(getGetFeedbackUrl(ticketNo),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetFeedbackQueryKey = (ticketNo?: string,) => {
+    return [
+    `/api/v1/consumer/complaints/${ticketNo}/feedback`
+    ] as const;
+    }
+
+    
+export const getGetFeedbackQueryOptions = <TData = Awaited<ReturnType<typeof getFeedback>>, TError = unknown>(ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeedback>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeedbackQueryKey(ticketNo);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeedback>>> = () => getFeedback(ticketNo, requestOptions);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(ticketNo), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeedback>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type GetFeedbackQueryResult = NonNullable<Awaited<ReturnType<typeof getFeedback>>>
+export type GetFeedbackQueryError = unknown
+
+
+export function useGetFeedback<TData = Awaited<ReturnType<typeof getFeedback>>, TError = unknown>(
+ ticketNo: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeedback>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeedback>>,
+          TError,
+          Awaited<ReturnType<typeof getFeedback>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useGetFeedback<TData = Awaited<ReturnType<typeof getFeedback>>, TError = unknown>(
+ ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeedback>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeedback>>,
+          TError,
+          Awaited<ReturnType<typeof getFeedback>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useGetFeedback<TData = Awaited<ReturnType<typeof getFeedback>>, TError = unknown>(
+ ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeedback>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Read-back the verified consumer's own feedback for a complaint (Stage 20.1)
+ */
+
+export function useGetFeedback<TData = Awaited<ReturnType<typeof getFeedback>>, TError = unknown>(
+ ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeedback>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getGetFeedbackQueryOptions(ticketNo,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Rating is 1..5; comment is optional. Allowed only after the complaint is CLOSED → 409 FEEDBACK_NOT_ALLOWED_YET while it's still open. One row per complaint (UNIQUE on complaint_id) → 409 FEEDBACK_ALREADY_SUBMITTED on a second attempt.
  * @summary Submit feedback for a CLOSED complaint (one-shot, idempotent at DB level)
  */

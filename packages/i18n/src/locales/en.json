@@ -364,7 +364,8 @@
       "submit": "Submit feedback",
       "submitting": "Submitting…",
       "successToast": "Thanks for the feedback!",
-      "alreadySubmitted": "Thanks — we've already received your feedback for this complaint."
+      "alreadySubmitted": "Thanks — we've already received your feedback for this complaint.",
+      "yourFeedback": "Your feedback"
     }
   },
   "complaints": {

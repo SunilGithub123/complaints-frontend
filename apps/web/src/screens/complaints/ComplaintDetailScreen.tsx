@@ -434,11 +434,11 @@ function hasAnyReason(v: Schemas.ComplaintStaffDetailResponse): boolean {
  *
  * - `COMPLAINT` images (consumer-submitted) → top group.
  * - `RESOLUTION` images (technician proof-of-fix) → bottom group.
- * - Anything missing `imageType` falls into an unlabeled group
- *   (defensive — old responses still in some caches before the BE bump).
  *
- * Inside each group, images are sorted by `uploadedAt` ASC for a stable,
- * chronological gallery.
+ * BE Stage 19.x confirmed `imageType` is required-non-null on every
+ * response, so the previously-defensive "untyped" bucket has been
+ * removed. Inside each group, images are sorted by `uploadedAt` ASC
+ * for a stable, chronological gallery.
  */
 function ImageGallery({
   images,
@@ -455,7 +455,6 @@ function ImageGallery({
   const resolution = images
     .filter((i) => i.imageType === 'RESOLUTION')
     .sort(byTime);
-  const untyped = images.filter((i) => i.imageType === undefined).sort(byTime);
 
   return (
     <div className="flex flex-col gap-4" data-testid="complaint-gallery">
@@ -473,13 +472,6 @@ function ImageGallery({
           testId="complaint-gallery-resolution"
         />
       ) : null}
-      {untyped.length > 0 ? (
-        <ImageGroup
-          heading={null}
-          images={untyped}
-          testId="complaint-gallery-untyped"
-        />
-      ) : null}
     </div>
   );
 }
@@ -489,17 +481,15 @@ function ImageGroup({
   images,
   testId,
 }: {
-  heading: string | null;
+  heading: string;
   images: Schemas.ComplaintImageResponse[];
   testId: string;
 }): React.JSX.Element {
   return (
     <div className="flex flex-col gap-1.5">
-      {heading ? (
-        <h4 className="text-xs uppercase tracking-wide text-[var(--color-muted-500)]">
-          {heading}
-        </h4>
-      ) : null}
+      <h4 className="text-xs uppercase tracking-wide text-[var(--color-muted-500)]">
+        {heading}
+      </h4>
       <ul className="grid grid-cols-3 gap-2" data-testid={testId}>
         {images.map((img) => (
           <li

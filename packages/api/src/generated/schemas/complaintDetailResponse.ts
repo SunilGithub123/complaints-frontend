@@ -24,5 +24,7 @@ export interface ComplaintDetailResponse {
   slaDeadline?: string;
   resolvedAt?: string;
   closedAt?: string;
+  /** True iff the consumer has already submitted feedback for this complaint. Lets the FE hide the Rate button on first paint without a probe POST. */
+  feedbackSubmitted: boolean;
   images?: ComplaintImageResponse[];
 }

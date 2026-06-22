@@ -1,14 +1,19 @@
 /**
  * `/consumer/my-complaints/:ticketNo` — consumer-facing detail screen
- * (BE Stage 17 enriched detail + Stage 18 cancel + Stage 19 feedback).
+ * (BE Stage 17 enriched detail + Stage 18 cancel + Stage 19 feedback,
+ * Stage 19.x added `feedbackSubmitted` boolean + GET /feedback).
  *
  * Renders the enriched `ComplaintDetailResponse` (severity, slaBreached,
- * resolvedAt, closedAt are new on this slice). Plus:
+ * resolvedAt, closedAt, feedbackSubmitted). Plus:
  *  - History timeline from `useGetConsumerComplaintHistory`.
  *  - Cancel button (status === 'SUBMITTED' only).
- *  - Feedback button (status === 'CLOSED' only; suppressed if we know
- *    the consumer already submitted feedback this session — see
- *    FeedbackDialog `wasSubmittedThisSession`).
+ *  - Feedback action:
+ *      feedbackSubmitted === false → "Leave feedback" button → dialog.
+ *      feedbackSubmitted === true  → read-only panel via
+ *                                    `useGetFeedback`.
+ *    BE contract: GET /feedback returns 200 with `data: null` in the
+ *    rare race window between detail and GET; we treat it as
+ *    "not yet rendered" and let the next tick refetch. NOT a 404.
  *
  * Error states:
  *  - 401 → clear consumer store, bounce to /consumer.
@@ -21,8 +26,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   useGetComplaintByTicket,
   useGetConsumerComplaintHistory,
+  useGetFeedback,
   getGetComplaintByTicketQueryKey,
   getConsumerComplaintHistoryQueryKey,
+  getGetFeedbackQueryKey,
   ApiError,
   type Schemas,
 } from '@complaints/api';
@@ -43,7 +50,7 @@ import { useConsumerAuthStore } from '@/features/consumer/consumerAuthStore';
 import { mapApiError } from '@/lib/apiErrors';
 import { ConsumerHistoryTimeline } from './ConsumerHistoryTimeline';
 import { CancelDialog } from './CancelDialog';
-import { FeedbackDialog, wasSubmittedThisSession } from './FeedbackDialog';
+import { FeedbackDialog } from './FeedbackDialog';
 
 type DialogKind = 'cancel' | 'feedback' | null;
 
@@ -55,9 +62,6 @@ export default function ConsumerDetailScreen(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { show: toast } = useToast();
   const [dialog, setDialog] = useState<DialogKind>(null);
-  const [feedbackDoneLocal, setFeedbackDoneLocal] = useState(() =>
-    wasSubmittedThisSession(ticketNo),
-  );
 
   const detail = useGetComplaintByTicket<
     { data?: Schemas.ApiResponseComplaintDetailResponse },
@@ -80,6 +84,21 @@ export default function ConsumerDetailScreen(): React.JSX.Element {
 
   const view = detail.data?.data?.data;
   const historyRows = history.data?.data?.data ?? [];
+  const feedbackSubmitted = view?.feedbackSubmitted === true;
+
+  // Only fetch the persisted feedback when the detail says it exists.
+  // BE returns 200 with `data: null` if the row hasn't propagated yet —
+  // treat that as "not yet" rather than an error (no try/catch needed).
+  const feedback = useGetFeedback<
+    { data?: Schemas.ApiResponseFeedbackResponse },
+    unknown
+  >(ticketNo, {
+    query: {
+      retry: false,
+      enabled: ticketNo.length > 0 && feedbackSubmitted,
+    },
+  });
+  const feedbackRow = feedback.data?.data?.data ?? null;
 
   // 401 anywhere → consumer JWT expired mid-session.
   useEffect(() => {
@@ -91,13 +110,18 @@ export default function ConsumerDetailScreen(): React.JSX.Element {
     }
   }, [detail.error, history.error, navigate]);
 
-  function invalidate(): void {
+  function invalidate(opts?: { feedback?: boolean }): void {
     void queryClient.invalidateQueries({
       queryKey: getGetComplaintByTicketQueryKey(ticketNo),
     });
     void queryClient.invalidateQueries({
       queryKey: getConsumerComplaintHistoryQueryKey(ticketNo),
     });
+    if (opts?.feedback) {
+      void queryClient.invalidateQueries({
+        queryKey: getGetFeedbackQueryKey(ticketNo),
+      });
+    }
   }
 
   // --- Error states --------------------------------------------------
@@ -147,7 +171,7 @@ export default function ConsumerDetailScreen(): React.JSX.Element {
   const status = view.status ?? 'SUBMITTED';
   const severity = view.severity ?? null;
   const canCancel = status === 'SUBMITTED';
-  const canSubmitFeedback = status === 'CLOSED' && !feedbackDoneLocal;
+  const canSubmitFeedback = status === 'CLOSED' && !feedbackSubmitted;
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-4 p-4">
@@ -234,6 +258,10 @@ export default function ConsumerDetailScreen(): React.JSX.Element {
         </CardContent>
       </Card>
 
+      {feedbackSubmitted ? (
+        <FeedbackPanel feedback={feedbackRow} loading={feedback.isLoading} t={t} />
+      ) : null}
+
       {canCancel || canSubmitFeedback ? (
         <Card>
           <CardHeader>
@@ -296,12 +324,58 @@ export default function ConsumerDetailScreen(): React.JSX.Element {
         onClose={() => setDialog(null)}
         ticketNo={ticketNo}
         onSubmitted={() => {
-          setFeedbackDoneLocal(true);
           setDialog(null);
           toast(t('consumer.feedback.successToast'), 'success');
+          // BE Stage 19.x: feedbackSubmitted is on detail, plus GET
+          // /feedback now exists. Invalidate both so the read-only
+          // panel renders without a manual refresh.
+          invalidate({ feedback: true });
         }}
       />
     </main>
+  );
+}
+
+function FeedbackPanel({
+  feedback,
+  loading,
+  t,
+}: {
+  feedback: Schemas.FeedbackResponse | null;
+  loading: boolean;
+  t: ReturnType<typeof useT>;
+}): React.JSX.Element {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('consumer.feedback.yourFeedback')}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        {loading || feedback === null ? (
+          <Skeleton className="h-16 w-full" />
+        ) : (
+          <>
+            <p className="text-sm">
+              {t('consumer.feedback.rating')}:{' '}
+              <span aria-label={`${feedback.rating ?? 0}`}>
+                {'★'.repeat(feedback.rating ?? 0)}
+                <span className="text-[var(--color-muted-200)]">
+                  {'★'.repeat(Math.max(0, 5 - (feedback.rating ?? 0)))}
+                </span>
+              </span>
+            </p>
+            {feedback.comment ? (
+              <p className="whitespace-pre-wrap text-sm">{feedback.comment}</p>
+            ) : null}
+            {feedback.submittedAt ? (
+              <p className="text-xs text-[var(--color-muted-500)]">
+                {formatIstDateTime(feedback.submittedAt)}
+              </p>
+            ) : null}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

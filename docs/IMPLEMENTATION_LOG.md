@@ -1814,6 +1814,97 @@ chunk via the consumer-flow lazy boundary.
 
 ---
 
+### Stage 13 (BE-followup) · feedbackSubmitted flag + GET /feedback + imageType hardening — 2026-06-23
+
+> Reactive pass after BE shipped the three follow-ups from the
+> Stage 13 carry-over list. No new screens or routes; just lighter
+> code paths and a real read-only feedback panel.
+
+**What shipped**
+
+- **Spec re-pull + regen.** Sibling `complaints/docs/openapi.json`
+  refreshed; orval picked up:
+  - `ComplaintDetailResponse.feedbackSubmitted: boolean` (required,
+    non-optional in the generated TS).
+  - New `getFeedback` query on
+    `/api/v1/consumer/complaints/{ticketNo}/feedback` →
+    `useGetFeedback` + `getGetFeedbackQueryKey` re-exported from
+    `@complaints/api`.
+  - `ComplaintImageResponse.imageType` now non-optional (the
+    previously-seen `?:` was a stale-spec artefact — confirmed by
+    BE; no orval transform needed).
+- **ConsumerDetailScreen** rewritten around `feedbackSubmitted`:
+  - `feedbackDoneLocal` state + `wasSubmittedThisSession` read are
+    gone. Single source of truth = the boolean on detail.
+  - When `feedbackSubmitted === true` we fire `useGetFeedback`
+    (`enabled` gated on the boolean) and render a new
+    `<FeedbackPanel>` card with rating stars + comment +
+    submitted-at IST timestamp.
+  - BE contract honoured: `getFeedback` returns 200 with
+    `data: null` in the rare race window between the detail and
+    the GET. We render a skeleton until either `data` arrives or
+    the next invalidate-then-fetch resolves it. No `try/catch`,
+    no 404 handling.
+  - `FeedbackDialog.onSubmitted` now invalidates the feedback
+    query alongside detail/history so the panel renders without
+    a manual refresh.
+  - `FeedbackDialog` keeps its `rememberSubmitted` /
+    `wasSubmittedThisSession` helpers but the screen no longer
+    consumes them — they remain as a belt-and-suspenders guard
+    inside the dialog itself (zero cost, removes one stale-state
+    failure mode if the detail query lags). Will drop on the
+    next slice if unused.
+- **Staff `ImageGallery`** — defensive "untyped" bucket removed
+  (BE confirmed `imageType` required-non-null). The existing test
+  that asserts `complaint-gallery-untyped` is NOT present continues
+  to pass (it became trivially true).
+- **i18n** — one new key: `consumer.feedback.yourFeedback` in
+  en + mr.
+
+**What we tested**
+
+- Existing 37/37 tests continue to pass. No new tests added — the
+  follow-up is structural (data flow + types) and the existing
+  FeedbackDialog tests still cover the submit + already-submitted
+  paths. The new `FeedbackPanel` is render-only; per minimum-test
+  policy it doesn't justify its own RTL test until it grows
+  branching logic.
+
+**Gate output**
+
+| Gate       | Result | Notes                                                              |
+| ---------- | ------ | ------------------------------------------------------------------ |
+| typecheck  | ✅     | 5 packages, 0 errors                                               |
+| lint       | ✅     | 0 warnings                                                         |
+| test       | ✅     | 19 files / 37 tests (unchanged)                                    |
+| build      | ✅     | 299 modules transformed                                            |
+| size (JS)  | ✅     | **145.86 KB gz** entry (+0.02 from Stage 13; **34.14 KB headroom**) |
+| size (CSS) | ✅     | 4.86 KB gz                                                         |
+
+**Manual smoke**
+
+- BE on `localhost:8080` post Stage 19.x.
+- Closed a complaint via staff, switched to consumer tab, refreshed:
+  Feedback button visible, submitted 4-star + comment → toast,
+  panel re-rendered with "Your feedback" card showing
+  `★★★★☆` and the comment.
+- Manually nuked the feedback row in DB while the tab was open,
+  refreshed → `feedbackSubmitted: false` came back, button
+  re-appeared. Edge case confirmed.
+
+**Carry-overs (refreshed)**
+
+- All three BE asks from Stage 13's carry-over list are **closed**.
+- `FeedbackDialog`'s `rememberSubmitted` helpers are dead code on
+  the happy path now; they're cheap and defensive against a flaky
+  detail refetch. Park for now, remove on the next consumer slice
+  if still untouched.
+- Push notifications (BE Stage 21) — BE has started work and will
+  loop FE in early on the device-token model. Stay reactive; no
+  speculative scaffolding.
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

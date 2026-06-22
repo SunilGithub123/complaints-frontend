@@ -53,6 +53,8 @@ export {
   getCancelMutationOptions as getCancelComplaintMutationOptions,
   useSubmitFeedback,
   getSubmitFeedbackMutationOptions,
+  useGetFeedback,
+  getGetFeedbackQueryKey,
   useGetHistory1 as useGetConsumerComplaintHistory,
   getGetHistory1QueryKey as getConsumerComplaintHistoryQueryKey,
 } from './generated/consumer-complaints/consumer-complaints';

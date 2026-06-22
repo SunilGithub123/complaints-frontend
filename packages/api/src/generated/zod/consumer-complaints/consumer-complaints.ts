@@ -54,6 +54,14 @@ export const submitBody = zod.object({
 }).describe('multipart\/form-data layout for POST \/api\/v1\/consumer\/complaints')
 
 /**
+ * Returns 200 with data=null when no feedback has been submitted yet. Lets the FE render a read-only rating panel without try / catching the submit 409 to discover existence. Owner-checked; foreign ticket → 403.
+ * @summary Read-back the verified consumer's own feedback for a complaint (Stage 20.1)
+ */
+export const getFeedbackParams = zod.object({
+  "ticketNo": zod.string()
+})
+
+/**
  * Rating is 1..5; comment is optional. Allowed only after the complaint is CLOSED → 409 FEEDBACK_NOT_ALLOWED_YET while it's still open. One row per complaint (UNIQUE on complaint_id) → 409 FEEDBACK_ALREADY_SUBMITTED on a second attempt.
  * @summary Submit feedback for a CLOSED complaint (one-shot, idempotent at DB level)
  */
