@@ -401,7 +401,7 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
             complaintId={view.id}
             slaBreached={view.slaBreached === true}
             existingSlaBreachReason={view.slaBreachReason ?? null}
-            onSuccess={(detail) => {
+            onSuccess={(detail: Schemas.ComplaintStaffDetailResponse | undefined) => {
               // BE Stage 16.1 — `close` now returns the post-close
               // detail. Seed the cache directly so we don't refetch.
               if (detail) {
