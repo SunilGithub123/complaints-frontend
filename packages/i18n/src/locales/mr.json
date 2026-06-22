@@ -348,7 +348,8 @@
       "historyHeading": "इतिहास",
       "historyEmpty": "अद्याप इतिहास नाही.",
       "historyInitial": "प्रारंभिक नोंद",
-      "historyChangedBy": "वापरकर्ता #{{userId}} द्वारे",
+      "historyChangedBy": "{{name}} ({{employeeId}}) द्वारे",
+      "historyChangedByUnknown": "वापरकर्ता #{{userId}} द्वारे",
       "historySystem": "प्रणालीद्वारे",
       "actions": {
         "heading": "क्रिया",

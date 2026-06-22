@@ -90,6 +90,10 @@ export {
 // The two query hooks use generic operationIds (`getById`, `getHistory`) that
 // would collide if a second resource adds identical operationIds in future —
 // alias them at the boundary so call-sites are always unambiguous.
+//
+// Numeric mapping (re-verify after every `pnpm api:gen`):
+//   getById  → 1 (un-suffixed went to staff-directory tag, Stage 14.5)
+//   getHistory has no collision yet
 export {
   useUpdateSeverity,
   getUpdateSeverityMutationOptions,
@@ -101,9 +105,25 @@ export {
   getMarkDuplicateMutationOptions,
   useAssign,
   getAssignMutationOptions,
-  useGetById as useGetStaffComplaintById,
-  getGetByIdQueryKey as getStaffComplaintByIdQueryKey,
+  useGetById1 as useGetStaffComplaintById,
+  getGetById1QueryKey as getStaffComplaintByIdQueryKey,
   useGetHistory as useGetStaffComplaintHistory,
   getGetHistoryQueryKey as getStaffComplaintHistoryQueryKey,
 } from './generated/staff-complaint-management/staff-complaint-management';
+
+// Staff Directory (Stage 14.5) — read-only, any-authenticated-staff lookup
+// for resolving user IDs into { fullName, employeeId, role, enabled, … }.
+// Distinct from the ADMIN-only `/admin/staff` lifecycle surface
+// (re-exported above as `useListStaff` etc.). The batch endpoint accepts
+// up to 50 ids per call and silently drops unknown ids — callers MUST
+// treat the response as a partial map keyed by `userId`.
+//
+// Both operationIds collide with staff-complaint-management's
+// `useGetById` / `getGetByIdQueryKey`, so we alias at the boundary.
+export {
+  useGetMany as useGetStaffDirectoryMany,
+  getGetManyQueryKey as getStaffDirectoryManyQueryKey,
+  useGetById as useGetStaffDirectoryById,
+  getGetByIdQueryKey as getStaffDirectoryByIdQueryKey,
+} from './generated/staff-directory/staff-directory';
 

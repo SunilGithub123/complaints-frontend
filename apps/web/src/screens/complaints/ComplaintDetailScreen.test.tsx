@@ -26,6 +26,9 @@ vi.mock('@complaints/api', async () => {
     ...actual,
     useGetStaffComplaintById: (...args: unknown[]) => mockDetail(...args),
     useGetStaffComplaintHistory: (...args: unknown[]) => mockHistory(...args),
+    // HistoryTimeline calls this once per render; both tests give it
+    // an empty history so the picker never actually fires.
+    useGetStaffDirectoryMany: () => ({ data: undefined, isLoading: false }),
     // Picker hook — never reached in these tests but the dialog files
     // import it eagerly.
     useListStaff: () => ({ data: undefined, isLoading: false }),

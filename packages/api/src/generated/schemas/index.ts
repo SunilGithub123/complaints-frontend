@@ -6,11 +6,14 @@
  * OpenAPI spec version: v1
  */
 
+export * from './addImagesBody';
 export * from './apiResponseComplaintCategoryResponse';
 export * from './apiResponseComplaintDetailResponse';
 export * from './apiResponseComplaintStaffDetailResponse';
 export * from './apiResponseDistributionCenterResponse';
 export * from './apiResponseListComplaintHistoryEntryResponse';
+export * from './apiResponseListComplaintImageResponse';
+export * from './apiResponseListStaffDirectoryEntryResponse';
 export * from './apiResponseLoginResponse';
 export * from './apiResponseOtpVerifyResponse';
 export * from './apiResponsePageResponseComplaintCategoryResponse';
@@ -18,6 +21,7 @@ export * from './apiResponsePageResponseDistributionCenterResponse';
 export * from './apiResponsePageResponseStaffListItemResponse';
 export * from './apiResponsePageResponseSubdivisionResponse';
 export * from './apiResponseResetStaffPasswordResponse';
+export * from './apiResponseStaffDirectoryEntryResponse';
 export * from './apiResponseStaffListItemResponse';
 export * from './apiResponseStaffSummaryResponse';
 export * from './apiResponseSubdivisionResponse';
@@ -27,6 +31,7 @@ export * from './apiResponseVoidData';
 export * from './assignComplaintRequest';
 export * from './assignComplaintRequestSeverity';
 export * from './changePasswordRequest';
+export * from './closeComplaintRequest';
 export * from './complaintCategoryRequest';
 export * from './complaintCategoryResponse';
 export * from './complaintDetailResponse';
@@ -44,6 +49,7 @@ export * from './distributionCenterRequest';
 export * from './distributionCenterResponse';
 export * from './errorResponse';
 export * from './errorResponseDetails';
+export * from './getManyParams';
 export * from './listActiveCategoriesParams';
 export * from './listCategoriesParams';
 export * from './listDcsParams';
@@ -65,6 +71,9 @@ export * from './reassignComplaintRequest';
 export * from './refreshTokenRequest';
 export * from './rejectComplaintRequest';
 export * from './resetStaffPasswordResponse';
+export * from './resolveComplaintRequest';
+export * from './staffDirectoryEntryResponse';
+export * from './staffDirectoryEntryResponseRole';
 export * from './staffListItemResponse';
 export * from './staffListItemResponseRole';
 export * from './staffSummaryResponse';

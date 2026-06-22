@@ -348,7 +348,8 @@
       "historyHeading": "History",
       "historyEmpty": "No history yet.",
       "historyInitial": "Initial submission",
-      "historyChangedBy": "by user #{{userId}}",
+      "historyChangedBy": "by {{name}} ({{employeeId}})",
+      "historyChangedByUnknown": "by user #{{userId}}",
       "historySystem": "by system",
       "actions": {
         "heading": "Actions",

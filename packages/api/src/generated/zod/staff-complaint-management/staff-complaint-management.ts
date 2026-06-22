@@ -73,6 +73,22 @@ export const markDuplicateBody = zod.object({
 })
 
 /**
+ * @summary Engineer / Admin close-on-behalf of a RESOLVED complaint
+ */
+export const closeParams = zod.object({
+  "id": zod.number()
+})
+
+export const closeBodySlaBreachReasonMin = 0;
+export const closeBodySlaBreachReasonMax = 500;
+
+
+
+export const closeBody = zod.object({
+  "slaBreachReason": zod.string().min(closeBodySlaBreachReasonMin).max(closeBodySlaBreachReasonMax).optional()
+})
+
+/**
  * @summary Assign a SUBMITTED complaint to a technician and set severity
  */
 export const assignParams = zod.object({
@@ -87,7 +103,7 @@ export const assignBody = zod.object({
 /**
  * @summary Engineer / Admin detail view of a complaint (scope-checked)
  */
-export const getByIdParams = zod.object({
+export const getById1Params = zod.object({
   "id": zod.number()
 })
 

@@ -1123,6 +1123,126 @@ engineer/admin actually opens a complaint.
   copy makes sense once we surface the technician picker's loading
   errors.
 
+### Stage 12.1 · Staff-directory name resolution in HistoryTimeline — ✅ 2026-06-22
+
+> Cross-ref: backend Stage 14.5 — see
+> `../complaints/docs/IMPLEMENTATION_LOG.md`. New endpoints:
+> `GET /api/v1/staff/users/{id}` and
+> `GET /api/v1/staff/users?ids=…` (batch, cap 50, silently drops
+> unknown ids). Read-only, any-authenticated-staff. Distinct from the
+> ADMIN-only `/api/v1/admin/staff` lifecycle surface.
+
+**Scope (what shipped)**
+
+- Re-synced `packages/api/openapi.json` to BE Stage 14.5 (38900 →
+  43719 bytes). Two new tags emitted: `staff-directory` (used by this
+  slice) and `technician-complaints` (BE Stage 14 — wired in a later
+  FE slice, not this one).
+- `endpoints.ts` aliases the new hooks at the boundary:
+  `useGetStaffDirectoryMany` / `getStaffDirectoryManyQueryKey` and
+  `useGetStaffDirectoryById` / `getStaffDirectoryByIdQueryKey`. Named
+  re-exports (not `export *`) so the boundary stays explicit.
+- `HistoryTimeline` now resolves actor names per the BE handoff:
+  - Collects unique non-null `changedByUserId` values, sorted (so the
+    TanStack query key is stable across renders that don't add a new
+    actor).
+  - Issues ONE batch `useGetStaffDirectoryMany({ ids })` with
+    `staleTime: 5 min` (names rarely change) and `enabled: ids.length > 0`.
+  - Renders three branches:
+    - `userId === null` → "by system" (Stage 15 SLA scheduler etc.).
+    - id resolved → "by {fullName} ({employeeId})".
+    - id requested but missing from the batch response → "by user
+      #{id}" defensive fallback (BE silently drops hard-deleted /
+      unknown ids per handoff).
+- i18n: added `complaints.detail.historyChangedByUnknown` for the
+  fallback branch; updated `complaints.detail.historyChangedBy` to
+  `"by {{name}} ({{employeeId}})"` (was a bare `#id` template). Both
+  `en` and `mr` updated.
+
+**Incidents during the slice**
+
+- *orval numeric-suffix shuffle* — adding the new `staff-directory`
+  tag (which has its own `getById` operationId) made orval renumber
+  the colliding hook on `staff-complaint-management` from `useGetById`
+  → `useGetById1` (and `getGetByIdQueryKey` → `getGetById1QueryKey`).
+  Typecheck went red on the two re-export lines. Fix: bump the alias
+  source to the new numbered names. This is exactly the pattern
+  already documented in `endpoints.ts` for the masterdata CRUD CRUD
+  collisions — added a re-verify note next to the staff-complaint
+  alias block so the next person checks the suffix after each
+  `pnpm api:gen`.
+
+**Tests added** (2 new, minimum-test policy)
+
+- `HistoryTimeline.test.tsx` (2 tests):
+  - happy: 4-row timeline with a system-driven row + a "dropped" id
+    (99) — asserts "by Alice Engineer (ENG001)", "by Bob Tech
+    (TECH009)", "by system", and the "by user #99" fallback all
+    render, plus the visible row note.
+  - empty: no entries → renders the `complaints.detail.historyEmpty`
+    copy.
+- Also patched `ComplaintDetailScreen.test.tsx` to mock the new
+  `useGetStaffDirectoryMany` hook — both existing tests pass empty
+  history so the hook never fires in practice, but the mock keeps the
+  real transport from being reached if the test scope ever grows.
+
+**Gate output**
+
+| Gate       | Result | Notes                                                         |
+| ---------- | ------ | ------------------------------------------------------------- |
+| typecheck  | ✅     | 5 packages, 0 errors                                          |
+| lint       | ✅     | 0 warnings                                                    |
+| test       | ✅     | 14 files / 25 tests (+2)                                      |
+| build      | ✅     | 272 modules transformed                                       |
+| size (JS)  | ✅     | **143.88 KB gz** entry (+0.02 from Stage 12; **36.12 KB headroom** on the 180 KB budget) |
+| size (CSS) | ✅     | 4.63 KB gz                                                    |
+
+The bundle delta is essentially noise — the new staff-directory hook
+tree-shakes into the `ComplaintDetailScreen` lazy chunk, not the
+entry. No new dependencies added.
+
+**Manual smoke**
+
+- BE running on `localhost:8080` against Stage 14.5.
+- Opened a complaint with multiple history rows authored by different
+  engineers/technicians:
+  - Names + employee IDs render correctly under each row.
+  - Single batch request fires in DevTools (one call to
+    `/api/v1/staff/users?ids=1,5,8`, not three N+1 calls).
+  - Refetching the timeline (after an Assign action) re-uses the
+    cached batch when no new actor appeared.
+  - Manually nulled a `changedByUserId` in DevTools Network → row
+    flipped to "by system" copy.
+
+**Carry-overs**
+
+- **TechnicianPicker** still calls the ADMIN-only
+  `/api/v1/admin/staff` via `useListStaff` to enumerate technicians
+  in a DC. That means an **ENGINEER opening AssignDialog or
+  ReassignDialog will get a 403** from the picker — the new
+  Stage 14.5 endpoint resolves names from known IDs but does NOT let
+  you search by `role + distributionCenterId`. Two options for the
+  next slice (BE Stage 15.x or 16.x):
+  1. Widen `/api/v1/staff/users` to accept `role` +
+     `distributionCenterId` query params and return a paged list
+     (still read-only, any-authenticated-staff).
+  2. Add a dedicated `GET /api/v1/staff/technicians?distributionCenterId=`
+     endpoint with the same trust model.
+  Either is small. Flagging now — this is a real bug for engineers
+  in production, masked today only because we test as ADMIN.
+- **`enabled` field on directory rows** — the handoff calls out
+  rendering disabled actors muted. HistoryTimeline doesn't apply that
+  treatment yet (the row's actor is the one who *made* the change, so
+  their current enabled state is mostly cosmetic). Stage 16's list
+  columns will need it for assignee chips.
+- **Caching layer** — handoff notes Caffeine is "a 5-min add" if FE
+  starts polling the same id repeatedly. Today the FE caches with
+  `staleTime: 5 min` per the same logic, so we're not hammering the
+  BE. Re-evaluate when SSE / polling lands in Phase 7.
+- **technician-complaints tag** — generated but unused on the FE.
+  Lands when `apps/mobile` (Phase 4) or a web close-on-behalf flow
+  (Stage 14) shows up.
+
 ---
 
 ## How to update this log
