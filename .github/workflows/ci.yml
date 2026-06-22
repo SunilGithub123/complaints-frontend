@@ -125,30 +125,32 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-  openapi-drift:
-    name: openapi-drift
+  api-codegen-fresh:
+    name: api-codegen-fresh
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Runs in parallel with build-test — both jobs are quick and the
-    # drift signal is independent. A drift failure is "FE forgot to
-    # re-sync after a BE OpenAPI change" — surfaces clearly without
-    # being buried under build-test logs.
+    # Self-contained internal-consistency check (replaces the previous
+    # cross-repo `openapi-drift` job).
+    #
+    # What this catches:
+    #   The committed `packages/api/openapi.json` does NOT match the
+    #   committed `packages/api/src/generated/**` — i.e. someone edited
+    #   the OpenAPI snapshot but forgot to run `pnpm api:gen` (or vice
+    #   versa, regen output was hand-edited).
+    #
+    # What this deliberately does NOT do:
+    #   Compare against the sibling backend repo's `main`. Syncing the
+    #   BE OpenAPI snapshot into the FE is a deliberate human step
+    #   performed as part of a feature PR — not something CI should
+    #   police on every BE merge. Integration drift between FE and a
+    #   running BE is caught by E2E tests in PR #3, which is the right
+    #   layer for that check.
+    #
+    # See docs/CI_CD_DESIGN.md §3.1 + Decision log entry 2026-06-22.
 
     steps:
-      - name: Checkout frontend
+      - name: Checkout
         uses: actions/checkout@v4
-
-      # Pulls the BE's committed OpenAPI snapshot from `main`. The BE's
-      # own CI catches *uncommitted* spec changes; this job catches
-      # *unsynced* ones on the FE side.
-      - name: Checkout sibling backend (complaints @ main)
-        uses: actions/checkout@v4
-        with:
-          repository: SunilGithub123/complaints
-          ref: main
-          path: .sibling/complaints
-          # Public repo — default GITHUB_TOKEN is enough. If we ever
-          # switch the BE to private, add a fine-grained PAT here.
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -162,23 +164,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Re-sync BE OpenAPI snapshot
-        run: cp .sibling/complaints/docs/openapi.json packages/api/openapi.json
-
-      - name: Regenerate API bindings
+      - name: Regenerate API bindings from committed openapi.json
         run: pnpm api:gen
 
-      # Any change under packages/api/ — modified tracked files OR newly
-      # generated untracked files — means the FE branch is behind the BE
-      # main spec. `git diff` alone misses untracked files (the common
-      # case when a new tag lands), so we check `git status --porcelain`
-      # which covers both.
-      - name: Assert no drift
+      # `git status --porcelain` catches both modified tracked files
+      # AND newly generated untracked files. We scope to
+      # `packages/api/src` so the check is about generated *output*
+      # only — `openapi.json` itself is the input and is not rewritten
+      # by `pnpm api:gen`.
+      - name: Assert openapi.json and generated bindings are in lockstep
         run: |
-          STATUS="$(git status --porcelain -- packages/api)"
+          STATUS="$(git status --porcelain -- packages/api/src)"
           if [ -n "$STATUS" ]; then
-            echo "::error::Frontend is out of sync with the backend OpenAPI snapshot."
-            echo "::error::Run \`cp ../complaints/docs/openapi.json packages/api/openapi.json && pnpm api:gen\` and commit the result."
+            echo "::error::packages/api/openapi.json and packages/api/src/generated are out of sync."
+            echo "::error::Run \`pnpm api:gen\` locally and commit the result."
             echo "Details:"
             echo "$STATUS"
             exit 1

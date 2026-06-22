@@ -93,7 +93,7 @@ needed (`packages: write` for ghcr.io push).
 | `lighthouse.yml` | `pull_request` | ~3 min | ❌ (report-only) |
 | `deploy-test.yml` | `workflow_dispatch` (manual) | ~1 min | ❌ — **stubbed**, enabled once test hosting lands (Phase 2 ENV) |
 
-### 3.1 `ci.yml` — typecheck + lint + unit + build + size + openapi drift
+### 3.1 `ci.yml` — typecheck + lint + unit + build + size + api codegen freshness
 
 ```
 jobs:
@@ -111,22 +111,28 @@ jobs:
     - davelosert/vitest-coverage-report-action
     - upload-artifact: apps/*/dist, coverage
 
-  openapi-drift:
+  api-codegen-fresh:
     needs: build-test
-    - checkout (complaints-frontend)
-    - checkout (complaints @ main, path: ../complaints)
-    - cp ../complaints/docs/openapi.json packages/api/openapi.json
+    - checkout
+    - pnpm install --frozen-lockfile
     - pnpm api:gen
-    - git diff --exit-code packages/api
-      # any diff = FE forgot to re-sync after a BE OpenAPI change
+    - git status --porcelain -- packages/api/src
+      # non-empty = the committed openapi.json and the committed
+      # generated/ are out of step (someone edited the spec but
+      # forgot to regen, or hand-edited the regen output)
 ```
 
-**Why a sibling-repo checkout for drift:** the OpenAPI snapshot lives in
-the BE repo by design (BE is the spec source). The drift check pulls the
-latest committed BE spec into the FE workspace and re-runs orval — any
-diff means the FE branch is behind the BE main. Same intent as the BE's
-`openapi-drift` job, flipped: BE catches *uncommitted* spec changes; FE
-catches *unsynced* spec changes.
+**Internal-consistency, not cross-repo drift.** Earlier iterations of this
+job checked out the BE repo's `main` and asserted that the FE's
+committed `openapi.json` matched it. That created a cross-repo race —
+every BE merge silently broke every open FE PR until a sync PR landed,
+and the sync PR itself raced subsequent BE merges. For a small team
+where the same humans ship both sides, the realistic foot-gun is
+"edited `openapi.json`, forgot to run `pnpm api:gen`" — which is a
+single-repo check needing no BE checkout. Syncing the BE spec into
+`packages/api/openapi.json` stays a deliberate human step performed as
+part of a feature PR; integration drift between FE and a running BE is
+caught by E2E tests (§3.3), which is the right layer for that signal.
 
 ### 3.2 `quality.yml` — secret scan + dependency review
 
@@ -149,7 +155,7 @@ there); no need to duplicate. We deliberately *don't* add a separate
 | `lint` (`ci.yml`) | New ESLint errors on changed files | Whole-repo lint as warn-only first PR, flip to error after baseline. |
 | `test` (`ci.yml`) | Any failing Vitest test | Standard. |
 | `size` (`ci.yml`) | Entry chunk > 180 KB gzipped | Real gate; matches FE log budget. |
-| `openapi-drift` (`ci.yml`) | Any diff under `packages/api/` after re-gen | Forces re-sync hygiene. |
+| `api-codegen-fresh` (`ci.yml`) | `pnpm api:gen` produces any diff under `packages/api/src/` | Forces the dev who edited `openapi.json` to also commit the regenerated bindings. |
 | `gitleaks` | Any finding | Secrets are P0. |
 | `dependency-review` | Any new HIGH or CRITICAL CVE | Replaces a paid SCA scanner. |
 | `e2e` | Any failing Playwright spec | Hard gate once §3.3 settles. |
@@ -268,7 +274,7 @@ After all workflows are green at least once on `main`, enable:
 
 - **Require PRs** to merge into `main`.
 - **Required status checks** (must pass before merge):
-  - `build-test`, `openapi-drift` (from `ci.yml`)
+  - `build-test`, `api-codegen-fresh` (from `ci.yml`)
   - `gitleaks`, `dependency-review` (from `quality.yml`)
   - `analyze (javascript-typescript)` (from `codeql.yml`)
   - `e2e` (from `e2e.yml`) — *once stable, see §3.3*
@@ -352,6 +358,7 @@ These mirror the BE answers so the two pipelines stay consistent.
 | 2026-06-22 | **Lighthouse warn-only initially.** | Establish a baseline before turning the dial. |
 | 2026-06-22 | **No hard coverage % gate.** | Per backend `.github/copilot-instructions.md → Minimum-test policy`. |
 | 2026-06-22 | **Doc moved from `complaints/docs/CI_CD_DESIGN_FRONTEND.md` (draft) to `complaints-frontend/docs/CI_CD_DESIGN.md`.** | Standalone, lives with the code it gates. BE's draft copy can be deleted once this is merged. |
+| 2026-06-22 | **Replace cross-repo `openapi-drift` with self-contained `api-codegen-fresh`.** No more BE-repo checkout in CI; the job only asserts that the committed `openapi.json` and `packages/api/src/generated/**` are internally consistent. | The cross-repo check created a race (every BE merge silently failed every open FE PR until a sync PR landed; the sync PR then raced subsequent BE merges). For a small team where the same humans ship both sides, the realistic foot-gun is *"edited `openapi.json`, forgot to run `pnpm api:gen`"* — a single-repo, internal-consistency check needing no BE checkout. Syncing the BE spec stays a deliberate human step performed inside a feature PR; integration drift gets caught by E2E tests against a running BE in PR #3 (§3.3). When the OpenAPI becomes a published `@complaints/api-contract` npm package (second consumer / Phase 4 mobile), Dependabot replaces this check entirely. |
 
 ---
 
