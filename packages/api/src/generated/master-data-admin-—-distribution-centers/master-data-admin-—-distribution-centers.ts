@@ -27,19 +27,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-export type update2Response200 = {
+/**
+ * @summary Update a DC
+ */
+export type updateDistributionCenterResponse200 = {
   data: ApiResponseDistributionCenterResponse
   status: 200
 }
     
-export type update2ResponseSuccess = (update2Response200) & {
+export type updateDistributionCenterResponseSuccess = (updateDistributionCenterResponse200) & {
   headers: Headers;
 };
 ;
 
-export type update2Response = (update2ResponseSuccess)
+export type updateDistributionCenterResponse = (updateDistributionCenterResponseSuccess)
 
-export const getUpdate2Url = (id: number,) => {
+export const getUpdateDistributionCenterUrl = (id: number,) => {
 
 
   
@@ -47,10 +50,10 @@ export const getUpdate2Url = (id: number,) => {
   return `/api/v1/admin/masterdata/distribution-centers/${id}`
 }
 
-export const update2 = async (id: number,
-    distributionCenterRequest: DistributionCenterRequest, options?: RequestInit): Promise<update2Response> => {
+export const updateDistributionCenter = async (id: number,
+    distributionCenterRequest: DistributionCenterRequest, options?: RequestInit): Promise<updateDistributionCenterResponse> => {
   
-  return customFetch<update2Response>(getUpdate2Url(id),
+  return customFetch<updateDistributionCenterResponse>(getUpdateDistributionCenterUrl(id),
   {      
     ...options,
     method: 'PUT',
@@ -63,11 +66,11 @@ export const update2 = async (id: number,
 
 
 
-export const getUpdate2MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update2>>, TError,{id: number;data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof update2>>, TError,{id: number;data: DistributionCenterRequest}, TContext> => {
+export const getUpdateDistributionCenterMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDistributionCenter>>, TError,{id: number;data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateDistributionCenter>>, TError,{id: number;data: DistributionCenterRequest}, TContext> => {
 
-const mutationKey = ['update2'];
+const mutationKey = ['updateDistributionCenter'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -77,10 +80,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof update2>>, {id: number;data: DistributionCenterRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDistributionCenter>>, {id: number;data: DistributionCenterRequest}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  update2(id,data,requestOptions)
+          return  updateDistributionCenter(id,data,requestOptions)
         }
 
         
@@ -88,39 +91,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Update2MutationResult = NonNullable<Awaited<ReturnType<typeof update2>>>
-    export type Update2MutationBody = DistributionCenterRequest
-    export type Update2MutationError = unknown
+    export type UpdateDistributionCenterMutationResult = NonNullable<Awaited<ReturnType<typeof updateDistributionCenter>>>
+    export type UpdateDistributionCenterMutationBody = DistributionCenterRequest
+    export type UpdateDistributionCenterMutationError = unknown
 
-    export const useUpdate2 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update2>>, TError,{id: number;data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+    /**
+ * @summary Update a DC
+ */
+export const useUpdateDistributionCenter = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDistributionCenter>>, TError,{id: number;data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof update2>>,
+        Awaited<ReturnType<typeof updateDistributionCenter>>,
         TError,
         {id: number;data: DistributionCenterRequest},
         TContext
       > => {
 
-      const mutationOptions = getUpdate2MutationOptions(options);
+      const mutationOptions = getUpdateDistributionCenterMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Create a DC under the admin's subdivision
  */
-export type create2Response200 = {
+export type createDistributionCenterResponse200 = {
   data: ApiResponseDistributionCenterResponse
   status: 200
 }
     
-export type create2ResponseSuccess = (create2Response200) & {
+export type createDistributionCenterResponseSuccess = (createDistributionCenterResponse200) & {
   headers: Headers;
 };
 ;
 
-export type create2Response = (create2ResponseSuccess)
+export type createDistributionCenterResponse = (createDistributionCenterResponseSuccess)
 
-export const getCreate2Url = () => {
+export const getCreateDistributionCenterUrl = () => {
 
 
   
@@ -128,9 +134,9 @@ export const getCreate2Url = () => {
   return `/api/v1/admin/masterdata/distribution-centers`
 }
 
-export const create2 = async (distributionCenterRequest: DistributionCenterRequest, options?: RequestInit): Promise<create2Response> => {
+export const createDistributionCenter = async (distributionCenterRequest: DistributionCenterRequest, options?: RequestInit): Promise<createDistributionCenterResponse> => {
   
-  return customFetch<create2Response>(getCreate2Url(),
+  return customFetch<createDistributionCenterResponse>(getCreateDistributionCenterUrl(),
   {      
     ...options,
     method: 'POST',
@@ -143,11 +149,11 @@ export const create2 = async (distributionCenterRequest: DistributionCenterReque
 
 
 
-export const getCreate2MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create2>>, TError,{data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof create2>>, TError,{data: DistributionCenterRequest}, TContext> => {
+export const getCreateDistributionCenterMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDistributionCenter>>, TError,{data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDistributionCenter>>, TError,{data: DistributionCenterRequest}, TContext> => {
 
-const mutationKey = ['create2'];
+const mutationKey = ['createDistributionCenter'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -157,10 +163,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof create2>>, {data: DistributionCenterRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDistributionCenter>>, {data: DistributionCenterRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  create2(data,requestOptions)
+          return  createDistributionCenter(data,requestOptions)
         }
 
         
@@ -168,39 +174,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Create2MutationResult = NonNullable<Awaited<ReturnType<typeof create2>>>
-    export type Create2MutationBody = DistributionCenterRequest
-    export type Create2MutationError = unknown
+    export type CreateDistributionCenterMutationResult = NonNullable<Awaited<ReturnType<typeof createDistributionCenter>>>
+    export type CreateDistributionCenterMutationBody = DistributionCenterRequest
+    export type CreateDistributionCenterMutationError = unknown
 
     /**
  * @summary Create a DC under the admin's subdivision
  */
-export const useCreate2 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create2>>, TError,{data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateDistributionCenter = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDistributionCenter>>, TError,{data: DistributionCenterRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof create2>>,
+        Awaited<ReturnType<typeof createDistributionCenter>>,
         TError,
         {data: DistributionCenterRequest},
         TContext
       > => {
 
-      const mutationOptions = getCreate2MutationOptions(options);
+      const mutationOptions = getCreateDistributionCenterMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    export type deactivate2Response200 = {
+    /**
+ * @summary Deactivate a DC
+ */
+export type deactivateDistributionCenterResponse200 = {
   data: ApiResponseDistributionCenterResponse
   status: 200
 }
     
-export type deactivate2ResponseSuccess = (deactivate2Response200) & {
+export type deactivateDistributionCenterResponseSuccess = (deactivateDistributionCenterResponse200) & {
   headers: Headers;
 };
 ;
 
-export type deactivate2Response = (deactivate2ResponseSuccess)
+export type deactivateDistributionCenterResponse = (deactivateDistributionCenterResponseSuccess)
 
-export const getDeactivate2Url = (id: number,) => {
+export const getDeactivateDistributionCenterUrl = (id: number,) => {
 
 
   
@@ -208,9 +217,9 @@ export const getDeactivate2Url = (id: number,) => {
   return `/api/v1/admin/masterdata/distribution-centers/${id}/deactivate`
 }
 
-export const deactivate2 = async (id: number, options?: RequestInit): Promise<deactivate2Response> => {
+export const deactivateDistributionCenter = async (id: number, options?: RequestInit): Promise<deactivateDistributionCenterResponse> => {
   
-  return customFetch<deactivate2Response>(getDeactivate2Url(id),
+  return customFetch<deactivateDistributionCenterResponse>(getDeactivateDistributionCenterUrl(id),
   {      
     ...options,
     method: 'POST'
@@ -222,11 +231,11 @@ export const deactivate2 = async (id: number, options?: RequestInit): Promise<de
 
 
 
-export const getDeactivate2MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate2>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deactivate2>>, TError,{id: number}, TContext> => {
+export const getDeactivateDistributionCenterMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivateDistributionCenter>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deactivateDistributionCenter>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['deactivate2'];
+const mutationKey = ['deactivateDistributionCenter'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -236,10 +245,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivate2>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivateDistributionCenter>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  deactivate2(id,requestOptions)
+          return  deactivateDistributionCenter(id,requestOptions)
         }
 
         
@@ -247,36 +256,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Deactivate2MutationResult = NonNullable<Awaited<ReturnType<typeof deactivate2>>>
+    export type DeactivateDistributionCenterMutationResult = NonNullable<Awaited<ReturnType<typeof deactivateDistributionCenter>>>
     
-    export type Deactivate2MutationError = unknown
+    export type DeactivateDistributionCenterMutationError = unknown
 
-    export const useDeactivate2 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate2>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    /**
+ * @summary Deactivate a DC
+ */
+export const useDeactivateDistributionCenter = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivateDistributionCenter>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deactivate2>>,
+        Awaited<ReturnType<typeof deactivateDistributionCenter>>,
         TError,
         {id: number},
         TContext
       > => {
 
-      const mutationOptions = getDeactivate2MutationOptions(options);
+      const mutationOptions = getDeactivateDistributionCenterMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    export type activate2Response200 = {
+    /**
+ * @summary Activate a DC
+ */
+export type activateDistributionCenterResponse200 = {
   data: ApiResponseDistributionCenterResponse
   status: 200
 }
     
-export type activate2ResponseSuccess = (activate2Response200) & {
+export type activateDistributionCenterResponseSuccess = (activateDistributionCenterResponse200) & {
   headers: Headers;
 };
 ;
 
-export type activate2Response = (activate2ResponseSuccess)
+export type activateDistributionCenterResponse = (activateDistributionCenterResponseSuccess)
 
-export const getActivate2Url = (id: number,) => {
+export const getActivateDistributionCenterUrl = (id: number,) => {
 
 
   
@@ -284,9 +299,9 @@ export const getActivate2Url = (id: number,) => {
   return `/api/v1/admin/masterdata/distribution-centers/${id}/activate`
 }
 
-export const activate2 = async (id: number, options?: RequestInit): Promise<activate2Response> => {
+export const activateDistributionCenter = async (id: number, options?: RequestInit): Promise<activateDistributionCenterResponse> => {
   
-  return customFetch<activate2Response>(getActivate2Url(id),
+  return customFetch<activateDistributionCenterResponse>(getActivateDistributionCenterUrl(id),
   {      
     ...options,
     method: 'POST'
@@ -298,11 +313,11 @@ export const activate2 = async (id: number, options?: RequestInit): Promise<acti
 
 
 
-export const getActivate2MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate2>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof activate2>>, TError,{id: number}, TContext> => {
+export const getActivateDistributionCenterMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateDistributionCenter>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof activateDistributionCenter>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['activate2'];
+const mutationKey = ['activateDistributionCenter'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -312,10 +327,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activate2>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activateDistributionCenter>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  activate2(id,requestOptions)
+          return  activateDistributionCenter(id,requestOptions)
         }
 
         
@@ -323,20 +338,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Activate2MutationResult = NonNullable<Awaited<ReturnType<typeof activate2>>>
+    export type ActivateDistributionCenterMutationResult = NonNullable<Awaited<ReturnType<typeof activateDistributionCenter>>>
     
-    export type Activate2MutationError = unknown
+    export type ActivateDistributionCenterMutationError = unknown
 
-    export const useActivate2 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate2>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    /**
+ * @summary Activate a DC
+ */
+export const useActivateDistributionCenter = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateDistributionCenter>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof activate2>>,
+        Awaited<ReturnType<typeof activateDistributionCenter>>,
         TError,
         {id: number},
         TContext
       > => {
 
-      const mutationOptions = getActivate2MutationOptions(options);
+      const mutationOptions = getActivateDistributionCenterMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

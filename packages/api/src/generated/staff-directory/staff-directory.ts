@@ -22,8 +22,8 @@ import type {
 
 import type {
   ApiResponseStaffDirectoryEntryResponse,
-  Search200,
-  SearchParams
+  GetStaffDirectoryEntries200,
+  GetStaffDirectoryEntriesParams
 } from '.././schemas';
 
 import { customFetch } from '../../client';
@@ -37,19 +37,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * Unknown ids are silently dropped. Order of the response is not guaranteed.
  * @summary Batch-resolve up to 50 staff ids in one round-trip
  */
-export type searchResponse200 = {
-  data: Search200
+export type getStaffDirectoryEntriesResponse200 = {
+  data: GetStaffDirectoryEntries200
   status: 200
 }
     
-export type searchResponseSuccess = (searchResponse200) & {
+export type getStaffDirectoryEntriesResponseSuccess = (getStaffDirectoryEntriesResponse200) & {
   headers: Headers;
 };
 ;
 
-export type searchResponse = (searchResponseSuccess)
+export type getStaffDirectoryEntriesResponse = (getStaffDirectoryEntriesResponseSuccess)
 
-export const getSearchUrl = (params: SearchParams,) => {
+export const getGetStaffDirectoryEntriesUrl = (params: GetStaffDirectoryEntriesParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -72,9 +72,9 @@ export const getSearchUrl = (params: SearchParams,) => {
   return stringifiedParams.length > 0 ? `/api/v1/staff/users?${stringifiedParams}` : `/api/v1/staff/users`
 }
 
-export const search = async (params: SearchParams, options?: RequestInit): Promise<searchResponse> => {
+export const getStaffDirectoryEntries = async (params: GetStaffDirectoryEntriesParams, options?: RequestInit): Promise<getStaffDirectoryEntriesResponse> => {
   
-  return customFetch<searchResponse>(getSearchUrl(params),
+  return customFetch<getStaffDirectoryEntriesResponse>(getGetStaffDirectoryEntriesUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -87,69 +87,69 @@ export const search = async (params: SearchParams, options?: RequestInit): Promi
 
 
 
-export const getSearchQueryKey = (params?: SearchParams,) => {
+export const getGetStaffDirectoryEntriesQueryKey = (params?: GetStaffDirectoryEntriesParams,) => {
     return [
     `/api/v1/staff/users`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getSearchQueryOptions = <TData = Awaited<ReturnType<typeof search>>, TError = unknown>(params: SearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetStaffDirectoryEntriesQueryOptions = <TData = Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError = unknown>(params: GetStaffDirectoryEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getSearchQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetStaffDirectoryEntriesQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof search>>> = () => search(params, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStaffDirectoryEntries>>> = () => getStaffDirectoryEntries(params, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type SearchQueryResult = NonNullable<Awaited<ReturnType<typeof search>>>
-export type SearchQueryError = unknown
+export type GetStaffDirectoryEntriesQueryResult = NonNullable<Awaited<ReturnType<typeof getStaffDirectoryEntries>>>
+export type GetStaffDirectoryEntriesQueryError = unknown
 
 
-export function useSearch<TData = Awaited<ReturnType<typeof search>>, TError = unknown>(
- params: SearchParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>> & Pick<
+export function useGetStaffDirectoryEntries<TData = Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError = unknown>(
+ params: GetStaffDirectoryEntriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof search>>,
+          Awaited<ReturnType<typeof getStaffDirectoryEntries>>,
           TError,
-          Awaited<ReturnType<typeof search>>
+          Awaited<ReturnType<typeof getStaffDirectoryEntries>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useSearch<TData = Awaited<ReturnType<typeof search>>, TError = unknown>(
- params: SearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>> & Pick<
+export function useGetStaffDirectoryEntries<TData = Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError = unknown>(
+ params: GetStaffDirectoryEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof search>>,
+          Awaited<ReturnType<typeof getStaffDirectoryEntries>>,
           TError,
-          Awaited<ReturnType<typeof search>>
+          Awaited<ReturnType<typeof getStaffDirectoryEntries>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useSearch<TData = Awaited<ReturnType<typeof search>>, TError = unknown>(
- params: SearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetStaffDirectoryEntries<TData = Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError = unknown>(
+ params: GetStaffDirectoryEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Batch-resolve up to 50 staff ids in one round-trip
  */
 
-export function useSearch<TData = Awaited<ReturnType<typeof search>>, TError = unknown>(
- params: SearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof search>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetStaffDirectoryEntries<TData = Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError = unknown>(
+ params: GetStaffDirectoryEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getSearchQueryOptions(params,options)
+  const queryOptions = getGetStaffDirectoryEntriesQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -164,19 +164,19 @@ export function useSearch<TData = Awaited<ReturnType<typeof search>>, TError = u
 /**
  * @summary Resolve a single staff id to a directory entry
  */
-export type getByIdResponse200 = {
+export type getStaffDirectoryEntryResponse200 = {
   data: ApiResponseStaffDirectoryEntryResponse
   status: 200
 }
     
-export type getByIdResponseSuccess = (getByIdResponse200) & {
+export type getStaffDirectoryEntryResponseSuccess = (getStaffDirectoryEntryResponse200) & {
   headers: Headers;
 };
 ;
 
-export type getByIdResponse = (getByIdResponseSuccess)
+export type getStaffDirectoryEntryResponse = (getStaffDirectoryEntryResponseSuccess)
 
-export const getGetByIdUrl = (id: number,) => {
+export const getGetStaffDirectoryEntryUrl = (id: number,) => {
 
 
   
@@ -184,9 +184,9 @@ export const getGetByIdUrl = (id: number,) => {
   return `/api/v1/staff/users/${id}`
 }
 
-export const getById = async (id: number, options?: RequestInit): Promise<getByIdResponse> => {
+export const getStaffDirectoryEntry = async (id: number, options?: RequestInit): Promise<getStaffDirectoryEntryResponse> => {
   
-  return customFetch<getByIdResponse>(getGetByIdUrl(id),
+  return customFetch<getStaffDirectoryEntryResponse>(getGetStaffDirectoryEntryUrl(id),
   {      
     ...options,
     method: 'GET'
@@ -199,69 +199,69 @@ export const getById = async (id: number, options?: RequestInit): Promise<getByI
 
 
 
-export const getGetByIdQueryKey = (id?: number,) => {
+export const getGetStaffDirectoryEntryQueryKey = (id?: number,) => {
     return [
     `/api/v1/staff/users/${id}`
     ] as const;
     }
 
     
-export const getGetByIdQueryOptions = <TData = Awaited<ReturnType<typeof getById>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getById>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetStaffDirectoryEntryQueryOptions = <TData = Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetByIdQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getGetStaffDirectoryEntryQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getById>>> = () => getById(id, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStaffDirectoryEntry>>> = () => getStaffDirectoryEntry(id, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type GetByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getById>>>
-export type GetByIdQueryError = unknown
+export type GetStaffDirectoryEntryQueryResult = NonNullable<Awaited<ReturnType<typeof getStaffDirectoryEntry>>>
+export type GetStaffDirectoryEntryQueryError = unknown
 
 
-export function useGetById<TData = Awaited<ReturnType<typeof getById>>, TError = unknown>(
- id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getById>>, TError, TData>> & Pick<
+export function useGetStaffDirectoryEntry<TData = Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getById>>,
+          Awaited<ReturnType<typeof getStaffDirectoryEntry>>,
           TError,
-          Awaited<ReturnType<typeof getById>>
+          Awaited<ReturnType<typeof getStaffDirectoryEntry>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetById<TData = Awaited<ReturnType<typeof getById>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getById>>, TError, TData>> & Pick<
+export function useGetStaffDirectoryEntry<TData = Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getById>>,
+          Awaited<ReturnType<typeof getStaffDirectoryEntry>>,
           TError,
-          Awaited<ReturnType<typeof getById>>
+          Awaited<ReturnType<typeof getStaffDirectoryEntry>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetById<TData = Awaited<ReturnType<typeof getById>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getById>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetStaffDirectoryEntry<TData = Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Resolve a single staff id to a directory entry
  */
 
-export function useGetById<TData = Awaited<ReturnType<typeof getById>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getById>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetStaffDirectoryEntry<TData = Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaffDirectoryEntry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getGetByIdQueryOptions(id,options)
+  const queryOptions = getGetStaffDirectoryEntryQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 

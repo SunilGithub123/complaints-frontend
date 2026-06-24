@@ -8,58 +8,67 @@
 import * as zod from 'zod';
 
 
-export const update2Params = zod.object({
+/**
+ * @summary Update a DC
+ */
+export const updateDistributionCenterParams = zod.object({
   "id": zod.number()
 })
 
-export const update2BodyCodeMin = 0;
-export const update2BodyCodeMax = 50;
+export const updateDistributionCenterBodyCodeMin = 0;
+export const updateDistributionCenterBodyCodeMax = 50;
 
 
-export const update2BodyCodeRegExp = new RegExp('^[A-Z0-9-]+$');
-export const update2BodyNameMin = 0;
-export const update2BodyNameMax = 200;
+export const updateDistributionCenterBodyCodeRegExp = new RegExp('^[A-Z0-9-]+$');
+export const updateDistributionCenterBodyNameMin = 0;
+export const updateDistributionCenterBodyNameMax = 200;
 
-export const update2BodyAddressMin = 0;
-export const update2BodyAddressMax = 1000;
+export const updateDistributionCenterBodyAddressMin = 0;
+export const updateDistributionCenterBodyAddressMax = 1000;
 
 
 
-export const update2Body = zod.object({
+export const updateDistributionCenterBody = zod.object({
   "subdivisionId": zod.number(),
-  "code": zod.string().min(update2BodyCodeMin).max(update2BodyCodeMax).regex(update2BodyCodeRegExp),
-  "name": zod.string().min(update2BodyNameMin).max(update2BodyNameMax),
-  "address": zod.string().min(update2BodyAddressMin).max(update2BodyAddressMax).optional()
+  "code": zod.string().min(updateDistributionCenterBodyCodeMin).max(updateDistributionCenterBodyCodeMax).regex(updateDistributionCenterBodyCodeRegExp),
+  "name": zod.string().min(updateDistributionCenterBodyNameMin).max(updateDistributionCenterBodyNameMax),
+  "address": zod.string().min(updateDistributionCenterBodyAddressMin).max(updateDistributionCenterBodyAddressMax).optional()
 })
 
 /**
  * @summary Create a DC under the admin's subdivision
  */
-export const create2BodyCodeMin = 0;
-export const create2BodyCodeMax = 50;
+export const createDistributionCenterBodyCodeMin = 0;
+export const createDistributionCenterBodyCodeMax = 50;
 
 
-export const create2BodyCodeRegExp = new RegExp('^[A-Z0-9-]+$');
-export const create2BodyNameMin = 0;
-export const create2BodyNameMax = 200;
+export const createDistributionCenterBodyCodeRegExp = new RegExp('^[A-Z0-9-]+$');
+export const createDistributionCenterBodyNameMin = 0;
+export const createDistributionCenterBodyNameMax = 200;
 
-export const create2BodyAddressMin = 0;
-export const create2BodyAddressMax = 1000;
+export const createDistributionCenterBodyAddressMin = 0;
+export const createDistributionCenterBodyAddressMax = 1000;
 
 
 
-export const create2Body = zod.object({
+export const createDistributionCenterBody = zod.object({
   "subdivisionId": zod.number(),
-  "code": zod.string().min(create2BodyCodeMin).max(create2BodyCodeMax).regex(create2BodyCodeRegExp),
-  "name": zod.string().min(create2BodyNameMin).max(create2BodyNameMax),
-  "address": zod.string().min(create2BodyAddressMin).max(create2BodyAddressMax).optional()
+  "code": zod.string().min(createDistributionCenterBodyCodeMin).max(createDistributionCenterBodyCodeMax).regex(createDistributionCenterBodyCodeRegExp),
+  "name": zod.string().min(createDistributionCenterBodyNameMin).max(createDistributionCenterBodyNameMax),
+  "address": zod.string().min(createDistributionCenterBodyAddressMin).max(createDistributionCenterBodyAddressMax).optional()
 })
 
-export const deactivate2Params = zod.object({
+/**
+ * @summary Deactivate a DC
+ */
+export const deactivateDistributionCenterParams = zod.object({
   "id": zod.number()
 })
 
-export const activate2Params = zod.object({
+/**
+ * @summary Activate a DC
+ */
+export const activateDistributionCenterParams = zod.object({
   "id": zod.number()
 })
 

@@ -6,7 +6,7 @@
  *      `location.state.response` (SubmitComplaintResponse). We render
  *      from that immediately, no network round trip.
  *   2. Page refresh — `location.state` is gone. We call
- *      `useGetComplaintByTicket(ticketNo)` and render once it resolves.
+ *      `useGetConsumerComplaint(ticketNo)` and render once it resolves.
  *      A 403 means the JWT we have is for a *different* consumer
  *      (BE's "owned-by-consumer" check) → surface the friendly
  *      "this ticket isn't yours" state.
@@ -18,7 +18,7 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
-  useGetComplaintByTicket,
+  useGetConsumerComplaint,
   ApiError,
   type Schemas,
 } from '@complaints/api';
@@ -50,7 +50,7 @@ export default function ConfirmationScreen(): React.JSX.Element {
   const { show } = useToast();
 
   // Skip the network call entirely on the happy "just submitted" path.
-  const query = useGetComplaintByTicket<
+  const query = useGetConsumerComplaint<
     { data?: Schemas.ApiResponseComplaintDetailResponse },
     unknown
   >(ticketNo ?? '', {

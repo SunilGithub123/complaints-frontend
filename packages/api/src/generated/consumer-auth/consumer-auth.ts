@@ -33,19 +33,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * On success, returns a non-refreshable 5-minute JWT carrying consumerId, consumerMasterId, and the OTP-verified mobile. Use it on every /api/v1/consumer/** call. After expiry, repeat the send/verify cycle.
  * @summary Verify an OTP and receive a 5-minute consumer verification token
  */
-export type verifyOtpResponse200 = {
+export type verifyConsumerOtpResponse200 = {
   data: ApiResponseOtpVerifyResponse
   status: 200
 }
     
-export type verifyOtpResponseSuccess = (verifyOtpResponse200) & {
+export type verifyConsumerOtpResponseSuccess = (verifyConsumerOtpResponse200) & {
   headers: Headers;
 };
 ;
 
-export type verifyOtpResponse = (verifyOtpResponseSuccess)
+export type verifyConsumerOtpResponse = (verifyConsumerOtpResponseSuccess)
 
-export const getVerifyOtpUrl = () => {
+export const getVerifyConsumerOtpUrl = () => {
 
 
   
@@ -53,9 +53,9 @@ export const getVerifyOtpUrl = () => {
   return `/api/v1/auth/consumer/otp/verify`
 }
 
-export const verifyOtp = async (otpVerifyRequest: OtpVerifyRequest, options?: RequestInit): Promise<verifyOtpResponse> => {
+export const verifyConsumerOtp = async (otpVerifyRequest: OtpVerifyRequest, options?: RequestInit): Promise<verifyConsumerOtpResponse> => {
   
-  return customFetch<verifyOtpResponse>(getVerifyOtpUrl(),
+  return customFetch<verifyConsumerOtpResponse>(getVerifyConsumerOtpUrl(),
   {      
     ...options,
     method: 'POST',
@@ -68,11 +68,11 @@ export const verifyOtp = async (otpVerifyRequest: OtpVerifyRequest, options?: Re
 
 
 
-export const getVerifyOtpMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyOtp>>, TError,{data: OtpVerifyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof verifyOtp>>, TError,{data: OtpVerifyRequest}, TContext> => {
+export const getVerifyConsumerOtpMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyConsumerOtp>>, TError,{data: OtpVerifyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyConsumerOtp>>, TError,{data: OtpVerifyRequest}, TContext> => {
 
-const mutationKey = ['verifyOtp'];
+const mutationKey = ['verifyConsumerOtp'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -82,10 +82,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyOtp>>, {data: OtpVerifyRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyConsumerOtp>>, {data: OtpVerifyRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  verifyOtp(data,requestOptions)
+          return  verifyConsumerOtp(data,requestOptions)
         }
 
         
@@ -93,23 +93,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type VerifyOtpMutationResult = NonNullable<Awaited<ReturnType<typeof verifyOtp>>>
-    export type VerifyOtpMutationBody = OtpVerifyRequest
-    export type VerifyOtpMutationError = unknown
+    export type VerifyConsumerOtpMutationResult = NonNullable<Awaited<ReturnType<typeof verifyConsumerOtp>>>
+    export type VerifyConsumerOtpMutationBody = OtpVerifyRequest
+    export type VerifyConsumerOtpMutationError = unknown
 
     /**
  * @summary Verify an OTP and receive a 5-minute consumer verification token
  */
-export const useVerifyOtp = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyOtp>>, TError,{data: OtpVerifyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useVerifyConsumerOtp = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyConsumerOtp>>, TError,{data: OtpVerifyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof verifyOtp>>,
+        Awaited<ReturnType<typeof verifyConsumerOtp>>,
         TError,
         {data: OtpVerifyRequest},
         TContext
       > => {
 
-      const mutationOptions = getVerifyOtpMutationOptions(options);
+      const mutationOptions = getVerifyConsumerOtpMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -117,19 +117,19 @@ export const useVerifyOtp = <TError = unknown,
  * Validates the Consumer ID against consumer_master, then issues a BCrypt-hashed OTP (raw never persisted or logged). Enforces a 30-second per-mobile cooldown and a max 5 sends per mobile per hour.
  * @summary Send a 6-digit OTP to the supplied mobile
  */
-export type sendOtpResponse200 = {
+export type sendConsumerOtpResponse200 = {
   data: ApiResponseVoid
   status: 200
 }
     
-export type sendOtpResponseSuccess = (sendOtpResponse200) & {
+export type sendConsumerOtpResponseSuccess = (sendConsumerOtpResponse200) & {
   headers: Headers;
 };
 ;
 
-export type sendOtpResponse = (sendOtpResponseSuccess)
+export type sendConsumerOtpResponse = (sendConsumerOtpResponseSuccess)
 
-export const getSendOtpUrl = () => {
+export const getSendConsumerOtpUrl = () => {
 
 
   
@@ -137,9 +137,9 @@ export const getSendOtpUrl = () => {
   return `/api/v1/auth/consumer/otp/send`
 }
 
-export const sendOtp = async (otpSendRequest: OtpSendRequest, options?: RequestInit): Promise<sendOtpResponse> => {
+export const sendConsumerOtp = async (otpSendRequest: OtpSendRequest, options?: RequestInit): Promise<sendConsumerOtpResponse> => {
   
-  return customFetch<sendOtpResponse>(getSendOtpUrl(),
+  return customFetch<sendConsumerOtpResponse>(getSendConsumerOtpUrl(),
   {      
     ...options,
     method: 'POST',
@@ -152,11 +152,11 @@ export const sendOtp = async (otpSendRequest: OtpSendRequest, options?: RequestI
 
 
 
-export const getSendOtpMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendOtp>>, TError,{data: OtpSendRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof sendOtp>>, TError,{data: OtpSendRequest}, TContext> => {
+export const getSendConsumerOtpMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendConsumerOtp>>, TError,{data: OtpSendRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendConsumerOtp>>, TError,{data: OtpSendRequest}, TContext> => {
 
-const mutationKey = ['sendOtp'];
+const mutationKey = ['sendConsumerOtp'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -166,10 +166,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendOtp>>, {data: OtpSendRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendConsumerOtp>>, {data: OtpSendRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  sendOtp(data,requestOptions)
+          return  sendConsumerOtp(data,requestOptions)
         }
 
         
@@ -177,23 +177,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type SendOtpMutationResult = NonNullable<Awaited<ReturnType<typeof sendOtp>>>
-    export type SendOtpMutationBody = OtpSendRequest
-    export type SendOtpMutationError = unknown
+    export type SendConsumerOtpMutationResult = NonNullable<Awaited<ReturnType<typeof sendConsumerOtp>>>
+    export type SendConsumerOtpMutationBody = OtpSendRequest
+    export type SendConsumerOtpMutationError = unknown
 
     /**
  * @summary Send a 6-digit OTP to the supplied mobile
  */
-export const useSendOtp = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendOtp>>, TError,{data: OtpSendRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useSendConsumerOtp = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendConsumerOtp>>, TError,{data: OtpSendRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof sendOtp>>,
+        Awaited<ReturnType<typeof sendConsumerOtp>>,
         TError,
         {data: OtpSendRequest},
         TContext
       > => {
 
-      const mutationOptions = getSendOtpMutationOptions(options);
+      const mutationOptions = getSendConsumerOtpMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

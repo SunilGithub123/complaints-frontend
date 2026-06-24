@@ -4,13 +4,13 @@
  * technicians get only the home link this stage (their dedicated screens
  * land in Phase 3+).
  *
- * Logout flow: calls `useLogout` mutation (best-effort — backend revokes
+ * Logout flow: calls `useLogoutStaff` mutation (best-effort — backend revokes
  * the refresh token), clears the store regardless of the response, then
  * navigates to /login. We don't block UI on the mutation result because
  * a 401 there should still log the user out client-side.
  */
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useLogout } from '@complaints/api';
+import { useLogoutStaff } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { useAuthStore } from '@/auth/authStore';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,7 @@ export default function DashboardLayout(): React.JSX.Element {
   const staff = useAuthStore((s) => s.staff);
   const refreshToken = useAuthStore((s) => s.refreshToken);
   const clear = useAuthStore((s) => s.clear);
-  const { mutateAsync: doLogout, isPending: loggingOut } = useLogout();
+  const { mutateAsync: doLogout, isPending: loggingOut } = useLogoutStaff();
 
   const navItems =
     staff?.role === 'ADMIN'

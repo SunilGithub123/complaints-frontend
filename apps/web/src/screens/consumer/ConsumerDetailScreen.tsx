@@ -24,11 +24,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  useGetComplaintByTicket,
+  useGetConsumerComplaint,
   useGetConsumerComplaintHistory,
   useGetFeedback,
-  getGetComplaintByTicketQueryKey,
-  getConsumerComplaintHistoryQueryKey,
+  getGetConsumerComplaintQueryKey,
+  getGetConsumerComplaintHistoryQueryKey,
   getGetFeedbackQueryKey,
   ApiError,
   type Schemas,
@@ -63,7 +63,7 @@ export default function ConsumerDetailScreen(): React.JSX.Element {
   const { show: toast } = useToast();
   const [dialog, setDialog] = useState<DialogKind>(null);
 
-  const detail = useGetComplaintByTicket<
+  const detail = useGetConsumerComplaint<
     { data?: Schemas.ApiResponseComplaintDetailResponse },
     unknown
   >(ticketNo, {
@@ -112,10 +112,10 @@ export default function ConsumerDetailScreen(): React.JSX.Element {
 
   function invalidate(opts?: { feedback?: boolean }): void {
     void queryClient.invalidateQueries({
-      queryKey: getGetComplaintByTicketQueryKey(ticketNo),
+      queryKey: getGetConsumerComplaintQueryKey(ticketNo),
     });
     void queryClient.invalidateQueries({
-      queryKey: getConsumerComplaintHistoryQueryKey(ticketNo),
+      queryKey: getGetConsumerComplaintHistoryQueryKey(ticketNo),
     });
     if (opts?.feedback) {
       void queryClient.invalidateQueries({

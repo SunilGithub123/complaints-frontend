@@ -30,19 +30,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Update a subdivision
  */
-export type update1Response200 = {
+export type updateSubdivisionResponse200 = {
   data: ApiResponseSubdivisionResponse
   status: 200
 }
     
-export type update1ResponseSuccess = (update1Response200) & {
+export type updateSubdivisionResponseSuccess = (updateSubdivisionResponse200) & {
   headers: Headers;
 };
 ;
 
-export type update1Response = (update1ResponseSuccess)
+export type updateSubdivisionResponse = (updateSubdivisionResponseSuccess)
 
-export const getUpdate1Url = (id: number,) => {
+export const getUpdateSubdivisionUrl = (id: number,) => {
 
 
   
@@ -50,10 +50,10 @@ export const getUpdate1Url = (id: number,) => {
   return `/api/v1/admin/masterdata/subdivisions/${id}`
 }
 
-export const update1 = async (id: number,
-    subdivisionRequest: SubdivisionRequest, options?: RequestInit): Promise<update1Response> => {
+export const updateSubdivision = async (id: number,
+    subdivisionRequest: SubdivisionRequest, options?: RequestInit): Promise<updateSubdivisionResponse> => {
   
-  return customFetch<update1Response>(getUpdate1Url(id),
+  return customFetch<updateSubdivisionResponse>(getUpdateSubdivisionUrl(id),
   {      
     ...options,
     method: 'PUT',
@@ -66,11 +66,11 @@ export const update1 = async (id: number,
 
 
 
-export const getUpdate1MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update1>>, TError,{id: number;data: SubdivisionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof update1>>, TError,{id: number;data: SubdivisionRequest}, TContext> => {
+export const getUpdateSubdivisionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSubdivision>>, TError,{id: number;data: SubdivisionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSubdivision>>, TError,{id: number;data: SubdivisionRequest}, TContext> => {
 
-const mutationKey = ['update1'];
+const mutationKey = ['updateSubdivision'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -80,10 +80,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof update1>>, {id: number;data: SubdivisionRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSubdivision>>, {id: number;data: SubdivisionRequest}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  update1(id,data,requestOptions)
+          return  updateSubdivision(id,data,requestOptions)
         }
 
         
@@ -91,42 +91,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Update1MutationResult = NonNullable<Awaited<ReturnType<typeof update1>>>
-    export type Update1MutationBody = SubdivisionRequest
-    export type Update1MutationError = unknown
+    export type UpdateSubdivisionMutationResult = NonNullable<Awaited<ReturnType<typeof updateSubdivision>>>
+    export type UpdateSubdivisionMutationBody = SubdivisionRequest
+    export type UpdateSubdivisionMutationError = unknown
 
     /**
  * @summary Update a subdivision
  */
-export const useUpdate1 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update1>>, TError,{id: number;data: SubdivisionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdateSubdivision = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSubdivision>>, TError,{id: number;data: SubdivisionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof update1>>,
+        Awaited<ReturnType<typeof updateSubdivision>>,
         TError,
         {id: number;data: SubdivisionRequest},
         TContext
       > => {
 
-      const mutationOptions = getUpdate1MutationOptions(options);
+      const mutationOptions = getUpdateSubdivisionMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Create a new subdivision
  */
-export type create1Response200 = {
+export type createSubdivisionResponse200 = {
   data: ApiResponseSubdivisionResponse
   status: 200
 }
     
-export type create1ResponseSuccess = (create1Response200) & {
+export type createSubdivisionResponseSuccess = (createSubdivisionResponse200) & {
   headers: Headers;
 };
 ;
 
-export type create1Response = (create1ResponseSuccess)
+export type createSubdivisionResponse = (createSubdivisionResponseSuccess)
 
-export const getCreate1Url = () => {
+export const getCreateSubdivisionUrl = () => {
 
 
   
@@ -134,9 +134,9 @@ export const getCreate1Url = () => {
   return `/api/v1/admin/masterdata/subdivisions`
 }
 
-export const create1 = async (subdivisionRequest: SubdivisionRequest, options?: RequestInit): Promise<create1Response> => {
+export const createSubdivision = async (subdivisionRequest: SubdivisionRequest, options?: RequestInit): Promise<createSubdivisionResponse> => {
   
-  return customFetch<create1Response>(getCreate1Url(),
+  return customFetch<createSubdivisionResponse>(getCreateSubdivisionUrl(),
   {      
     ...options,
     method: 'POST',
@@ -149,11 +149,11 @@ export const create1 = async (subdivisionRequest: SubdivisionRequest, options?: 
 
 
 
-export const getCreate1MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create1>>, TError,{data: SubdivisionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof create1>>, TError,{data: SubdivisionRequest}, TContext> => {
+export const getCreateSubdivisionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubdivision>>, TError,{data: SubdivisionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSubdivision>>, TError,{data: SubdivisionRequest}, TContext> => {
 
-const mutationKey = ['create1'];
+const mutationKey = ['createSubdivision'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -163,10 +163,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof create1>>, {data: SubdivisionRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSubdivision>>, {data: SubdivisionRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  create1(data,requestOptions)
+          return  createSubdivision(data,requestOptions)
         }
 
         
@@ -174,39 +174,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Create1MutationResult = NonNullable<Awaited<ReturnType<typeof create1>>>
-    export type Create1MutationBody = SubdivisionRequest
-    export type Create1MutationError = unknown
+    export type CreateSubdivisionMutationResult = NonNullable<Awaited<ReturnType<typeof createSubdivision>>>
+    export type CreateSubdivisionMutationBody = SubdivisionRequest
+    export type CreateSubdivisionMutationError = unknown
 
     /**
  * @summary Create a new subdivision
  */
-export const useCreate1 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create1>>, TError,{data: SubdivisionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateSubdivision = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubdivision>>, TError,{data: SubdivisionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof create1>>,
+        Awaited<ReturnType<typeof createSubdivision>>,
         TError,
         {data: SubdivisionRequest},
         TContext
       > => {
 
-      const mutationOptions = getCreate1MutationOptions(options);
+      const mutationOptions = getCreateSubdivisionMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    export type deactivate1Response200 = {
+    /**
+ * @summary Deactivate a subdivision
+ */
+export type deactivateSubdivisionResponse200 = {
   data: ApiResponseSubdivisionResponse
   status: 200
 }
     
-export type deactivate1ResponseSuccess = (deactivate1Response200) & {
+export type deactivateSubdivisionResponseSuccess = (deactivateSubdivisionResponse200) & {
   headers: Headers;
 };
 ;
 
-export type deactivate1Response = (deactivate1ResponseSuccess)
+export type deactivateSubdivisionResponse = (deactivateSubdivisionResponseSuccess)
 
-export const getDeactivate1Url = (id: number,) => {
+export const getDeactivateSubdivisionUrl = (id: number,) => {
 
 
   
@@ -214,9 +217,9 @@ export const getDeactivate1Url = (id: number,) => {
   return `/api/v1/admin/masterdata/subdivisions/${id}/deactivate`
 }
 
-export const deactivate1 = async (id: number, options?: RequestInit): Promise<deactivate1Response> => {
+export const deactivateSubdivision = async (id: number, options?: RequestInit): Promise<deactivateSubdivisionResponse> => {
   
-  return customFetch<deactivate1Response>(getDeactivate1Url(id),
+  return customFetch<deactivateSubdivisionResponse>(getDeactivateSubdivisionUrl(id),
   {      
     ...options,
     method: 'POST'
@@ -228,11 +231,11 @@ export const deactivate1 = async (id: number, options?: RequestInit): Promise<de
 
 
 
-export const getDeactivate1MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate1>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deactivate1>>, TError,{id: number}, TContext> => {
+export const getDeactivateSubdivisionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivateSubdivision>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deactivateSubdivision>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['deactivate1'];
+const mutationKey = ['deactivateSubdivision'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -242,10 +245,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivate1>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivateSubdivision>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  deactivate1(id,requestOptions)
+          return  deactivateSubdivision(id,requestOptions)
         }
 
         
@@ -253,36 +256,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Deactivate1MutationResult = NonNullable<Awaited<ReturnType<typeof deactivate1>>>
+    export type DeactivateSubdivisionMutationResult = NonNullable<Awaited<ReturnType<typeof deactivateSubdivision>>>
     
-    export type Deactivate1MutationError = unknown
+    export type DeactivateSubdivisionMutationError = unknown
 
-    export const useDeactivate1 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate1>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    /**
+ * @summary Deactivate a subdivision
+ */
+export const useDeactivateSubdivision = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivateSubdivision>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deactivate1>>,
+        Awaited<ReturnType<typeof deactivateSubdivision>>,
         TError,
         {id: number},
         TContext
       > => {
 
-      const mutationOptions = getDeactivate1MutationOptions(options);
+      const mutationOptions = getDeactivateSubdivisionMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    export type activate1Response200 = {
+    /**
+ * @summary Activate a subdivision
+ */
+export type activateSubdivisionResponse200 = {
   data: ApiResponseSubdivisionResponse
   status: 200
 }
     
-export type activate1ResponseSuccess = (activate1Response200) & {
+export type activateSubdivisionResponseSuccess = (activateSubdivisionResponse200) & {
   headers: Headers;
 };
 ;
 
-export type activate1Response = (activate1ResponseSuccess)
+export type activateSubdivisionResponse = (activateSubdivisionResponseSuccess)
 
-export const getActivate1Url = (id: number,) => {
+export const getActivateSubdivisionUrl = (id: number,) => {
 
 
   
@@ -290,9 +299,9 @@ export const getActivate1Url = (id: number,) => {
   return `/api/v1/admin/masterdata/subdivisions/${id}/activate`
 }
 
-export const activate1 = async (id: number, options?: RequestInit): Promise<activate1Response> => {
+export const activateSubdivision = async (id: number, options?: RequestInit): Promise<activateSubdivisionResponse> => {
   
-  return customFetch<activate1Response>(getActivate1Url(id),
+  return customFetch<activateSubdivisionResponse>(getActivateSubdivisionUrl(id),
   {      
     ...options,
     method: 'POST'
@@ -304,11 +313,11 @@ export const activate1 = async (id: number, options?: RequestInit): Promise<acti
 
 
 
-export const getActivate1MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate1>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof activate1>>, TError,{id: number}, TContext> => {
+export const getActivateSubdivisionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateSubdivision>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof activateSubdivision>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['activate1'];
+const mutationKey = ['activateSubdivision'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -318,10 +327,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activate1>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activateSubdivision>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  activate1(id,requestOptions)
+          return  activateSubdivision(id,requestOptions)
         }
 
         
@@ -329,20 +338,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Activate1MutationResult = NonNullable<Awaited<ReturnType<typeof activate1>>>
+    export type ActivateSubdivisionMutationResult = NonNullable<Awaited<ReturnType<typeof activateSubdivision>>>
     
-    export type Activate1MutationError = unknown
+    export type ActivateSubdivisionMutationError = unknown
 
-    export const useActivate1 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate1>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    /**
+ * @summary Activate a subdivision
+ */
+export const useActivateSubdivision = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateSubdivision>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof activate1>>,
+        Awaited<ReturnType<typeof activateSubdivision>>,
         TError,
         {id: number},
         TContext
       > => {
 
-      const mutationOptions = getActivate1MutationOptions(options);
+      const mutationOptions = getActivateSubdivisionMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

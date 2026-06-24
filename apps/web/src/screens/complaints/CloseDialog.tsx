@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useClose, type Schemas } from '@complaints/api';
+import { useCloseComplaint, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { Dialog } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -50,7 +50,7 @@ export function CloseDialog({
   onSuccess,
 }: CloseDialogProps): React.JSX.Element {
   const t = useT();
-  const { mutateAsync, isPending } = useClose();
+  const { mutateAsync, isPending } = useCloseComplaint();
   const [formError, setFormError] = useState<string | null>(null);
 
   const reasonRequired =

@@ -12,29 +12,29 @@ import * as zod from 'zod';
  * Unknown ids are silently dropped. Order of the response is not guaranteed.
  * @summary Batch-resolve up to 50 staff ids in one round-trip
  */
-export const searchQueryPageablePageMin = 0;
+export const getStaffDirectoryEntriesQueryPageablePageMin = 0;
 
 
-export const searchQueryIdsMax = 50;
+export const getStaffDirectoryEntriesQueryIdsMax = 50;
 
 
 
-export const searchQueryParams = zod.object({
+export const getStaffDirectoryEntriesQueryParams = zod.object({
   "role": zod.enum(['ADMIN', 'ENGINEER', 'TECHNICIAN']).optional(),
   "distributionCenterId": zod.number().optional(),
   "active": zod.boolean().optional(),
   "pageable": zod.object({
-  "page": zod.number().min(searchQueryPageablePageMin).optional(),
+  "page": zod.number().min(getStaffDirectoryEntriesQueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 }),
-  "ids": zod.array(zod.number()).min(1).max(searchQueryIdsMax)
+  "ids": zod.array(zod.number()).min(1).max(getStaffDirectoryEntriesQueryIdsMax)
 })
 
 /**
  * @summary Resolve a single staff id to a directory entry
  */
-export const getByIdParams = zod.object({
+export const getStaffDirectoryEntryParams = zod.object({
   "id": zod.number()
 })
 

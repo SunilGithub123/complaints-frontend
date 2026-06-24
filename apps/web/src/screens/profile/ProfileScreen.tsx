@@ -31,9 +31,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import {
-  useUpdateMyProfile,
+  useUpdateMyStaffProfile,
   useGetSubdivision,
-  useGetDc,
+  useGetDistributionCenter,
   type Schemas,
 } from '@complaints/api';
 import { useT } from '@complaints/i18n';
@@ -109,7 +109,7 @@ export default function ProfileScreen(): React.JSX.Element {
   const subdivisionQuery = useGetSubdivision(staff?.subdivisionId ?? 0, {
     query: { enabled: !!staff?.subdivisionId },
   });
-  const dcQuery = useGetDc(staff?.distributionCenterId ?? 0, {
+  const dcQuery = useGetDistributionCenter(staff?.distributionCenterId ?? 0, {
     query: { enabled: !!staff?.distributionCenterId },
   });
 
@@ -127,7 +127,7 @@ export default function ProfileScreen(): React.JSX.Element {
     return env?.data?.name ?? t('staff.profile.notSet');
   }, [dcQuery.data, t]);
 
-  const { mutateAsync, isPending } = useUpdateMyProfile();
+  const { mutateAsync, isPending } = useUpdateMyStaffProfile();
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);

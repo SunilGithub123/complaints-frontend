@@ -8,7 +8,7 @@
  *  2. Unhappy path: BE returns `EMPLOYEE_ID_TAKEN` → field-level error
  *     appears under "Employee ID" and `onCreated` was NOT called.
  *
- * `useListDcs` is mocked so the DC picker has a deterministic option set.
+ * `useListDistributionCenters` is mocked so the DC picker has a deterministic option set.
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -22,7 +22,7 @@ vi.mock('@complaints/api', async () => {
   const actual = await vi.importActual<typeof import('@complaints/api')>('@complaints/api');
   return {
     ...actual,
-    useListDcs: () => ({
+    useListDistributionCenters: () => ({
       data: {
         data: {
           success: true,

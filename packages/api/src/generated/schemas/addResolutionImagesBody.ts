@@ -5,12 +5,7 @@
  * Backend API for the Maharashtra State Electricity Board Complaint Resolution System.
  * OpenAPI spec version: v1
  */
-import type { List1Role } from './list1Role';
-import type { Pageable } from './pageable';
 
-export type List1Params = {
-role?: List1Role;
-distributionCenterId?: number;
-enabled?: boolean;
-pageable: Pageable;
+export type AddResolutionImagesBody = {
+  images: Blob[];
 };

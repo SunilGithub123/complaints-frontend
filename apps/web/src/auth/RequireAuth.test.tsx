@@ -1,17 +1,17 @@
 /**
  * RequireAuth — Stage 8a boot-time revalidation tests.
  *
- *  1. Happy: token in store, `useMe` returns an updated role (ADMIN →
+ *  1. Happy: token in store, `useGetMyStaffProfile` returns an updated role (ADMIN →
  *     ENGINEER server-side). The guard commits the fresh staff into
  *     the auth store before rendering its protected child.
- *  2. Unhappy: `useMe` is in the error state (caller-side proxy for the
+ *  2. Unhappy: `useGetMyStaffProfile` is in the error state (caller-side proxy for the
  *     "401 → refresh failed → auth:logout dispatched" path the
  *     transport owns). The guard still falls through to render so the
  *     existing `auth:logout` listener in App.tsx can navigate away —
  *     we just verify the guard does NOT block forever on a failure
  *     and the child eventually renders against the cached snapshot.
  *
- * We mock `useMe` rather than going through TanStack Query + the
+ * We mock `useGetMyStaffProfile` rather than going through TanStack Query + the
  * transport; the transport already has its own happy + 401-refresh
  * tests in `@complaints/api`.
  */
@@ -28,7 +28,7 @@ vi.mock('@complaints/api', async () => {
   const actual = await vi.importActual<typeof import('@complaints/api')>('@complaints/api');
   return {
     ...actual,
-    useMe: (...args: unknown[]) => useMeMock(...args),
+    useGetMyStaffProfile: (...args: unknown[]) => useMeMock(...args),
   };
 });
 

@@ -11,7 +11,7 @@
  *
  * Role-dependent UI: ENGINEER & TECHNICIAN must have a DC selection.
  * We don't load every DC eagerly for the picker — we use the same
- * `useListDcs` hook that the masterdata read screen uses, scoped via
+ * `useListDistributionCenters` hook that the masterdata read screen uses, scoped via
  * pageable. For Phase 2 the active DC count per subdivision is small
  * (≤ a few dozen) so a single page of 100 is enough.
  */
@@ -20,7 +20,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  useListDcs,
+  useListDistributionCenters,
   type Schemas,
 } from '@complaints/api';
 import { useT } from '@complaints/i18n';
@@ -112,7 +112,7 @@ export function StaffFormDialog({
   const [formError, setFormError] = useState<string | null>(null);
 
   // DC picker source (Phase 2: single page is enough).
-  const dcQuery = useListDcs({ pageable: { page: 0, size: 100, sort: ['code,asc'] } });
+  const dcQuery = useListDistributionCenters({ pageable: { page: 0, size: 100, sort: ['code,asc'] } });
   const dcs: DcOption[] = useMemo(() => {
     const env = (dcQuery.data as
       | { data: Schemas.ApiResponsePageResponseDistributionCenterResponse }

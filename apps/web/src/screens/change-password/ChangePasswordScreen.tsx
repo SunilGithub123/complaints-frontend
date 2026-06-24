@@ -13,7 +13,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useChangePassword, ApiError, type Schemas } from '@complaints/api';
+import { useChangeStaffPassword, ApiError, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { useAuthStore } from '@/auth/authStore';
 import { Button } from '@/components/ui/button';
@@ -69,7 +69,7 @@ export default function ChangePasswordScreen(): React.JSX.Element {
     defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
   });
 
-  const { mutateAsync, isPending } = useChangePassword();
+  const { mutateAsync, isPending } = useChangeStaffPassword();
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);

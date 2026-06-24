@@ -24,6 +24,9 @@ export const listSubdivisionsQueryParams = zod.object({
 })
 })
 
+/**
+ * @summary Fetch a subdivision by id
+ */
 export const getSubdivisionParams = zod.object({
   "id": zod.number()
 })
@@ -31,21 +34,24 @@ export const getSubdivisionParams = zod.object({
 /**
  * @summary List distribution centers (optionally filtered by subdivision)
  */
-export const listDcsQueryPageablePageMin = 0;
+export const listDistributionCentersQueryPageablePageMin = 0;
 
 
 
 
-export const listDcsQueryParams = zod.object({
+export const listDistributionCentersQueryParams = zod.object({
   "subdivisionId": zod.number().optional(),
   "pageable": zod.object({
-  "page": zod.number().min(listDcsQueryPageablePageMin).optional(),
+  "page": zod.number().min(listDistributionCentersQueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 })
 })
 
-export const getDcParams = zod.object({
+/**
+ * @summary Fetch a DC by id
+ */
+export const getDistributionCenterParams = zod.object({
   "id": zod.number()
 })
 
@@ -65,6 +71,9 @@ export const listCategoriesQueryParams = zod.object({
 })
 })
 
+/**
+ * @summary Fetch a category by id
+ */
 export const getCategoryParams = zod.object({
   "id": zod.number()
 })

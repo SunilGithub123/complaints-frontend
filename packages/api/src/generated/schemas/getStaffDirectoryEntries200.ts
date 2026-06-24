@@ -8,4 +8,4 @@
 import type { ApiResponseListStaffDirectoryEntryResponse } from './apiResponseListStaffDirectoryEntryResponse';
 import type { ApiResponsePageResponseStaffDirectoryEntryResponse } from './apiResponsePageResponseStaffDirectoryEntryResponse';
 
-export type Search200 = ApiResponseListStaffDirectoryEntryResponse | ApiResponsePageResponseStaffDirectoryEntryResponse;
+export type GetStaffDirectoryEntries200 = ApiResponseListStaffDirectoryEntryResponse | ApiResponsePageResponseStaffDirectoryEntryResponse;

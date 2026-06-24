@@ -5,7 +5,7 @@
  *     and exposes the Assign / Reject / Mark-as-duplicate actions (and
  *     NOT Reassign / Update-severity / Close, which belong to later
  *     statuses).
- *  2. Unhappy path: 403 from `useGetStaffComplaintById` renders the
+ *  2. Unhappy path: 403 from `useGetStaffComplaint` renders the
  *     friendly "outside your area" empty state, NOT a hard error. Per
  *     BE Stage 13.5 handoff: `COMPLAINT_OUT_OF_SCOPE` is expected when
  *     an engineer/admin opens a complaint outside their scope.
@@ -29,7 +29,7 @@ vi.mock('@complaints/api', async () => {
     await vi.importActual<typeof import('@complaints/api')>('@complaints/api');
   return {
     ...actual,
-    useGetStaffComplaintById: (...args: unknown[]) => mockDetail(...args),
+    useGetStaffComplaint: (...args: unknown[]) => mockDetail(...args),
     useGetStaffComplaintHistory: (...args: unknown[]) => mockHistory(...args),
   };
 });

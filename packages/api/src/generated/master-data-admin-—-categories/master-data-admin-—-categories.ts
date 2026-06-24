@@ -27,19 +27,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-export type update3Response200 = {
+/**
+ * @summary Update a complaint category
+ */
+export type updateCategoryResponse200 = {
   data: ApiResponseComplaintCategoryResponse
   status: 200
 }
     
-export type update3ResponseSuccess = (update3Response200) & {
+export type updateCategoryResponseSuccess = (updateCategoryResponse200) & {
   headers: Headers;
 };
 ;
 
-export type update3Response = (update3ResponseSuccess)
+export type updateCategoryResponse = (updateCategoryResponseSuccess)
 
-export const getUpdate3Url = (id: number,) => {
+export const getUpdateCategoryUrl = (id: number,) => {
 
 
   
@@ -47,10 +50,10 @@ export const getUpdate3Url = (id: number,) => {
   return `/api/v1/admin/masterdata/categories/${id}`
 }
 
-export const update3 = async (id: number,
-    complaintCategoryRequest: ComplaintCategoryRequest, options?: RequestInit): Promise<update3Response> => {
+export const updateCategory = async (id: number,
+    complaintCategoryRequest: ComplaintCategoryRequest, options?: RequestInit): Promise<updateCategoryResponse> => {
   
-  return customFetch<update3Response>(getUpdate3Url(id),
+  return customFetch<updateCategoryResponse>(getUpdateCategoryUrl(id),
   {      
     ...options,
     method: 'PUT',
@@ -63,11 +66,11 @@ export const update3 = async (id: number,
 
 
 
-export const getUpdate3MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update3>>, TError,{id: number;data: ComplaintCategoryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof update3>>, TError,{id: number;data: ComplaintCategoryRequest}, TContext> => {
+export const getUpdateCategoryMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCategory>>, TError,{id: number;data: ComplaintCategoryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCategory>>, TError,{id: number;data: ComplaintCategoryRequest}, TContext> => {
 
-const mutationKey = ['update3'];
+const mutationKey = ['updateCategory'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -77,10 +80,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof update3>>, {id: number;data: ComplaintCategoryRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCategory>>, {id: number;data: ComplaintCategoryRequest}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  update3(id,data,requestOptions)
+          return  updateCategory(id,data,requestOptions)
         }
 
         
@@ -88,39 +91,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Update3MutationResult = NonNullable<Awaited<ReturnType<typeof update3>>>
-    export type Update3MutationBody = ComplaintCategoryRequest
-    export type Update3MutationError = unknown
+    export type UpdateCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof updateCategory>>>
+    export type UpdateCategoryMutationBody = ComplaintCategoryRequest
+    export type UpdateCategoryMutationError = unknown
 
-    export const useUpdate3 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update3>>, TError,{id: number;data: ComplaintCategoryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+    /**
+ * @summary Update a complaint category
+ */
+export const useUpdateCategory = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCategory>>, TError,{id: number;data: ComplaintCategoryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof update3>>,
+        Awaited<ReturnType<typeof updateCategory>>,
         TError,
         {id: number;data: ComplaintCategoryRequest},
         TContext
       > => {
 
-      const mutationOptions = getUpdate3MutationOptions(options);
+      const mutationOptions = getUpdateCategoryMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Create a complaint category
  */
-export type create3Response200 = {
+export type createCategoryResponse200 = {
   data: ApiResponseComplaintCategoryResponse
   status: 200
 }
     
-export type create3ResponseSuccess = (create3Response200) & {
+export type createCategoryResponseSuccess = (createCategoryResponse200) & {
   headers: Headers;
 };
 ;
 
-export type create3Response = (create3ResponseSuccess)
+export type createCategoryResponse = (createCategoryResponseSuccess)
 
-export const getCreate3Url = () => {
+export const getCreateCategoryUrl = () => {
 
 
   
@@ -128,9 +134,9 @@ export const getCreate3Url = () => {
   return `/api/v1/admin/masterdata/categories`
 }
 
-export const create3 = async (complaintCategoryRequest: ComplaintCategoryRequest, options?: RequestInit): Promise<create3Response> => {
+export const createCategory = async (complaintCategoryRequest: ComplaintCategoryRequest, options?: RequestInit): Promise<createCategoryResponse> => {
   
-  return customFetch<create3Response>(getCreate3Url(),
+  return customFetch<createCategoryResponse>(getCreateCategoryUrl(),
   {      
     ...options,
     method: 'POST',
@@ -143,11 +149,11 @@ export const create3 = async (complaintCategoryRequest: ComplaintCategoryRequest
 
 
 
-export const getCreate3MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create3>>, TError,{data: ComplaintCategoryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof create3>>, TError,{data: ComplaintCategoryRequest}, TContext> => {
+export const getCreateCategoryMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCategory>>, TError,{data: ComplaintCategoryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCategory>>, TError,{data: ComplaintCategoryRequest}, TContext> => {
 
-const mutationKey = ['create3'];
+const mutationKey = ['createCategory'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -157,10 +163,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof create3>>, {data: ComplaintCategoryRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCategory>>, {data: ComplaintCategoryRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  create3(data,requestOptions)
+          return  createCategory(data,requestOptions)
         }
 
         
@@ -168,39 +174,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Create3MutationResult = NonNullable<Awaited<ReturnType<typeof create3>>>
-    export type Create3MutationBody = ComplaintCategoryRequest
-    export type Create3MutationError = unknown
+    export type CreateCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof createCategory>>>
+    export type CreateCategoryMutationBody = ComplaintCategoryRequest
+    export type CreateCategoryMutationError = unknown
 
     /**
  * @summary Create a complaint category
  */
-export const useCreate3 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create3>>, TError,{data: ComplaintCategoryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateCategory = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCategory>>, TError,{data: ComplaintCategoryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof create3>>,
+        Awaited<ReturnType<typeof createCategory>>,
         TError,
         {data: ComplaintCategoryRequest},
         TContext
       > => {
 
-      const mutationOptions = getCreate3MutationOptions(options);
+      const mutationOptions = getCreateCategoryMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    export type deactivate3Response200 = {
+    /**
+ * @summary Deactivate a complaint category
+ */
+export type deactivateCategoryResponse200 = {
   data: ApiResponseComplaintCategoryResponse
   status: 200
 }
     
-export type deactivate3ResponseSuccess = (deactivate3Response200) & {
+export type deactivateCategoryResponseSuccess = (deactivateCategoryResponse200) & {
   headers: Headers;
 };
 ;
 
-export type deactivate3Response = (deactivate3ResponseSuccess)
+export type deactivateCategoryResponse = (deactivateCategoryResponseSuccess)
 
-export const getDeactivate3Url = (id: number,) => {
+export const getDeactivateCategoryUrl = (id: number,) => {
 
 
   
@@ -208,9 +217,9 @@ export const getDeactivate3Url = (id: number,) => {
   return `/api/v1/admin/masterdata/categories/${id}/deactivate`
 }
 
-export const deactivate3 = async (id: number, options?: RequestInit): Promise<deactivate3Response> => {
+export const deactivateCategory = async (id: number, options?: RequestInit): Promise<deactivateCategoryResponse> => {
   
-  return customFetch<deactivate3Response>(getDeactivate3Url(id),
+  return customFetch<deactivateCategoryResponse>(getDeactivateCategoryUrl(id),
   {      
     ...options,
     method: 'POST'
@@ -222,11 +231,11 @@ export const deactivate3 = async (id: number, options?: RequestInit): Promise<de
 
 
 
-export const getDeactivate3MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate3>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deactivate3>>, TError,{id: number}, TContext> => {
+export const getDeactivateCategoryMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivateCategory>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deactivateCategory>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['deactivate3'];
+const mutationKey = ['deactivateCategory'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -236,10 +245,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivate3>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivateCategory>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  deactivate3(id,requestOptions)
+          return  deactivateCategory(id,requestOptions)
         }
 
         
@@ -247,36 +256,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Deactivate3MutationResult = NonNullable<Awaited<ReturnType<typeof deactivate3>>>
+    export type DeactivateCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof deactivateCategory>>>
     
-    export type Deactivate3MutationError = unknown
+    export type DeactivateCategoryMutationError = unknown
 
-    export const useDeactivate3 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate3>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    /**
+ * @summary Deactivate a complaint category
+ */
+export const useDeactivateCategory = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivateCategory>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deactivate3>>,
+        Awaited<ReturnType<typeof deactivateCategory>>,
         TError,
         {id: number},
         TContext
       > => {
 
-      const mutationOptions = getDeactivate3MutationOptions(options);
+      const mutationOptions = getDeactivateCategoryMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    export type activate3Response200 = {
+    /**
+ * @summary Activate a complaint category
+ */
+export type activateCategoryResponse200 = {
   data: ApiResponseComplaintCategoryResponse
   status: 200
 }
     
-export type activate3ResponseSuccess = (activate3Response200) & {
+export type activateCategoryResponseSuccess = (activateCategoryResponse200) & {
   headers: Headers;
 };
 ;
 
-export type activate3Response = (activate3ResponseSuccess)
+export type activateCategoryResponse = (activateCategoryResponseSuccess)
 
-export const getActivate3Url = (id: number,) => {
+export const getActivateCategoryUrl = (id: number,) => {
 
 
   
@@ -284,9 +299,9 @@ export const getActivate3Url = (id: number,) => {
   return `/api/v1/admin/masterdata/categories/${id}/activate`
 }
 
-export const activate3 = async (id: number, options?: RequestInit): Promise<activate3Response> => {
+export const activateCategory = async (id: number, options?: RequestInit): Promise<activateCategoryResponse> => {
   
-  return customFetch<activate3Response>(getActivate3Url(id),
+  return customFetch<activateCategoryResponse>(getActivateCategoryUrl(id),
   {      
     ...options,
     method: 'POST'
@@ -298,11 +313,11 @@ export const activate3 = async (id: number, options?: RequestInit): Promise<acti
 
 
 
-export const getActivate3MutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate3>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof activate3>>, TError,{id: number}, TContext> => {
+export const getActivateCategoryMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateCategory>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof activateCategory>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['activate3'];
+const mutationKey = ['activateCategory'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -312,10 +327,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activate3>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activateCategory>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  activate3(id,requestOptions)
+          return  activateCategory(id,requestOptions)
         }
 
         
@@ -323,20 +338,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type Activate3MutationResult = NonNullable<Awaited<ReturnType<typeof activate3>>>
+    export type ActivateCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof activateCategory>>>
     
-    export type Activate3MutationError = unknown
+    export type ActivateCategoryMutationError = unknown
 
-    export const useActivate3 = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activate3>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    /**
+ * @summary Activate a complaint category
+ */
+export const useActivateCategory = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateCategory>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof activate3>>,
+        Awaited<ReturnType<typeof activateCategory>>,
         TError,
         {id: number},
         TContext
       > => {
 
-      const mutationOptions = getActivate3MutationOptions(options);
+      const mutationOptions = getActivateCategoryMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

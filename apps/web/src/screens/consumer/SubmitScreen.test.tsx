@@ -38,7 +38,7 @@ vi.mock('@complaints/api', async () => {
   );
   return {
     ...actual,
-    useListActiveCategories: () => ({
+    useListActiveCategoriesForConsumer: () => ({
       data: {
         data: {
           success: true,

@@ -24,7 +24,7 @@
  */
 import type { ReactElement } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useMe, type Schemas } from '@complaints/api';
+import { useGetMyStaffProfile, type Schemas } from '@complaints/api';
 import {
   useAuthStore,
   selectStaff,
@@ -47,9 +47,9 @@ export function RequireAuth(): ReactElement {
 
   // Boot-time revalidation. Skipped entirely for anonymous visitors so the
   // hook never fires without a token. We deliberately gate the call with
-  // `enabled` rather than calling `useMe` conditionally — Rules of Hooks.
+  // `enabled` rather than calling `useGetMyStaffProfile` conditionally — Rules of Hooks.
   const needsRevalidation = isAuthed && lastValidatedAt === null;
-  const meQuery = useMe<
+  const meQuery = useGetMyStaffProfile<
     { data?: Schemas.ApiResponseStaffSummaryResponse },
     unknown
   >({

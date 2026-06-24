@@ -44,19 +44,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Current staff profile
  */
-export type meResponse200 = {
+export type getMyStaffProfileResponse200 = {
   data: ApiResponseStaffSummaryResponse
   status: 200
 }
     
-export type meResponseSuccess = (meResponse200) & {
+export type getMyStaffProfileResponseSuccess = (getMyStaffProfileResponse200) & {
   headers: Headers;
 };
 ;
 
-export type meResponse = (meResponseSuccess)
+export type getMyStaffProfileResponse = (getMyStaffProfileResponseSuccess)
 
-export const getMeUrl = () => {
+export const getGetMyStaffProfileUrl = () => {
 
 
   
@@ -64,9 +64,9 @@ export const getMeUrl = () => {
   return `/api/v1/staff/me`
 }
 
-export const me = async ( options?: RequestInit): Promise<meResponse> => {
+export const getMyStaffProfile = async ( options?: RequestInit): Promise<getMyStaffProfileResponse> => {
   
-  return customFetch<meResponse>(getMeUrl(),
+  return customFetch<getMyStaffProfileResponse>(getGetMyStaffProfileUrl(),
   {      
     ...options,
     method: 'GET'
@@ -79,69 +79,69 @@ export const me = async ( options?: RequestInit): Promise<meResponse> => {
 
 
 
-export const getMeQueryKey = () => {
+export const getGetMyStaffProfileQueryKey = () => {
     return [
     `/api/v1/staff/me`
     ] as const;
     }
 
     
-export const getMeQueryOptions = <TData = Awaited<ReturnType<typeof me>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetMyStaffProfileQueryOptions = <TData = Awaited<ReturnType<typeof getMyStaffProfile>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyStaffProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getMeQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetMyStaffProfileQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof me>>> = () => me(requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyStaffProfile>>> = () => getMyStaffProfile(requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyStaffProfile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type MeQueryResult = NonNullable<Awaited<ReturnType<typeof me>>>
-export type MeQueryError = unknown
+export type GetMyStaffProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getMyStaffProfile>>>
+export type GetMyStaffProfileQueryError = unknown
 
 
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
+export function useGetMyStaffProfile<TData = Awaited<ReturnType<typeof getMyStaffProfile>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyStaffProfile>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me>>,
+          Awaited<ReturnType<typeof getMyStaffProfile>>,
           TError,
-          Awaited<ReturnType<typeof me>>
+          Awaited<ReturnType<typeof getMyStaffProfile>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
+export function useGetMyStaffProfile<TData = Awaited<ReturnType<typeof getMyStaffProfile>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyStaffProfile>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me>>,
+          Awaited<ReturnType<typeof getMyStaffProfile>>,
           TError,
-          Awaited<ReturnType<typeof me>>
+          Awaited<ReturnType<typeof getMyStaffProfile>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetMyStaffProfile<TData = Awaited<ReturnType<typeof getMyStaffProfile>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyStaffProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Current staff profile
  */
 
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetMyStaffProfile<TData = Awaited<ReturnType<typeof getMyStaffProfile>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyStaffProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getMeQueryOptions(options)
+  const queryOptions = getGetMyStaffProfileQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -157,19 +157,19 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
  * Updates the caller's own mutable profile fields: fullName, email, mobile, notificationsPushEnabled. Scope fields (role, subdivisionId, distributionCenterId, employeeId) are immutable here — those are admin actions via PUT /api/v1/admin/staff/{id}.
  * @summary Update my profile (self-service)
  */
-export type updateMyProfileResponse200 = {
+export type updateMyStaffProfileResponse200 = {
   data: ApiResponseStaffSummaryResponse
   status: 200
 }
     
-export type updateMyProfileResponseSuccess = (updateMyProfileResponse200) & {
+export type updateMyStaffProfileResponseSuccess = (updateMyStaffProfileResponse200) & {
   headers: Headers;
 };
 ;
 
-export type updateMyProfileResponse = (updateMyProfileResponseSuccess)
+export type updateMyStaffProfileResponse = (updateMyStaffProfileResponseSuccess)
 
-export const getUpdateMyProfileUrl = () => {
+export const getUpdateMyStaffProfileUrl = () => {
 
 
   
@@ -177,9 +177,9 @@ export const getUpdateMyProfileUrl = () => {
   return `/api/v1/staff/me`
 }
 
-export const updateMyProfile = async (updateMyProfileRequest: UpdateMyProfileRequest, options?: RequestInit): Promise<updateMyProfileResponse> => {
+export const updateMyStaffProfile = async (updateMyProfileRequest: UpdateMyProfileRequest, options?: RequestInit): Promise<updateMyStaffProfileResponse> => {
   
-  return customFetch<updateMyProfileResponse>(getUpdateMyProfileUrl(),
+  return customFetch<updateMyStaffProfileResponse>(getUpdateMyStaffProfileUrl(),
   {      
     ...options,
     method: 'PUT',
@@ -192,11 +192,11 @@ export const updateMyProfile = async (updateMyProfileRequest: UpdateMyProfileReq
 
 
 
-export const getUpdateMyProfileMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,{data: UpdateMyProfileRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,{data: UpdateMyProfileRequest}, TContext> => {
+export const getUpdateMyStaffProfileMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyStaffProfile>>, TError,{data: UpdateMyProfileRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyStaffProfile>>, TError,{data: UpdateMyProfileRequest}, TContext> => {
 
-const mutationKey = ['updateMyProfile'];
+const mutationKey = ['updateMyStaffProfile'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -206,10 +206,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyProfile>>, {data: UpdateMyProfileRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyStaffProfile>>, {data: UpdateMyProfileRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  updateMyProfile(data,requestOptions)
+          return  updateMyStaffProfile(data,requestOptions)
         }
 
         
@@ -217,42 +217,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateMyProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyProfile>>>
-    export type UpdateMyProfileMutationBody = UpdateMyProfileRequest
-    export type UpdateMyProfileMutationError = unknown
+    export type UpdateMyStaffProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyStaffProfile>>>
+    export type UpdateMyStaffProfileMutationBody = UpdateMyProfileRequest
+    export type UpdateMyStaffProfileMutationError = unknown
 
     /**
  * @summary Update my profile (self-service)
  */
-export const useUpdateMyProfile = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,{data: UpdateMyProfileRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdateMyStaffProfile = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyStaffProfile>>, TError,{data: UpdateMyProfileRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateMyProfile>>,
+        Awaited<ReturnType<typeof updateMyStaffProfile>>,
         TError,
         {data: UpdateMyProfileRequest},
         TContext
       > => {
 
-      const mutationOptions = getUpdateMyProfileMutationOptions(options);
+      const mutationOptions = getUpdateMyStaffProfileMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Rotate refresh token; returns new access + refresh pair
  */
-export type refreshResponse200 = {
+export type refreshStaffTokenResponse200 = {
   data: ApiResponseLoginResponse
   status: 200
 }
     
-export type refreshResponseSuccess = (refreshResponse200) & {
+export type refreshStaffTokenResponseSuccess = (refreshStaffTokenResponse200) & {
   headers: Headers;
 };
 ;
 
-export type refreshResponse = (refreshResponseSuccess)
+export type refreshStaffTokenResponse = (refreshStaffTokenResponseSuccess)
 
-export const getRefreshUrl = () => {
+export const getRefreshStaffTokenUrl = () => {
 
 
   
@@ -260,9 +260,9 @@ export const getRefreshUrl = () => {
   return `/api/v1/staff/auth/refresh`
 }
 
-export const refresh = async (refreshTokenRequest: RefreshTokenRequest, options?: RequestInit): Promise<refreshResponse> => {
+export const refreshStaffToken = async (refreshTokenRequest: RefreshTokenRequest, options?: RequestInit): Promise<refreshStaffTokenResponse> => {
   
-  return customFetch<refreshResponse>(getRefreshUrl(),
+  return customFetch<refreshStaffTokenResponse>(getRefreshStaffTokenUrl(),
   {      
     ...options,
     method: 'POST',
@@ -275,11 +275,11 @@ export const refresh = async (refreshTokenRequest: RefreshTokenRequest, options?
 
 
 
-export const getRefreshMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refresh>>, TError,{data: RefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof refresh>>, TError,{data: RefreshTokenRequest}, TContext> => {
+export const getRefreshStaffTokenMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshStaffToken>>, TError,{data: RefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof refreshStaffToken>>, TError,{data: RefreshTokenRequest}, TContext> => {
 
-const mutationKey = ['refresh'];
+const mutationKey = ['refreshStaffToken'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -289,10 +289,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refresh>>, {data: RefreshTokenRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshStaffToken>>, {data: RefreshTokenRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  refresh(data,requestOptions)
+          return  refreshStaffToken(data,requestOptions)
         }
 
         
@@ -300,42 +300,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type RefreshMutationResult = NonNullable<Awaited<ReturnType<typeof refresh>>>
-    export type RefreshMutationBody = RefreshTokenRequest
-    export type RefreshMutationError = unknown
+    export type RefreshStaffTokenMutationResult = NonNullable<Awaited<ReturnType<typeof refreshStaffToken>>>
+    export type RefreshStaffTokenMutationBody = RefreshTokenRequest
+    export type RefreshStaffTokenMutationError = unknown
 
     /**
  * @summary Rotate refresh token; returns new access + refresh pair
  */
-export const useRefresh = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refresh>>, TError,{data: RefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useRefreshStaffToken = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshStaffToken>>, TError,{data: RefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof refresh>>,
+        Awaited<ReturnType<typeof refreshStaffToken>>,
         TError,
         {data: RefreshTokenRequest},
         TContext
       > => {
 
-      const mutationOptions = getRefreshMutationOptions(options);
+      const mutationOptions = getRefreshStaffTokenMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Revoke the provided refresh token (or all sessions if body omitted)
  */
-export type logoutResponse200 = {
+export type logoutStaffResponse200 = {
   data: ApiResponseVoid
   status: 200
 }
     
-export type logoutResponseSuccess = (logoutResponse200) & {
+export type logoutStaffResponseSuccess = (logoutStaffResponse200) & {
   headers: Headers;
 };
 ;
 
-export type logoutResponse = (logoutResponseSuccess)
+export type logoutStaffResponse = (logoutStaffResponseSuccess)
 
-export const getLogoutUrl = () => {
+export const getLogoutStaffUrl = () => {
 
 
   
@@ -343,9 +343,9 @@ export const getLogoutUrl = () => {
   return `/api/v1/staff/auth/logout`
 }
 
-export const logout = async (refreshTokenRequest: RefreshTokenRequest, options?: RequestInit): Promise<logoutResponse> => {
+export const logoutStaff = async (refreshTokenRequest: RefreshTokenRequest, options?: RequestInit): Promise<logoutStaffResponse> => {
   
-  return customFetch<logoutResponse>(getLogoutUrl(),
+  return customFetch<logoutStaffResponse>(getLogoutStaffUrl(),
   {      
     ...options,
     method: 'POST',
@@ -358,11 +358,11 @@ export const logout = async (refreshTokenRequest: RefreshTokenRequest, options?:
 
 
 
-export const getLogoutMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,{data: RefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,{data: RefreshTokenRequest}, TContext> => {
+export const getLogoutStaffMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutStaff>>, TError,{data: RefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof logoutStaff>>, TError,{data: RefreshTokenRequest}, TContext> => {
 
-const mutationKey = ['logout'];
+const mutationKey = ['logoutStaff'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -372,10 +372,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logout>>, {data: RefreshTokenRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logoutStaff>>, {data: RefreshTokenRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  logout(data,requestOptions)
+          return  logoutStaff(data,requestOptions)
         }
 
         
@@ -383,42 +383,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type LogoutMutationResult = NonNullable<Awaited<ReturnType<typeof logout>>>
-    export type LogoutMutationBody = RefreshTokenRequest
-    export type LogoutMutationError = unknown
+    export type LogoutStaffMutationResult = NonNullable<Awaited<ReturnType<typeof logoutStaff>>>
+    export type LogoutStaffMutationBody = RefreshTokenRequest
+    export type LogoutStaffMutationError = unknown
 
     /**
  * @summary Revoke the provided refresh token (or all sessions if body omitted)
  */
-export const useLogout = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,{data: RefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useLogoutStaff = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutStaff>>, TError,{data: RefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof logout>>,
+        Awaited<ReturnType<typeof logoutStaff>>,
         TError,
         {data: RefreshTokenRequest},
         TContext
       > => {
 
-      const mutationOptions = getLogoutMutationOptions(options);
+      const mutationOptions = getLogoutStaffMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Login with employee ID + password
  */
-export type loginResponse200 = {
+export type loginStaffResponse200 = {
   data: ApiResponseLoginResponse
   status: 200
 }
     
-export type loginResponseSuccess = (loginResponse200) & {
+export type loginStaffResponseSuccess = (loginStaffResponse200) & {
   headers: Headers;
 };
 ;
 
-export type loginResponse = (loginResponseSuccess)
+export type loginStaffResponse = (loginStaffResponseSuccess)
 
-export const getLoginUrl = () => {
+export const getLoginStaffUrl = () => {
 
 
   
@@ -426,9 +426,9 @@ export const getLoginUrl = () => {
   return `/api/v1/staff/auth/login`
 }
 
-export const login = async (loginRequest: LoginRequest, options?: RequestInit): Promise<loginResponse> => {
+export const loginStaff = async (loginRequest: LoginRequest, options?: RequestInit): Promise<loginStaffResponse> => {
   
-  return customFetch<loginResponse>(getLoginUrl(),
+  return customFetch<loginStaffResponse>(getLoginStaffUrl(),
   {      
     ...options,
     method: 'POST',
@@ -441,11 +441,11 @@ export const login = async (loginRequest: LoginRequest, options?: RequestInit): 
 
 
 
-export const getLoginMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext> => {
+export const getLoginStaffMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginStaff>>, TError,{data: LoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof loginStaff>>, TError,{data: LoginRequest}, TContext> => {
 
-const mutationKey = ['login'];
+const mutationKey = ['loginStaff'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -455,10 +455,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: LoginRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginStaff>>, {data: LoginRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  login(data,requestOptions)
+          return  loginStaff(data,requestOptions)
         }
 
         
@@ -466,23 +466,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
-    export type LoginMutationBody = LoginRequest
-    export type LoginMutationError = unknown
+    export type LoginStaffMutationResult = NonNullable<Awaited<ReturnType<typeof loginStaff>>>
+    export type LoginStaffMutationBody = LoginRequest
+    export type LoginStaffMutationError = unknown
 
     /**
  * @summary Login with employee ID + password
  */
-export const useLogin = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useLoginStaff = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginStaff>>, TError,{data: LoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof login>>,
+        Awaited<ReturnType<typeof loginStaff>>,
         TError,
         {data: LoginRequest},
         TContext
       > => {
 
-      const mutationOptions = getLoginMutationOptions(options);
+      const mutationOptions = getLoginStaffMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -490,19 +490,19 @@ export const useLogin = <TError = unknown,
  * Persists the new password, revokes every refresh token belonging to the caller (kicks all other sessions), and returns a brand-new access + refresh pair with passwordResetRequired = false in both the JWT claims and the response envelope. Callers do not need to chain /staff/auth/refresh afterwards.
  * @summary Change password and receive a fresh token pair
  */
-export type changePasswordResponse200 = {
+export type changeStaffPasswordResponse200 = {
   data: ApiResponseLoginResponse
   status: 200
 }
     
-export type changePasswordResponseSuccess = (changePasswordResponse200) & {
+export type changeStaffPasswordResponseSuccess = (changeStaffPasswordResponse200) & {
   headers: Headers;
 };
 ;
 
-export type changePasswordResponse = (changePasswordResponseSuccess)
+export type changeStaffPasswordResponse = (changeStaffPasswordResponseSuccess)
 
-export const getChangePasswordUrl = () => {
+export const getChangeStaffPasswordUrl = () => {
 
 
   
@@ -510,9 +510,9 @@ export const getChangePasswordUrl = () => {
   return `/api/v1/staff/auth/change-password`
 }
 
-export const changePassword = async (changePasswordRequest: ChangePasswordRequest, options?: RequestInit): Promise<changePasswordResponse> => {
+export const changeStaffPassword = async (changePasswordRequest: ChangePasswordRequest, options?: RequestInit): Promise<changeStaffPasswordResponse> => {
   
-  return customFetch<changePasswordResponse>(getChangePasswordUrl(),
+  return customFetch<changeStaffPasswordResponse>(getChangeStaffPasswordUrl(),
   {      
     ...options,
     method: 'POST',
@@ -525,11 +525,11 @@ export const changePassword = async (changePasswordRequest: ChangePasswordReques
 
 
 
-export const getChangePasswordMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordRequest}, TContext> => {
+export const getChangeStaffPasswordMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeStaffPassword>>, TError,{data: ChangePasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeStaffPassword>>, TError,{data: ChangePasswordRequest}, TContext> => {
 
-const mutationKey = ['changePassword'];
+const mutationKey = ['changeStaffPassword'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -539,10 +539,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePassword>>, {data: ChangePasswordRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeStaffPassword>>, {data: ChangePasswordRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  changePassword(data,requestOptions)
+          return  changeStaffPassword(data,requestOptions)
         }
 
         
@@ -550,23 +550,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ChangePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changePassword>>>
-    export type ChangePasswordMutationBody = ChangePasswordRequest
-    export type ChangePasswordMutationError = unknown
+    export type ChangeStaffPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changeStaffPassword>>>
+    export type ChangeStaffPasswordMutationBody = ChangePasswordRequest
+    export type ChangeStaffPasswordMutationError = unknown
 
     /**
  * @summary Change password and receive a fresh token pair
  */
-export const useChangePassword = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useChangeStaffPassword = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeStaffPassword>>, TError,{data: ChangePasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof changePassword>>,
+        Awaited<ReturnType<typeof changeStaffPassword>>,
         TError,
         {data: ChangePasswordRequest},
         TContext
       > => {
 
-      const mutationOptions = getChangePasswordMutationOptions(options);
+      const mutationOptions = getChangeStaffPasswordMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAssign, type Schemas } from '@complaints/api';
+import { useAssignComplaint, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { Dialog } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -41,7 +41,7 @@ export function AssignDialog({
   onSuccess,
 }: AssignDialogProps): React.JSX.Element {
   const t = useT();
-  const { mutateAsync, isPending } = useAssign();
+  const { mutateAsync, isPending } = useAssignComplaint();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<Values>({

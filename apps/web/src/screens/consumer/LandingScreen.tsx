@@ -17,7 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useSendOtp, ApiError } from '@complaints/api';
+import { useSendConsumerOtp, ApiError } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import {
   useConsumerAuthStore,
@@ -64,7 +64,7 @@ export default function LandingScreen(): React.JSX.Element {
   const [formError, setFormError] = useState<string | null>(null);
   const [pendingIdentity, setPendingIdentity] = useState<LandingValues | null>(null);
 
-  const sendMutation = useSendOtp();
+  const sendMutation = useSendConsumerOtp();
 
   const {
     register,

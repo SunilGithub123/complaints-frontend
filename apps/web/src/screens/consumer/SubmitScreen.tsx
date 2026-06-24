@@ -4,7 +4,7 @@
  * Gated by `ConsumerRequireVerification` (router-level), so we know
  * `consumerId` + `mobile` are present in the consumer store on mount.
  * Three sections:
- *  1. Category dropdown — `useListActiveCategories` (consumer-scoped
+ *  1. Category dropdown — `useListActiveCategoriesForConsumer` (consumer-scoped
  *     endpoint, returns only active categories).
  *  2. Description + optional location.
  *  3. Image picker — 0..3 JPEG/PNG, client-side compressed to ≤ 1 MB
@@ -23,7 +23,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import {
-  useListActiveCategories,
+  useListActiveCategoriesForConsumer,
   ApiError,
   type Schemas,
 } from '@complaints/api';
@@ -92,7 +92,7 @@ export default function SubmitScreen(): React.JSX.Element {
   const [imageBusy, setImageBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const categoriesQuery = useListActiveCategories({ pageable: PAGE });
+  const categoriesQuery = useListActiveCategoriesForConsumer({ pageable: PAGE });
   const categoriesEnvelope = (
     categoriesQuery.data as
       | { data: Schemas.ApiResponsePageResponseComplaintCategoryResponse }

@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useReject, type Schemas } from '@complaints/api';
+import { useRejectComplaint, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { Dialog } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -31,7 +31,7 @@ export function RejectDialog({
   onSuccess,
 }: RejectDialogProps): React.JSX.Element {
   const t = useT();
-  const { mutateAsync, isPending } = useReject();
+  const { mutateAsync, isPending } = useRejectComplaint();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<Values>({

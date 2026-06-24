@@ -25,11 +25,12 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  AddImagesBody,
+  AddResolutionImagesBody,
   ApiResponseListComplaintImageResponse,
   ApiResponsePageResponseComplaintListItemResponse,
   ApiResponseVoid,
-  List2Params,
+  CloseComplaintRequest,
+  ListTechnicianComplaintsParams,
   ResolveComplaintRequest
 } from '.././schemas';
 
@@ -43,19 +44,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Start work on an ASSIGNED complaint (→ IN_PROGRESS)
  */
-export type startResponse200 = {
+export type startComplaintResponse200 = {
   data: ApiResponseVoid
   status: 200
 }
     
-export type startResponseSuccess = (startResponse200) & {
+export type startComplaintResponseSuccess = (startComplaintResponse200) & {
   headers: Headers;
 };
 ;
 
-export type startResponse = (startResponseSuccess)
+export type startComplaintResponse = (startComplaintResponseSuccess)
 
-export const getStartUrl = (id: number,) => {
+export const getStartComplaintUrl = (id: number,) => {
 
 
   
@@ -63,9 +64,9 @@ export const getStartUrl = (id: number,) => {
   return `/api/v1/technician/complaints/${id}/start`
 }
 
-export const start = async (id: number, options?: RequestInit): Promise<startResponse> => {
+export const startComplaint = async (id: number, options?: RequestInit): Promise<startComplaintResponse> => {
   
-  return customFetch<startResponse>(getStartUrl(id),
+  return customFetch<startComplaintResponse>(getStartComplaintUrl(id),
   {      
     ...options,
     method: 'POST'
@@ -77,11 +78,11 @@ export const start = async (id: number, options?: RequestInit): Promise<startRes
 
 
 
-export const getStartMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof start>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof start>>, TError,{id: number}, TContext> => {
+export const getStartComplaintMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startComplaint>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startComplaint>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['start'];
+const mutationKey = ['startComplaint'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -91,10 +92,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof start>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startComplaint>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  start(id,requestOptions)
+          return  startComplaint(id,requestOptions)
         }
 
         
@@ -102,42 +103,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type StartMutationResult = NonNullable<Awaited<ReturnType<typeof start>>>
+    export type StartComplaintMutationResult = NonNullable<Awaited<ReturnType<typeof startComplaint>>>
     
-    export type StartMutationError = unknown
+    export type StartComplaintMutationError = unknown
 
     /**
  * @summary Start work on an ASSIGNED complaint (→ IN_PROGRESS)
  */
-export const useStart = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof start>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useStartComplaint = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startComplaint>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof start>>,
+        Awaited<ReturnType<typeof startComplaint>>,
         TError,
         {id: number},
         TContext
       > => {
 
-      const mutationOptions = getStartMutationOptions(options);
+      const mutationOptions = getStartComplaintMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Mark an IN_PROGRESS complaint RESOLVED (SLA-breach reason required if late)
  */
-export type resolveResponse200 = {
+export type resolveComplaintResponse200 = {
   data: ApiResponseVoid
   status: 200
 }
     
-export type resolveResponseSuccess = (resolveResponse200) & {
+export type resolveComplaintResponseSuccess = (resolveComplaintResponse200) & {
   headers: Headers;
 };
 ;
 
-export type resolveResponse = (resolveResponseSuccess)
+export type resolveComplaintResponse = (resolveComplaintResponseSuccess)
 
-export const getResolveUrl = (id: number,) => {
+export const getResolveComplaintUrl = (id: number,) => {
 
 
   
@@ -145,10 +146,10 @@ export const getResolveUrl = (id: number,) => {
   return `/api/v1/technician/complaints/${id}/resolve`
 }
 
-export const resolve = async (id: number,
-    resolveComplaintRequest: ResolveComplaintRequest, options?: RequestInit): Promise<resolveResponse> => {
+export const resolveComplaint = async (id: number,
+    resolveComplaintRequest: ResolveComplaintRequest, options?: RequestInit): Promise<resolveComplaintResponse> => {
   
-  return customFetch<resolveResponse>(getResolveUrl(id),
+  return customFetch<resolveComplaintResponse>(getResolveComplaintUrl(id),
   {      
     ...options,
     method: 'POST',
@@ -161,11 +162,11 @@ export const resolve = async (id: number,
 
 
 
-export const getResolveMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolve>>, TError,{id: number;data: ResolveComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof resolve>>, TError,{id: number;data: ResolveComplaintRequest}, TContext> => {
+export const getResolveComplaintMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveComplaint>>, TError,{id: number;data: ResolveComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resolveComplaint>>, TError,{id: number;data: ResolveComplaintRequest}, TContext> => {
 
-const mutationKey = ['resolve'];
+const mutationKey = ['resolveComplaint'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -175,10 +176,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resolve>>, {id: number;data: ResolveComplaintRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resolveComplaint>>, {id: number;data: ResolveComplaintRequest}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  resolve(id,data,requestOptions)
+          return  resolveComplaint(id,data,requestOptions)
         }
 
         
@@ -186,42 +187,42 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ResolveMutationResult = NonNullable<Awaited<ReturnType<typeof resolve>>>
-    export type ResolveMutationBody = ResolveComplaintRequest
-    export type ResolveMutationError = unknown
+    export type ResolveComplaintMutationResult = NonNullable<Awaited<ReturnType<typeof resolveComplaint>>>
+    export type ResolveComplaintMutationBody = ResolveComplaintRequest
+    export type ResolveComplaintMutationError = unknown
 
     /**
  * @summary Mark an IN_PROGRESS complaint RESOLVED (SLA-breach reason required if late)
  */
-export const useResolve = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolve>>, TError,{id: number;data: ResolveComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useResolveComplaint = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveComplaint>>, TError,{id: number;data: ResolveComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof resolve>>,
+        Awaited<ReturnType<typeof resolveComplaint>>,
         TError,
         {id: number;data: ResolveComplaintRequest},
         TContext
       > => {
 
-      const mutationOptions = getResolveMutationOptions(options);
+      const mutationOptions = getResolveComplaintMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Upload up to 3 resolution images (multipart, image/jpeg or image/png)
  */
-export type addImagesResponse200 = {
+export type addResolutionImagesResponse200 = {
   data: ApiResponseListComplaintImageResponse
   status: 200
 }
     
-export type addImagesResponseSuccess = (addImagesResponse200) & {
+export type addResolutionImagesResponseSuccess = (addResolutionImagesResponse200) & {
   headers: Headers;
 };
 ;
 
-export type addImagesResponse = (addImagesResponseSuccess)
+export type addResolutionImagesResponse = (addResolutionImagesResponseSuccess)
 
-export const getAddImagesUrl = (id: number,) => {
+export const getAddResolutionImagesUrl = (id: number,) => {
 
 
   
@@ -229,12 +230,12 @@ export const getAddImagesUrl = (id: number,) => {
   return `/api/v1/technician/complaints/${id}/images`
 }
 
-export const addImages = async (id: number,
-    addImagesBody: AddImagesBody, options?: RequestInit): Promise<addImagesResponse> => {
+export const addResolutionImages = async (id: number,
+    addResolutionImagesBody: AddResolutionImagesBody, options?: RequestInit): Promise<addResolutionImagesResponse> => {
     const formData = new FormData();
-addImagesBody.images.forEach(value => formData.append(`images`, value));
+addResolutionImagesBody.images.forEach(value => formData.append(`images`, value));
 
-  return customFetch<addImagesResponse>(getAddImagesUrl(id),
+  return customFetch<addResolutionImagesResponse>(getAddResolutionImagesUrl(id),
   {      
     ...options,
     method: 'POST'
@@ -247,11 +248,11 @@ addImagesBody.images.forEach(value => formData.append(`images`, value));
 
 
 
-export const getAddImagesMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addImages>>, TError,{id: number;data: AddImagesBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof addImages>>, TError,{id: number;data: AddImagesBody}, TContext> => {
+export const getAddResolutionImagesMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addResolutionImages>>, TError,{id: number;data: AddResolutionImagesBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addResolutionImages>>, TError,{id: number;data: AddResolutionImagesBody}, TContext> => {
 
-const mutationKey = ['addImages'];
+const mutationKey = ['addResolutionImages'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -261,10 +262,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addImages>>, {id: number;data: AddImagesBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addResolutionImages>>, {id: number;data: AddResolutionImagesBody}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  addImages(id,data,requestOptions)
+          return  addResolutionImages(id,data,requestOptions)
         }
 
         
@@ -272,23 +273,108 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type AddImagesMutationResult = NonNullable<Awaited<ReturnType<typeof addImages>>>
-    export type AddImagesMutationBody = AddImagesBody
-    export type AddImagesMutationError = unknown
+    export type AddResolutionImagesMutationResult = NonNullable<Awaited<ReturnType<typeof addResolutionImages>>>
+    export type AddResolutionImagesMutationBody = AddResolutionImagesBody
+    export type AddResolutionImagesMutationError = unknown
 
     /**
  * @summary Upload up to 3 resolution images (multipart, image/jpeg or image/png)
  */
-export const useAddImages = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addImages>>, TError,{id: number;data: AddImagesBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useAddResolutionImages = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addResolutionImages>>, TError,{id: number;data: AddResolutionImagesBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof addImages>>,
+        Awaited<ReturnType<typeof addResolutionImages>>,
         TError,
-        {id: number;data: AddImagesBody},
+        {id: number;data: AddResolutionImagesBody},
         TContext
       > => {
 
-      const mutationOptions = getAddImagesMutationOptions(options);
+      const mutationOptions = getAddResolutionImagesMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * BRD §4.8: technician is the normal closing actor. Caller must be the assigned technician; complaint must be RESOLVED. Body's slaBreachReason is required only when the complaint is SLA-breached and no reason was already captured at resolve time.
+ * @summary Close a RESOLVED complaint that is assigned to the calling technician
+ */
+export type closeComplaintAsTechnicianResponse200 = {
+  data: ApiResponseVoid
+  status: 200
+}
+    
+export type closeComplaintAsTechnicianResponseSuccess = (closeComplaintAsTechnicianResponse200) & {
+  headers: Headers;
+};
+;
+
+export type closeComplaintAsTechnicianResponse = (closeComplaintAsTechnicianResponseSuccess)
+
+export const getCloseComplaintAsTechnicianUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/technician/complaints/${id}/close`
+}
+
+export const closeComplaintAsTechnician = async (id: number,
+    closeComplaintRequest: CloseComplaintRequest, options?: RequestInit): Promise<closeComplaintAsTechnicianResponse> => {
+  
+  return customFetch<closeComplaintAsTechnicianResponse>(getCloseComplaintAsTechnicianUrl(id),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      closeComplaintRequest,)
+  }
+);}
+
+
+
+
+export const getCloseComplaintAsTechnicianMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeComplaintAsTechnician>>, TError,{id: number;data: CloseComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof closeComplaintAsTechnician>>, TError,{id: number;data: CloseComplaintRequest}, TContext> => {
+
+const mutationKey = ['closeComplaintAsTechnician'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof closeComplaintAsTechnician>>, {id: number;data: CloseComplaintRequest}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  closeComplaintAsTechnician(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CloseComplaintAsTechnicianMutationResult = NonNullable<Awaited<ReturnType<typeof closeComplaintAsTechnician>>>
+    export type CloseComplaintAsTechnicianMutationBody = CloseComplaintRequest
+    export type CloseComplaintAsTechnicianMutationError = unknown
+
+    /**
+ * @summary Close a RESOLVED complaint that is assigned to the calling technician
+ */
+export const useCloseComplaintAsTechnician = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeComplaintAsTechnician>>, TError,{id: number;data: CloseComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof closeComplaintAsTechnician>>,
+        TError,
+        {id: number;data: CloseComplaintRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getCloseComplaintAsTechnicianMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -296,19 +382,19 @@ export const useAddImages = <TError = unknown,
  * Server pins assigned_technician_id = caller.userId(). Optional filters: status, severity, slaBreached, dateFrom/dateTo, q.
  * @summary Paged list of complaints assigned to the calling technician
  */
-export type list2Response200 = {
+export type listTechnicianComplaintsResponse200 = {
   data: ApiResponsePageResponseComplaintListItemResponse
   status: 200
 }
     
-export type list2ResponseSuccess = (list2Response200) & {
+export type listTechnicianComplaintsResponseSuccess = (listTechnicianComplaintsResponse200) & {
   headers: Headers;
 };
 ;
 
-export type list2Response = (list2ResponseSuccess)
+export type listTechnicianComplaintsResponse = (listTechnicianComplaintsResponseSuccess)
 
-export const getList2Url = (params: List2Params,) => {
+export const getListTechnicianComplaintsUrl = (params: ListTechnicianComplaintsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -323,9 +409,9 @@ export const getList2Url = (params: List2Params,) => {
   return stringifiedParams.length > 0 ? `/api/v1/technician/complaints?${stringifiedParams}` : `/api/v1/technician/complaints`
 }
 
-export const list2 = async (params: List2Params, options?: RequestInit): Promise<list2Response> => {
+export const listTechnicianComplaints = async (params: ListTechnicianComplaintsParams, options?: RequestInit): Promise<listTechnicianComplaintsResponse> => {
   
-  return customFetch<list2Response>(getList2Url(params),
+  return customFetch<listTechnicianComplaintsResponse>(getListTechnicianComplaintsUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -338,69 +424,69 @@ export const list2 = async (params: List2Params, options?: RequestInit): Promise
 
 
 
-export const getList2QueryKey = (params?: List2Params,) => {
+export const getListTechnicianComplaintsQueryKey = (params?: ListTechnicianComplaintsParams,) => {
     return [
     `/api/v1/technician/complaints`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getList2QueryOptions = <TData = Awaited<ReturnType<typeof list2>>, TError = unknown>(params: List2Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list2>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getListTechnicianComplaintsQueryOptions = <TData = Awaited<ReturnType<typeof listTechnicianComplaints>>, TError = unknown>(params: ListTechnicianComplaintsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTechnicianComplaints>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getList2QueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getListTechnicianComplaintsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof list2>>> = () => list2(params, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTechnicianComplaints>>> = () => listTechnicianComplaints(params, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof list2>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTechnicianComplaints>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type List2QueryResult = NonNullable<Awaited<ReturnType<typeof list2>>>
-export type List2QueryError = unknown
+export type ListTechnicianComplaintsQueryResult = NonNullable<Awaited<ReturnType<typeof listTechnicianComplaints>>>
+export type ListTechnicianComplaintsQueryError = unknown
 
 
-export function useList2<TData = Awaited<ReturnType<typeof list2>>, TError = unknown>(
- params: List2Params, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof list2>>, TError, TData>> & Pick<
+export function useListTechnicianComplaints<TData = Awaited<ReturnType<typeof listTechnicianComplaints>>, TError = unknown>(
+ params: ListTechnicianComplaintsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTechnicianComplaints>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list2>>,
+          Awaited<ReturnType<typeof listTechnicianComplaints>>,
           TError,
-          Awaited<ReturnType<typeof list2>>
+          Awaited<ReturnType<typeof listTechnicianComplaints>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useList2<TData = Awaited<ReturnType<typeof list2>>, TError = unknown>(
- params: List2Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list2>>, TError, TData>> & Pick<
+export function useListTechnicianComplaints<TData = Awaited<ReturnType<typeof listTechnicianComplaints>>, TError = unknown>(
+ params: ListTechnicianComplaintsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTechnicianComplaints>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list2>>,
+          Awaited<ReturnType<typeof listTechnicianComplaints>>,
           TError,
-          Awaited<ReturnType<typeof list2>>
+          Awaited<ReturnType<typeof listTechnicianComplaints>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useList2<TData = Awaited<ReturnType<typeof list2>>, TError = unknown>(
- params: List2Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list2>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useListTechnicianComplaints<TData = Awaited<ReturnType<typeof listTechnicianComplaints>>, TError = unknown>(
+ params: ListTechnicianComplaintsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTechnicianComplaints>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Paged list of complaints assigned to the calling technician
  */
 
-export function useList2<TData = Awaited<ReturnType<typeof list2>>, TError = unknown>(
- params: List2Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list2>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useListTechnicianComplaints<TData = Awaited<ReturnType<typeof listTechnicianComplaints>>, TError = unknown>(
+ params: ListTechnicianComplaintsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTechnicianComplaints>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getList2QueryOptions(params,options)
+  const queryOptions = getListTechnicianComplaintsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 

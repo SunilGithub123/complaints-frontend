@@ -7,7 +7,6 @@
  */
 import type { Pageable } from './pageable';
 
-export type ListDcsParams = {
-subdivisionId?: number;
+export type ListActiveCategoriesForConsumerParams = {
 pageable: Pageable;
 };

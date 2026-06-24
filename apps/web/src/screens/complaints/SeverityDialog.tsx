@@ -4,7 +4,7 @@
  * with the technician.)
  */
 import { useEffect, useState } from 'react';
-import { useUpdateSeverity, type Schemas } from '@complaints/api';
+import { useUpdateComplaintSeverity, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { Dialog } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -32,7 +32,7 @@ export function SeverityDialog({
   onSuccess,
 }: SeverityDialogProps): React.JSX.Element {
   const t = useT();
-  const { mutateAsync, isPending } = useUpdateSeverity();
+  const { mutateAsync, isPending } = useUpdateComplaintSeverity();
   const [severity, setSeverity] = useState<Severity>(current ?? 'MEDIUM');
   const [error, setError] = useState<string | null>(null);
 

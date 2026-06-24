@@ -28,10 +28,10 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  useGetStaffComplaintById,
+  useGetStaffComplaint,
   useGetStaffComplaintHistory,
-  getStaffComplaintByIdQueryKey,
-  getStaffComplaintHistoryQueryKey,
+  getGetStaffComplaintQueryKey,
+  getGetStaffComplaintHistoryQueryKey,
   ApiError,
   type Schemas,
 } from '@complaints/api';
@@ -84,7 +84,7 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
   // we no longer need `staleTime: 0` to keep gallery thumbnails alive.
   // 30 min leaves a comfortable safety margin under the 1 h TTL while
   // still feeling fresh on a tab the user revisits.
-  const detail = useGetStaffComplaintById<
+  const detail = useGetStaffComplaint<
     { data?: Schemas.ApiResponseComplaintStaffDetailResponse },
     unknown
   >(id, {
@@ -105,11 +105,11 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
   function refetch(opts?: { skipDetail?: boolean }): void {
     if (!opts?.skipDetail) {
       void queryClient.invalidateQueries({
-        queryKey: getStaffComplaintByIdQueryKey(id),
+        queryKey: getGetStaffComplaintQueryKey(id),
       });
     }
     void queryClient.invalidateQueries({
-      queryKey: getStaffComplaintHistoryQueryKey(id),
+      queryKey: getGetStaffComplaintHistoryQueryKey(id),
     });
   }
 
@@ -405,7 +405,7 @@ export default function ComplaintDetailScreen(): React.JSX.Element {
               // BE Stage 16.1 — `close` now returns the post-close
               // detail. Seed the cache directly so we don't refetch.
               if (detail) {
-                queryClient.setQueryData(getStaffComplaintByIdQueryKey(view.id!), {
+                queryClient.setQueryData(getGetStaffComplaintQueryKey(view.id!), {
                   data: { success: true, data: detail },
                 } satisfies { data: Schemas.ApiResponseComplaintStaffDetailResponse });
               }

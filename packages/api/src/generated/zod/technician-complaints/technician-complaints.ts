@@ -11,51 +11,68 @@ import * as zod from 'zod';
 /**
  * @summary Start work on an ASSIGNED complaint (→ IN_PROGRESS)
  */
-export const startParams = zod.object({
+export const startComplaintParams = zod.object({
   "id": zod.number()
 })
 
 /**
  * @summary Mark an IN_PROGRESS complaint RESOLVED (SLA-breach reason required if late)
  */
-export const resolveParams = zod.object({
+export const resolveComplaintParams = zod.object({
   "id": zod.number()
 })
 
-export const resolveBodyResolutionNotesMin = 0;
-export const resolveBodyResolutionNotesMax = 2000;
+export const resolveComplaintBodyResolutionNotesMin = 0;
+export const resolveComplaintBodyResolutionNotesMax = 2000;
 
-export const resolveBodySlaBreachReasonMin = 0;
-export const resolveBodySlaBreachReasonMax = 500;
+export const resolveComplaintBodySlaBreachReasonMin = 0;
+export const resolveComplaintBodySlaBreachReasonMax = 500;
 
 
 
-export const resolveBody = zod.object({
-  "resolutionNotes": zod.string().min(resolveBodyResolutionNotesMin).max(resolveBodyResolutionNotesMax),
-  "slaBreachReason": zod.string().min(resolveBodySlaBreachReasonMin).max(resolveBodySlaBreachReasonMax).optional()
+export const resolveComplaintBody = zod.object({
+  "resolutionNotes": zod.string().min(resolveComplaintBodyResolutionNotesMin).max(resolveComplaintBodyResolutionNotesMax),
+  "slaBreachReason": zod.string().min(resolveComplaintBodySlaBreachReasonMin).max(resolveComplaintBodySlaBreachReasonMax).optional()
 })
 
 /**
  * @summary Upload up to 3 resolution images (multipart, image/jpeg or image/png)
  */
-export const addImagesParams = zod.object({
+export const addResolutionImagesParams = zod.object({
   "id": zod.number()
 })
 
-export const addImagesBody = zod.object({
+export const addResolutionImagesBody = zod.object({
   "images": zod.array(zod.instanceof(File))
+})
+
+/**
+ * BRD §4.8: technician is the normal closing actor. Caller must be the assigned technician; complaint must be RESOLVED. Body's slaBreachReason is required only when the complaint is SLA-breached and no reason was already captured at resolve time.
+ * @summary Close a RESOLVED complaint that is assigned to the calling technician
+ */
+export const closeComplaintAsTechnicianParams = zod.object({
+  "id": zod.number()
+})
+
+export const closeComplaintAsTechnicianBodySlaBreachReasonMin = 0;
+export const closeComplaintAsTechnicianBodySlaBreachReasonMax = 500;
+
+
+
+export const closeComplaintAsTechnicianBody = zod.object({
+  "slaBreachReason": zod.string().min(closeComplaintAsTechnicianBodySlaBreachReasonMin).max(closeComplaintAsTechnicianBodySlaBreachReasonMax).optional()
 })
 
 /**
  * Server pins assigned_technician_id = caller.userId(). Optional filters: status, severity, slaBreached, dateFrom/dateTo, q.
  * @summary Paged list of complaints assigned to the calling technician
  */
-export const list2QueryPageablePageMin = 0;
+export const listTechnicianComplaintsQueryPageablePageMin = 0;
 
 
 
 
-export const list2QueryParams = zod.object({
+export const listTechnicianComplaintsQueryParams = zod.object({
   "filters": zod.object({
   "status": zod.enum(['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED', 'REJECTED', 'DUPLICATE']).optional(),
   "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
@@ -68,7 +85,7 @@ export const list2QueryParams = zod.object({
   "q": zod.string().optional()
 }),
   "pageable": zod.object({
-  "page": zod.number().min(list2QueryPageablePageMin).optional(),
+  "page": zod.number().min(listTechnicianComplaintsQueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 })

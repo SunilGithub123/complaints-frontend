@@ -11,47 +11,47 @@ import * as zod from 'zod';
 /**
  * @summary Fetch one staff account by ID
  */
-export const getParams = zod.object({
+export const getStaffParams = zod.object({
   "id": zod.number()
 })
 
 /**
  * @summary Update an existing staff account (profile + DC reassignment)
  */
-export const updateParams = zod.object({
+export const updateStaffParams = zod.object({
   "id": zod.number()
 })
 
-export const updateBodyFullNameMin = 0;
-export const updateBodyFullNameMax = 200;
+export const updateStaffBodyFullNameMin = 0;
+export const updateStaffBodyFullNameMax = 200;
 
-export const updateBodyEmailMin = 0;
-export const updateBodyEmailMax = 200;
+export const updateStaffBodyEmailMin = 0;
+export const updateStaffBodyEmailMax = 200;
 
-export const updateBodyMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
+export const updateStaffBodyMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
 
 
-export const updateBody = zod.object({
-  "fullName": zod.string().min(updateBodyFullNameMin).max(updateBodyFullNameMax),
-  "email": zod.string().min(updateBodyEmailMin).max(updateBodyEmailMax).optional(),
-  "mobile": zod.string().regex(updateBodyMobileRegExp).optional(),
+export const updateStaffBody = zod.object({
+  "fullName": zod.string().min(updateStaffBodyFullNameMin).max(updateStaffBodyFullNameMax),
+  "email": zod.string().min(updateStaffBodyEmailMin).max(updateStaffBodyEmailMax).optional(),
+  "mobile": zod.string().regex(updateStaffBodyMobileRegExp).optional(),
   "distributionCenterId": zod.number().optional()
 })
 
 /**
  * @summary List staff in the admin's subdivision (paged, filterable)
  */
-export const list1QueryPageablePageMin = 0;
+export const listStaffQueryPageablePageMin = 0;
 
 
 
 
-export const list1QueryParams = zod.object({
+export const listStaffQueryParams = zod.object({
   "role": zod.enum(['ADMIN', 'ENGINEER', 'TECHNICIAN']).optional(),
   "distributionCenterId": zod.number().optional(),
   "enabled": zod.boolean().optional(),
   "pageable": zod.object({
-  "page": zod.number().min(list1QueryPageablePageMin).optional(),
+  "page": zod.number().min(listStaffQueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 })
@@ -60,26 +60,26 @@ export const list1QueryParams = zod.object({
 /**
  * @summary Create a staff account; returns the one-time temporary password
  */
-export const createBodyEmployeeIdMin = 0;
-export const createBodyEmployeeIdMax = 50;
+export const createStaffBodyEmployeeIdMin = 0;
+export const createStaffBodyEmployeeIdMax = 50;
 
 
-export const createBodyEmployeeIdRegExp = new RegExp('^[A-Z0-9-]+$');
-export const createBodyFullNameMin = 0;
-export const createBodyFullNameMax = 200;
+export const createStaffBodyEmployeeIdRegExp = new RegExp('^[A-Z0-9-]+$');
+export const createStaffBodyFullNameMin = 0;
+export const createStaffBodyFullNameMax = 200;
 
-export const createBodyEmailMin = 0;
-export const createBodyEmailMax = 200;
+export const createStaffBodyEmailMin = 0;
+export const createStaffBodyEmailMax = 200;
 
-export const createBodyMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
+export const createStaffBodyMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
 
 
-export const createBody = zod.object({
-  "employeeId": zod.string().min(createBodyEmployeeIdMin).max(createBodyEmployeeIdMax).regex(createBodyEmployeeIdRegExp),
-  "fullName": zod.string().min(createBodyFullNameMin).max(createBodyFullNameMax),
+export const createStaffBody = zod.object({
+  "employeeId": zod.string().min(createStaffBodyEmployeeIdMin).max(createStaffBodyEmployeeIdMax).regex(createStaffBodyEmployeeIdRegExp),
+  "fullName": zod.string().min(createStaffBodyFullNameMin).max(createStaffBodyFullNameMax),
   "role": zod.enum(['ADMIN', 'ENGINEER', 'TECHNICIAN']),
-  "email": zod.string().min(createBodyEmailMin).max(createBodyEmailMax).optional(),
-  "mobile": zod.string().regex(createBodyMobileRegExp).optional(),
+  "email": zod.string().min(createStaffBodyEmailMin).max(createStaffBodyEmailMax).optional(),
+  "mobile": zod.string().regex(createStaffBodyMobileRegExp).optional(),
   "subdivisionId": zod.number(),
   "distributionCenterId": zod.number().optional()
 })
@@ -87,21 +87,21 @@ export const createBody = zod.object({
 /**
  * @summary Reset a staff account password; returns the one-time temporary password
  */
-export const resetPasswordParams = zod.object({
+export const resetStaffPasswordParams = zod.object({
   "id": zod.number()
 })
 
 /**
  * @summary Deactivate a staff account (revokes all live sessions)
  */
-export const deactivateParams = zod.object({
+export const deactivateStaffParams = zod.object({
   "id": zod.number()
 })
 
 /**
  * @summary Activate a staff account
  */
-export const activateParams = zod.object({
+export const activateStaffParams = zod.object({
   "id": zod.number()
 })
 

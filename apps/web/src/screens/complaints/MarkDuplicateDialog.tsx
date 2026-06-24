@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMarkDuplicate, type Schemas } from '@complaints/api';
+import { useMarkComplaintDuplicate, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -38,7 +38,7 @@ export function MarkDuplicateDialog({
   onSuccess,
 }: MarkDuplicateDialogProps): React.JSX.Element {
   const t = useT();
-  const { mutateAsync, isPending } = useMarkDuplicate();
+  const { mutateAsync, isPending } = useMarkComplaintDuplicate();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<Values>({

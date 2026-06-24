@@ -12,14 +12,14 @@ import * as zod from 'zod';
  * Returns only categories where active = true. Inactive rows are never surfaced to consumers.
  * @summary List active complaint categories for the consumer submit dropdown
  */
-export const listActiveCategoriesQueryPageablePageMin = 0;
+export const listActiveCategoriesForConsumerQueryPageablePageMin = 0;
 
 
 
 
-export const listActiveCategoriesQueryParams = zod.object({
+export const listActiveCategoriesForConsumerQueryParams = zod.object({
   "pageable": zod.object({
-  "page": zod.number().min(listActiveCategoriesQueryPageablePageMin).optional(),
+  "page": zod.number().min(listActiveCategoriesForConsumerQueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 })

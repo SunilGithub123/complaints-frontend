@@ -6,10 +6,10 @@
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  useListDcs,
+  useListDistributionCenters,
   useActivateDistributionCenter,
   useDeactivateDistributionCenter,
-  getListDcsQueryKey,
+  getListDistributionCentersQueryKey,
   type Schemas,
 } from '@complaints/api';
 import { useT } from '@complaints/i18n';
@@ -25,7 +25,7 @@ export default function DistributionCentersAdminScreen(): React.JSX.Element {
   const t = useT();
   const queryClient = useQueryClient();
   const { show: toast } = useToast();
-  const { data, isLoading, error } = useListDcs({ pageable: DEFAULT_PAGE });
+  const { data, isLoading, error } = useListDistributionCenters({ pageable: DEFAULT_PAGE });
   const envelope = (data as
     | { data: Schemas.ApiResponsePageResponseDistributionCenterResponse }
     | undefined)?.data;
@@ -34,7 +34,7 @@ export default function DistributionCentersAdminScreen(): React.JSX.Element {
   const [editing, setEditing] = useState<Schemas.DistributionCenterResponse | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const listKey = getListDcsQueryKey({ pageable: DEFAULT_PAGE });
+  const listKey = getListDistributionCentersQueryKey({ pageable: DEFAULT_PAGE });
   function refetch(): void {
     void queryClient.invalidateQueries({ queryKey: listKey });
   }

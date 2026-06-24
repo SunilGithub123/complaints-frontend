@@ -9,7 +9,7 @@ import { ToastViewport } from '@/components/ui/toast';
 
 // Single boot wiring — happens once before React renders. Calling at module
 // scope keeps the dance synchronous so `setAuthHooks` is in place by the
-// time the first `useLogin`/`useMe` hook fires.
+// time the first `useLoginStaff`/`useGetMyStaffProfile` hook fires.
 wireApi();
 initI18n();
 

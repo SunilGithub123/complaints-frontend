@@ -32,7 +32,7 @@ import type {
   ApiResponseSubmitComplaintResponse,
   ApiResponseVoid,
   CancelComplaintRequest,
-  ListParams,
+  ListConsumerComplaintsParams,
   SubmitFeedbackRequest,
   SubmitMultipartForm
 } from '.././schemas';
@@ -48,19 +48,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * Server pins consumer_master_id = caller.consumerMasterId(). Optional ?status=… filter. Default sort is createdAt,desc (latest first).
  * @summary Paged tracking list of every complaint the verified consumer has raised
  */
-export type listResponse200 = {
+export type listConsumerComplaintsResponse200 = {
   data: ApiResponsePageResponseConsumerComplaintListItemResponse
   status: 200
 }
     
-export type listResponseSuccess = (listResponse200) & {
+export type listConsumerComplaintsResponseSuccess = (listConsumerComplaintsResponse200) & {
   headers: Headers;
 };
 ;
 
-export type listResponse = (listResponseSuccess)
+export type listConsumerComplaintsResponse = (listConsumerComplaintsResponseSuccess)
 
-export const getListUrl = (params: ListParams,) => {
+export const getListConsumerComplaintsUrl = (params: ListConsumerComplaintsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -75,9 +75,9 @@ export const getListUrl = (params: ListParams,) => {
   return stringifiedParams.length > 0 ? `/api/v1/consumer/complaints?${stringifiedParams}` : `/api/v1/consumer/complaints`
 }
 
-export const list = async (params: ListParams, options?: RequestInit): Promise<listResponse> => {
+export const listConsumerComplaints = async (params: ListConsumerComplaintsParams, options?: RequestInit): Promise<listConsumerComplaintsResponse> => {
   
-  return customFetch<listResponse>(getListUrl(params),
+  return customFetch<listConsumerComplaintsResponse>(getListConsumerComplaintsUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -90,69 +90,69 @@ export const list = async (params: ListParams, options?: RequestInit): Promise<l
 
 
 
-export const getListQueryKey = (params?: ListParams,) => {
+export const getListConsumerComplaintsQueryKey = (params?: ListConsumerComplaintsParams,) => {
     return [
     `/api/v1/consumer/complaints`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListQueryOptions = <TData = Awaited<ReturnType<typeof list>>, TError = unknown>(params: ListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getListConsumerComplaintsQueryOptions = <TData = Awaited<ReturnType<typeof listConsumerComplaints>>, TError = unknown>(params: ListConsumerComplaintsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsumerComplaints>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getListConsumerComplaintsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof list>>> = () => list(params, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listConsumerComplaints>>> = () => listConsumerComplaints(params, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listConsumerComplaints>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type ListQueryResult = NonNullable<Awaited<ReturnType<typeof list>>>
-export type ListQueryError = unknown
+export type ListConsumerComplaintsQueryResult = NonNullable<Awaited<ReturnType<typeof listConsumerComplaints>>>
+export type ListConsumerComplaintsQueryError = unknown
 
 
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = unknown>(
- params: ListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>> & Pick<
+export function useListConsumerComplaints<TData = Awaited<ReturnType<typeof listConsumerComplaints>>, TError = unknown>(
+ params: ListConsumerComplaintsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsumerComplaints>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list>>,
+          Awaited<ReturnType<typeof listConsumerComplaints>>,
           TError,
-          Awaited<ReturnType<typeof list>>
+          Awaited<ReturnType<typeof listConsumerComplaints>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = unknown>(
- params: ListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>> & Pick<
+export function useListConsumerComplaints<TData = Awaited<ReturnType<typeof listConsumerComplaints>>, TError = unknown>(
+ params: ListConsumerComplaintsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsumerComplaints>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list>>,
+          Awaited<ReturnType<typeof listConsumerComplaints>>,
           TError,
-          Awaited<ReturnType<typeof list>>
+          Awaited<ReturnType<typeof listConsumerComplaints>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = unknown>(
- params: ListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useListConsumerComplaints<TData = Awaited<ReturnType<typeof listConsumerComplaints>>, TError = unknown>(
+ params: ListConsumerComplaintsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsumerComplaints>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Paged tracking list of every complaint the verified consumer has raised
  */
 
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = unknown>(
- params: ListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useListConsumerComplaints<TData = Awaited<ReturnType<typeof listConsumerComplaints>>, TError = unknown>(
+ params: ListConsumerComplaintsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsumerComplaints>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getListQueryOptions(params,options)
+  const queryOptions = getListConsumerComplaintsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -168,19 +168,19 @@ export function useList<TData = Awaited<ReturnType<typeof list>>, TError = unkno
  * Multipart contract: one JSON part named `complaint` (SubmitComplaintRequest) plus 0..3 image parts named `images` (image/jpeg or image/png, each ≤ 1 MB). Ticket number, SLA deadline and signed image URLs are returned in one response — no follow-up calls required for the confirmation screen.
  * @summary Submit a new complaint with up to 3 images in a single multipart request
  */
-export type submitResponse200 = {
+export type submitComplaintResponse200 = {
   data: ApiResponseSubmitComplaintResponse
   status: 200
 }
     
-export type submitResponseSuccess = (submitResponse200) & {
+export type submitComplaintResponseSuccess = (submitComplaintResponse200) & {
   headers: Headers;
 };
 ;
 
-export type submitResponse = (submitResponseSuccess)
+export type submitComplaintResponse = (submitComplaintResponseSuccess)
 
-export const getSubmitUrl = () => {
+export const getSubmitComplaintUrl = () => {
 
 
   
@@ -188,7 +188,7 @@ export const getSubmitUrl = () => {
   return `/api/v1/consumer/complaints`
 }
 
-export const submit = async (submitMultipartForm: SubmitMultipartForm, options?: RequestInit): Promise<submitResponse> => {
+export const submitComplaint = async (submitMultipartForm: SubmitMultipartForm, options?: RequestInit): Promise<submitComplaintResponse> => {
     const formData = new FormData();
 if(submitMultipartForm.complaint !== undefined) {
  formData.append(`complaint`, JSON.stringify(submitMultipartForm.complaint));
@@ -197,7 +197,7 @@ if(submitMultipartForm.images !== undefined) {
  submitMultipartForm.images.forEach(value => formData.append(`images`, value));
  }
 
-  return customFetch<submitResponse>(getSubmitUrl(),
+  return customFetch<submitComplaintResponse>(getSubmitComplaintUrl(),
   {      
     ...options,
     method: 'POST'
@@ -210,11 +210,11 @@ if(submitMultipartForm.images !== undefined) {
 
 
 
-export const getSubmitMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submit>>, TError,{data: SubmitMultipartForm}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof submit>>, TError,{data: SubmitMultipartForm}, TContext> => {
+export const getSubmitComplaintMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitComplaint>>, TError,{data: SubmitMultipartForm}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitComplaint>>, TError,{data: SubmitMultipartForm}, TContext> => {
 
-const mutationKey = ['submit'];
+const mutationKey = ['submitComplaint'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -224,10 +224,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submit>>, {data: SubmitMultipartForm}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitComplaint>>, {data: SubmitMultipartForm}> = (props) => {
           const {data} = props ?? {};
 
-          return  submit(data,requestOptions)
+          return  submitComplaint(data,requestOptions)
         }
 
         
@@ -235,23 +235,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type SubmitMutationResult = NonNullable<Awaited<ReturnType<typeof submit>>>
-    export type SubmitMutationBody = SubmitMultipartForm
-    export type SubmitMutationError = unknown
+    export type SubmitComplaintMutationResult = NonNullable<Awaited<ReturnType<typeof submitComplaint>>>
+    export type SubmitComplaintMutationBody = SubmitMultipartForm
+    export type SubmitComplaintMutationError = unknown
 
     /**
  * @summary Submit a new complaint with up to 3 images in a single multipart request
  */
-export const useSubmit = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submit>>, TError,{data: SubmitMultipartForm}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useSubmitComplaint = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitComplaint>>, TError,{data: SubmitMultipartForm}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof submit>>,
+        Awaited<ReturnType<typeof submitComplaint>>,
         TError,
         {data: SubmitMultipartForm},
         TContext
       > => {
 
-      const mutationOptions = getSubmitMutationOptions(options);
+      const mutationOptions = getSubmitComplaintMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -457,19 +457,19 @@ export const useSubmitFeedback = <TError = unknown,
  * Consumer-driven withdrawal. Once an engineer has assigned the complaint, MSEB owns the workflow and the consumer can no longer cancel — that's a 409 COMPLAINT_NOT_IN_SUBMITTED_STATE. Body carries an optional free-text reason.
  * @summary Cancel an owned complaint (only while status = SUBMITTED)
  */
-export type cancelResponse200 = {
+export type cancelComplaintResponse200 = {
   data: ApiResponseVoid
   status: 200
 }
     
-export type cancelResponseSuccess = (cancelResponse200) & {
+export type cancelComplaintResponseSuccess = (cancelComplaintResponse200) & {
   headers: Headers;
 };
 ;
 
-export type cancelResponse = (cancelResponseSuccess)
+export type cancelComplaintResponse = (cancelComplaintResponseSuccess)
 
-export const getCancelUrl = (ticketNo: string,) => {
+export const getCancelComplaintUrl = (ticketNo: string,) => {
 
 
   
@@ -477,10 +477,10 @@ export const getCancelUrl = (ticketNo: string,) => {
   return `/api/v1/consumer/complaints/${ticketNo}/cancel`
 }
 
-export const cancel = async (ticketNo: string,
-    cancelComplaintRequest: CancelComplaintRequest, options?: RequestInit): Promise<cancelResponse> => {
+export const cancelComplaint = async (ticketNo: string,
+    cancelComplaintRequest: CancelComplaintRequest, options?: RequestInit): Promise<cancelComplaintResponse> => {
   
-  return customFetch<cancelResponse>(getCancelUrl(ticketNo),
+  return customFetch<cancelComplaintResponse>(getCancelComplaintUrl(ticketNo),
   {      
     ...options,
     method: 'POST',
@@ -493,11 +493,11 @@ export const cancel = async (ticketNo: string,
 
 
 
-export const getCancelMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancel>>, TError,{ticketNo: string;data: CancelComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof cancel>>, TError,{ticketNo: string;data: CancelComplaintRequest}, TContext> => {
+export const getCancelComplaintMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelComplaint>>, TError,{ticketNo: string;data: CancelComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelComplaint>>, TError,{ticketNo: string;data: CancelComplaintRequest}, TContext> => {
 
-const mutationKey = ['cancel'];
+const mutationKey = ['cancelComplaint'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -507,10 +507,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancel>>, {ticketNo: string;data: CancelComplaintRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelComplaint>>, {ticketNo: string;data: CancelComplaintRequest}> = (props) => {
           const {ticketNo,data} = props ?? {};
 
-          return  cancel(ticketNo,data,requestOptions)
+          return  cancelComplaint(ticketNo,data,requestOptions)
         }
 
         
@@ -518,23 +518,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CancelMutationResult = NonNullable<Awaited<ReturnType<typeof cancel>>>
-    export type CancelMutationBody = CancelComplaintRequest
-    export type CancelMutationError = unknown
+    export type CancelComplaintMutationResult = NonNullable<Awaited<ReturnType<typeof cancelComplaint>>>
+    export type CancelComplaintMutationBody = CancelComplaintRequest
+    export type CancelComplaintMutationError = unknown
 
     /**
  * @summary Cancel an owned complaint (only while status = SUBMITTED)
  */
-export const useCancel = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancel>>, TError,{ticketNo: string;data: CancelComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCancelComplaint = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelComplaint>>, TError,{ticketNo: string;data: CancelComplaintRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof cancel>>,
+        Awaited<ReturnType<typeof cancelComplaint>>,
         TError,
         {ticketNo: string;data: CancelComplaintRequest},
         TContext
       > => {
 
-      const mutationOptions = getCancelMutationOptions(options);
+      const mutationOptions = getCancelComplaintMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -542,19 +542,19 @@ export const useCancel = <TError = unknown,
  * Owner-checked. Stage 17 enriched the payload with severity, slaBreached, resolvedAt, closedAt. Staff identities and internal reason fields remain on the staff-side DTO only.
  * @summary Fetch the verified consumer's own complaint by ticket number
  */
-export type getByTicketResponse200 = {
+export type getConsumerComplaintResponse200 = {
   data: ApiResponseComplaintDetailResponse
   status: 200
 }
     
-export type getByTicketResponseSuccess = (getByTicketResponse200) & {
+export type getConsumerComplaintResponseSuccess = (getConsumerComplaintResponse200) & {
   headers: Headers;
 };
 ;
 
-export type getByTicketResponse = (getByTicketResponseSuccess)
+export type getConsumerComplaintResponse = (getConsumerComplaintResponseSuccess)
 
-export const getGetByTicketUrl = (ticketNo: string,) => {
+export const getGetConsumerComplaintUrl = (ticketNo: string,) => {
 
 
   
@@ -562,9 +562,9 @@ export const getGetByTicketUrl = (ticketNo: string,) => {
   return `/api/v1/consumer/complaints/${ticketNo}`
 }
 
-export const getByTicket = async (ticketNo: string, options?: RequestInit): Promise<getByTicketResponse> => {
+export const getConsumerComplaint = async (ticketNo: string, options?: RequestInit): Promise<getConsumerComplaintResponse> => {
   
-  return customFetch<getByTicketResponse>(getGetByTicketUrl(ticketNo),
+  return customFetch<getConsumerComplaintResponse>(getGetConsumerComplaintUrl(ticketNo),
   {      
     ...options,
     method: 'GET'
@@ -577,69 +577,69 @@ export const getByTicket = async (ticketNo: string, options?: RequestInit): Prom
 
 
 
-export const getGetByTicketQueryKey = (ticketNo?: string,) => {
+export const getGetConsumerComplaintQueryKey = (ticketNo?: string,) => {
     return [
     `/api/v1/consumer/complaints/${ticketNo}`
     ] as const;
     }
 
     
-export const getGetByTicketQueryOptions = <TData = Awaited<ReturnType<typeof getByTicket>>, TError = unknown>(ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getByTicket>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetConsumerComplaintQueryOptions = <TData = Awaited<ReturnType<typeof getConsumerComplaint>>, TError = unknown>(ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaint>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetByTicketQueryKey(ticketNo);
+  const queryKey =  queryOptions?.queryKey ?? getGetConsumerComplaintQueryKey(ticketNo);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getByTicket>>> = () => getByTicket(ticketNo, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConsumerComplaint>>> = () => getConsumerComplaint(ticketNo, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(ticketNo), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getByTicket>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(ticketNo), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaint>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type GetByTicketQueryResult = NonNullable<Awaited<ReturnType<typeof getByTicket>>>
-export type GetByTicketQueryError = unknown
+export type GetConsumerComplaintQueryResult = NonNullable<Awaited<ReturnType<typeof getConsumerComplaint>>>
+export type GetConsumerComplaintQueryError = unknown
 
 
-export function useGetByTicket<TData = Awaited<ReturnType<typeof getByTicket>>, TError = unknown>(
- ticketNo: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getByTicket>>, TError, TData>> & Pick<
+export function useGetConsumerComplaint<TData = Awaited<ReturnType<typeof getConsumerComplaint>>, TError = unknown>(
+ ticketNo: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaint>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getByTicket>>,
+          Awaited<ReturnType<typeof getConsumerComplaint>>,
           TError,
-          Awaited<ReturnType<typeof getByTicket>>
+          Awaited<ReturnType<typeof getConsumerComplaint>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetByTicket<TData = Awaited<ReturnType<typeof getByTicket>>, TError = unknown>(
- ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getByTicket>>, TError, TData>> & Pick<
+export function useGetConsumerComplaint<TData = Awaited<ReturnType<typeof getConsumerComplaint>>, TError = unknown>(
+ ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaint>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getByTicket>>,
+          Awaited<ReturnType<typeof getConsumerComplaint>>,
           TError,
-          Awaited<ReturnType<typeof getByTicket>>
+          Awaited<ReturnType<typeof getConsumerComplaint>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetByTicket<TData = Awaited<ReturnType<typeof getByTicket>>, TError = unknown>(
- ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getByTicket>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetConsumerComplaint<TData = Awaited<ReturnType<typeof getConsumerComplaint>>, TError = unknown>(
+ ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaint>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Fetch the verified consumer's own complaint by ticket number
  */
 
-export function useGetByTicket<TData = Awaited<ReturnType<typeof getByTicket>>, TError = unknown>(
- ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getByTicket>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetConsumerComplaint<TData = Awaited<ReturnType<typeof getConsumerComplaint>>, TError = unknown>(
+ ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaint>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getGetByTicketQueryOptions(ticketNo,options)
+  const queryOptions = getGetConsumerComplaintQueryOptions(ticketNo,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -655,19 +655,19 @@ export function useGetByTicket<TData = Awaited<ReturnType<typeof getByTicket>>, 
  * Same chronological ordering as the staff endpoint, but without changedByUserId — consumers don't see staff IDs.
  * @summary Consumer-safe status-change history for an owned complaint
  */
-export type getHistory1Response200 = {
+export type getConsumerComplaintHistoryResponse200 = {
   data: ApiResponseListConsumerComplaintHistoryEntryResponse
   status: 200
 }
     
-export type getHistory1ResponseSuccess = (getHistory1Response200) & {
+export type getConsumerComplaintHistoryResponseSuccess = (getConsumerComplaintHistoryResponse200) & {
   headers: Headers;
 };
 ;
 
-export type getHistory1Response = (getHistory1ResponseSuccess)
+export type getConsumerComplaintHistoryResponse = (getConsumerComplaintHistoryResponseSuccess)
 
-export const getGetHistory1Url = (ticketNo: string,) => {
+export const getGetConsumerComplaintHistoryUrl = (ticketNo: string,) => {
 
 
   
@@ -675,9 +675,9 @@ export const getGetHistory1Url = (ticketNo: string,) => {
   return `/api/v1/consumer/complaints/${ticketNo}/history`
 }
 
-export const getHistory1 = async (ticketNo: string, options?: RequestInit): Promise<getHistory1Response> => {
+export const getConsumerComplaintHistory = async (ticketNo: string, options?: RequestInit): Promise<getConsumerComplaintHistoryResponse> => {
   
-  return customFetch<getHistory1Response>(getGetHistory1Url(ticketNo),
+  return customFetch<getConsumerComplaintHistoryResponse>(getGetConsumerComplaintHistoryUrl(ticketNo),
   {      
     ...options,
     method: 'GET'
@@ -690,69 +690,69 @@ export const getHistory1 = async (ticketNo: string, options?: RequestInit): Prom
 
 
 
-export const getGetHistory1QueryKey = (ticketNo?: string,) => {
+export const getGetConsumerComplaintHistoryQueryKey = (ticketNo?: string,) => {
     return [
     `/api/v1/consumer/complaints/${ticketNo}/history`
     ] as const;
     }
 
     
-export const getGetHistory1QueryOptions = <TData = Awaited<ReturnType<typeof getHistory1>>, TError = unknown>(ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetConsumerComplaintHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError = unknown>(ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetHistory1QueryKey(ticketNo);
+  const queryKey =  queryOptions?.queryKey ?? getGetConsumerComplaintHistoryQueryKey(ticketNo);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHistory1>>> = () => getHistory1(ticketNo, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConsumerComplaintHistory>>> = () => getConsumerComplaintHistory(ticketNo, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(ticketNo), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getHistory1>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(ticketNo), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type GetHistory1QueryResult = NonNullable<Awaited<ReturnType<typeof getHistory1>>>
-export type GetHistory1QueryError = unknown
+export type GetConsumerComplaintHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getConsumerComplaintHistory>>>
+export type GetConsumerComplaintHistoryQueryError = unknown
 
 
-export function useGetHistory1<TData = Awaited<ReturnType<typeof getHistory1>>, TError = unknown>(
- ticketNo: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory1>>, TError, TData>> & Pick<
+export function useGetConsumerComplaintHistory<TData = Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError = unknown>(
+ ticketNo: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getHistory1>>,
+          Awaited<ReturnType<typeof getConsumerComplaintHistory>>,
           TError,
-          Awaited<ReturnType<typeof getHistory1>>
+          Awaited<ReturnType<typeof getConsumerComplaintHistory>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetHistory1<TData = Awaited<ReturnType<typeof getHistory1>>, TError = unknown>(
- ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory1>>, TError, TData>> & Pick<
+export function useGetConsumerComplaintHistory<TData = Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError = unknown>(
+ ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getHistory1>>,
+          Awaited<ReturnType<typeof getConsumerComplaintHistory>>,
           TError,
-          Awaited<ReturnType<typeof getHistory1>>
+          Awaited<ReturnType<typeof getConsumerComplaintHistory>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetHistory1<TData = Awaited<ReturnType<typeof getHistory1>>, TError = unknown>(
- ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetConsumerComplaintHistory<TData = Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError = unknown>(
+ ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Consumer-safe status-change history for an owned complaint
  */
 
-export function useGetHistory1<TData = Awaited<ReturnType<typeof getHistory1>>, TError = unknown>(
- ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetConsumerComplaintHistory<TData = Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError = unknown>(
+ ticketNo: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsumerComplaintHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getGetHistory1QueryOptions(ticketNo,options)
+  const queryOptions = getGetConsumerComplaintHistoryQueryOptions(ticketNo,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 

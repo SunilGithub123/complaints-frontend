@@ -25,7 +25,7 @@ vi.mock('@complaints/api', async () => {
   );
   return {
     ...actual,
-    useGetComplaintByTicket: (...args: unknown[]) => getByTicketMock(...args),
+    useGetConsumerComplaint: (...args: unknown[]) => getByTicketMock(...args),
   };
 });
 

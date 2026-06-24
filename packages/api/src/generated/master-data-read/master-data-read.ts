@@ -28,7 +28,7 @@ import type {
   ApiResponsePageResponseSubdivisionResponse,
   ApiResponseSubdivisionResponse,
   ListCategoriesParams,
-  ListDcsParams,
+  ListDistributionCentersParams,
   ListSubdivisionsParams
 } from '.././schemas';
 
@@ -158,6 +158,9 @@ export function useListSubdivisions<TData = Awaited<ReturnType<typeof listSubdiv
 
 
 
+/**
+ * @summary Fetch a subdivision by id
+ */
 export type getSubdivisionResponse200 = {
   data: ApiResponseSubdivisionResponse
   status: 200
@@ -246,6 +249,9 @@ export function useGetSubdivision<TData = Awaited<ReturnType<typeof getSubdivisi
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubdivision>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Fetch a subdivision by id
+ */
 
 export function useGetSubdivision<TData = Awaited<ReturnType<typeof getSubdivision>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubdivision>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
@@ -267,19 +273,19 @@ export function useGetSubdivision<TData = Awaited<ReturnType<typeof getSubdivisi
 /**
  * @summary List distribution centers (optionally filtered by subdivision)
  */
-export type listDcsResponse200 = {
+export type listDistributionCentersResponse200 = {
   data: ApiResponsePageResponseDistributionCenterResponse
   status: 200
 }
     
-export type listDcsResponseSuccess = (listDcsResponse200) & {
+export type listDistributionCentersResponseSuccess = (listDistributionCentersResponse200) & {
   headers: Headers;
 };
 ;
 
-export type listDcsResponse = (listDcsResponseSuccess)
+export type listDistributionCentersResponse = (listDistributionCentersResponseSuccess)
 
-export const getListDcsUrl = (params: ListDcsParams,) => {
+export const getListDistributionCentersUrl = (params: ListDistributionCentersParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -294,9 +300,9 @@ export const getListDcsUrl = (params: ListDcsParams,) => {
   return stringifiedParams.length > 0 ? `/api/v1/staff/masterdata/distribution-centers?${stringifiedParams}` : `/api/v1/staff/masterdata/distribution-centers`
 }
 
-export const listDcs = async (params: ListDcsParams, options?: RequestInit): Promise<listDcsResponse> => {
+export const listDistributionCenters = async (params: ListDistributionCentersParams, options?: RequestInit): Promise<listDistributionCentersResponse> => {
   
-  return customFetch<listDcsResponse>(getListDcsUrl(params),
+  return customFetch<listDistributionCentersResponse>(getListDistributionCentersUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -309,69 +315,69 @@ export const listDcs = async (params: ListDcsParams, options?: RequestInit): Pro
 
 
 
-export const getListDcsQueryKey = (params?: ListDcsParams,) => {
+export const getListDistributionCentersQueryKey = (params?: ListDistributionCentersParams,) => {
     return [
     `/api/v1/staff/masterdata/distribution-centers`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListDcsQueryOptions = <TData = Awaited<ReturnType<typeof listDcs>>, TError = unknown>(params: ListDcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDcs>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getListDistributionCentersQueryOptions = <TData = Awaited<ReturnType<typeof listDistributionCenters>>, TError = unknown>(params: ListDistributionCentersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistributionCenters>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListDcsQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getListDistributionCentersQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDcs>>> = () => listDcs(params, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDistributionCenters>>> = () => listDistributionCenters(params, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDcs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDistributionCenters>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type ListDcsQueryResult = NonNullable<Awaited<ReturnType<typeof listDcs>>>
-export type ListDcsQueryError = unknown
+export type ListDistributionCentersQueryResult = NonNullable<Awaited<ReturnType<typeof listDistributionCenters>>>
+export type ListDistributionCentersQueryError = unknown
 
 
-export function useListDcs<TData = Awaited<ReturnType<typeof listDcs>>, TError = unknown>(
- params: ListDcsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDcs>>, TError, TData>> & Pick<
+export function useListDistributionCenters<TData = Awaited<ReturnType<typeof listDistributionCenters>>, TError = unknown>(
+ params: ListDistributionCentersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistributionCenters>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listDcs>>,
+          Awaited<ReturnType<typeof listDistributionCenters>>,
           TError,
-          Awaited<ReturnType<typeof listDcs>>
+          Awaited<ReturnType<typeof listDistributionCenters>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListDcs<TData = Awaited<ReturnType<typeof listDcs>>, TError = unknown>(
- params: ListDcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDcs>>, TError, TData>> & Pick<
+export function useListDistributionCenters<TData = Awaited<ReturnType<typeof listDistributionCenters>>, TError = unknown>(
+ params: ListDistributionCentersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistributionCenters>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listDcs>>,
+          Awaited<ReturnType<typeof listDistributionCenters>>,
           TError,
-          Awaited<ReturnType<typeof listDcs>>
+          Awaited<ReturnType<typeof listDistributionCenters>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListDcs<TData = Awaited<ReturnType<typeof listDcs>>, TError = unknown>(
- params: ListDcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDcs>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useListDistributionCenters<TData = Awaited<ReturnType<typeof listDistributionCenters>>, TError = unknown>(
+ params: ListDistributionCentersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistributionCenters>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List distribution centers (optionally filtered by subdivision)
  */
 
-export function useListDcs<TData = Awaited<ReturnType<typeof listDcs>>, TError = unknown>(
- params: ListDcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDcs>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useListDistributionCenters<TData = Awaited<ReturnType<typeof listDistributionCenters>>, TError = unknown>(
+ params: ListDistributionCentersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistributionCenters>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getListDcsQueryOptions(params,options)
+  const queryOptions = getListDistributionCentersQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -383,19 +389,22 @@ export function useListDcs<TData = Awaited<ReturnType<typeof listDcs>>, TError =
 
 
 
-export type getDcResponse200 = {
+/**
+ * @summary Fetch a DC by id
+ */
+export type getDistributionCenterResponse200 = {
   data: ApiResponseDistributionCenterResponse
   status: 200
 }
     
-export type getDcResponseSuccess = (getDcResponse200) & {
+export type getDistributionCenterResponseSuccess = (getDistributionCenterResponse200) & {
   headers: Headers;
 };
 ;
 
-export type getDcResponse = (getDcResponseSuccess)
+export type getDistributionCenterResponse = (getDistributionCenterResponseSuccess)
 
-export const getGetDcUrl = (id: number,) => {
+export const getGetDistributionCenterUrl = (id: number,) => {
 
 
   
@@ -403,9 +412,9 @@ export const getGetDcUrl = (id: number,) => {
   return `/api/v1/staff/masterdata/distribution-centers/${id}`
 }
 
-export const getDc = async (id: number, options?: RequestInit): Promise<getDcResponse> => {
+export const getDistributionCenter = async (id: number, options?: RequestInit): Promise<getDistributionCenterResponse> => {
   
-  return customFetch<getDcResponse>(getGetDcUrl(id),
+  return customFetch<getDistributionCenterResponse>(getGetDistributionCenterUrl(id),
   {      
     ...options,
     method: 'GET'
@@ -418,66 +427,69 @@ export const getDc = async (id: number, options?: RequestInit): Promise<getDcRes
 
 
 
-export const getGetDcQueryKey = (id?: number,) => {
+export const getGetDistributionCenterQueryKey = (id?: number,) => {
     return [
     `/api/v1/staff/masterdata/distribution-centers/${id}`
     ] as const;
     }
 
     
-export const getGetDcQueryOptions = <TData = Awaited<ReturnType<typeof getDc>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDc>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetDistributionCenterQueryOptions = <TData = Awaited<ReturnType<typeof getDistributionCenter>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDistributionCenter>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetDcQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getGetDistributionCenterQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDc>>> = () => getDc(id, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDistributionCenter>>> = () => getDistributionCenter(id, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDc>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDistributionCenter>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type GetDcQueryResult = NonNullable<Awaited<ReturnType<typeof getDc>>>
-export type GetDcQueryError = unknown
+export type GetDistributionCenterQueryResult = NonNullable<Awaited<ReturnType<typeof getDistributionCenter>>>
+export type GetDistributionCenterQueryError = unknown
 
 
-export function useGetDc<TData = Awaited<ReturnType<typeof getDc>>, TError = unknown>(
- id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDc>>, TError, TData>> & Pick<
+export function useGetDistributionCenter<TData = Awaited<ReturnType<typeof getDistributionCenter>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDistributionCenter>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getDc>>,
+          Awaited<ReturnType<typeof getDistributionCenter>>,
           TError,
-          Awaited<ReturnType<typeof getDc>>
+          Awaited<ReturnType<typeof getDistributionCenter>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetDc<TData = Awaited<ReturnType<typeof getDc>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDc>>, TError, TData>> & Pick<
+export function useGetDistributionCenter<TData = Awaited<ReturnType<typeof getDistributionCenter>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDistributionCenter>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getDc>>,
+          Awaited<ReturnType<typeof getDistributionCenter>>,
           TError,
-          Awaited<ReturnType<typeof getDc>>
+          Awaited<ReturnType<typeof getDistributionCenter>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetDc<TData = Awaited<ReturnType<typeof getDc>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDc>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetDistributionCenter<TData = Awaited<ReturnType<typeof getDistributionCenter>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDistributionCenter>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Fetch a DC by id
+ */
 
-export function useGetDc<TData = Awaited<ReturnType<typeof getDc>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDc>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetDistributionCenter<TData = Awaited<ReturnType<typeof getDistributionCenter>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDistributionCenter>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getGetDcQueryOptions(id,options)
+  const queryOptions = getGetDistributionCenterQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -608,6 +620,9 @@ export function useListCategories<TData = Awaited<ReturnType<typeof listCategori
 
 
 
+/**
+ * @summary Fetch a category by id
+ */
 export type getCategoryResponse200 = {
   data: ApiResponseComplaintCategoryResponse
   status: 200
@@ -696,6 +711,9 @@ export function useGetCategory<TData = Awaited<ReturnType<typeof getCategory>>, 
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCategory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Fetch a category by id
+ */
 
 export function useGetCategory<TData = Awaited<ReturnType<typeof getCategory>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCategory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}

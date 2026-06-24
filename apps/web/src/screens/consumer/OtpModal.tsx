@@ -25,8 +25,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  useSendOtp,
-  useVerifyOtp,
+  useSendConsumerOtp,
+  useVerifyConsumerOtp,
   ApiError,
   type Schemas,
 } from '@complaints/api';
@@ -95,8 +95,8 @@ export function OtpModal({
     return () => window.clearInterval(id);
   }, [open, lastSentAt]);
 
-  const verifyMutation = useVerifyOtp();
-  const sendMutation = useSendOtp();
+  const verifyMutation = useVerifyConsumerOtp();
+  const sendMutation = useSendConsumerOtp();
 
   const {
     register,

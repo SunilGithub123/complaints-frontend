@@ -12,31 +12,31 @@ import * as zod from 'zod';
  * On success, returns a non-refreshable 5-minute JWT carrying consumerId, consumerMasterId, and the OTP-verified mobile. Use it on every /api/v1/consumer/** call. After expiry, repeat the send/verify cycle.
  * @summary Verify an OTP and receive a 5-minute consumer verification token
  */
-export const verifyOtpBodyConsumerIdMin = 0;
-export const verifyOtpBodyConsumerIdMax = 50;
+export const verifyConsumerOtpBodyConsumerIdMin = 0;
+export const verifyConsumerOtpBodyConsumerIdMax = 50;
 
-export const verifyOtpBodyMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
-export const verifyOtpBodyOtpRegExp = new RegExp('^[0-9]{4,8}$');
+export const verifyConsumerOtpBodyMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
+export const verifyConsumerOtpBodyOtpRegExp = new RegExp('^[0-9]{4,8}$');
 
 
-export const verifyOtpBody = zod.object({
-  "consumerId": zod.string().min(verifyOtpBodyConsumerIdMin).max(verifyOtpBodyConsumerIdMax),
-  "mobile": zod.string().regex(verifyOtpBodyMobileRegExp),
-  "otp": zod.string().regex(verifyOtpBodyOtpRegExp)
+export const verifyConsumerOtpBody = zod.object({
+  "consumerId": zod.string().min(verifyConsumerOtpBodyConsumerIdMin).max(verifyConsumerOtpBodyConsumerIdMax),
+  "mobile": zod.string().regex(verifyConsumerOtpBodyMobileRegExp),
+  "otp": zod.string().regex(verifyConsumerOtpBodyOtpRegExp)
 })
 
 /**
  * Validates the Consumer ID against consumer_master, then issues a BCrypt-hashed OTP (raw never persisted or logged). Enforces a 30-second per-mobile cooldown and a max 5 sends per mobile per hour.
  * @summary Send a 6-digit OTP to the supplied mobile
  */
-export const sendOtpBodyConsumerIdMin = 0;
-export const sendOtpBodyConsumerIdMax = 50;
+export const sendConsumerOtpBodyConsumerIdMin = 0;
+export const sendConsumerOtpBodyConsumerIdMax = 50;
 
-export const sendOtpBodyMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
+export const sendConsumerOtpBodyMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
 
 
-export const sendOtpBody = zod.object({
-  "consumerId": zod.string().min(sendOtpBodyConsumerIdMin).max(sendOtpBodyConsumerIdMax),
-  "mobile": zod.string().regex(sendOtpBodyMobileRegExp)
+export const sendConsumerOtpBody = zod.object({
+  "consumerId": zod.string().min(sendConsumerOtpBodyConsumerIdMin).max(sendConsumerOtpBodyConsumerIdMax),
+  "mobile": zod.string().regex(sendConsumerOtpBodyMobileRegExp)
 })
 

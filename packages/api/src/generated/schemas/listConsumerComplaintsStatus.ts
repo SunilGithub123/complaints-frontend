@@ -6,11 +6,11 @@
  * OpenAPI spec version: v1
  */
 
-export type ListStatus = typeof ListStatus[keyof typeof ListStatus];
+export type ListConsumerComplaintsStatus = typeof ListConsumerComplaintsStatus[keyof typeof ListConsumerComplaintsStatus];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ListStatus = {
+export const ListConsumerComplaintsStatus = {
   SUBMITTED: 'SUBMITTED',
   ASSIGNED: 'ASSIGNED',
   IN_PROGRESS: 'IN_PROGRESS',

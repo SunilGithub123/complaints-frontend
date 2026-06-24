@@ -27,7 +27,7 @@ export interface AuthState {
   /**
    * Epoch-ms of the last successful `GET /staff/me` revalidation. `null`
    * after login / change-password / refresh so the boot-time guard fires
-   * again. Stage 8a — clears the Stage 4 carry-over "proactive useMe at
+   * again. Stage 8a — clears the Stage 4 carry-over "proactive useGetMyStaffProfile at
    * boot is deferred".
    */
   lastValidatedAt: number | null;

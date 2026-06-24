@@ -8,54 +8,63 @@
 import * as zod from 'zod';
 
 
-export const update3Params = zod.object({
+/**
+ * @summary Update a complaint category
+ */
+export const updateCategoryParams = zod.object({
   "id": zod.number()
 })
 
-export const update3BodyCodeMin = 0;
-export const update3BodyCodeMax = 50;
+export const updateCategoryBodyCodeMin = 0;
+export const updateCategoryBodyCodeMax = 50;
 
 
-export const update3BodyCodeRegExp = new RegExp('^[A-Z0-9_]+$');
-export const update3BodyNameMin = 0;
-export const update3BodyNameMax = 200;
+export const updateCategoryBodyCodeRegExp = new RegExp('^[A-Z0-9_]+$');
+export const updateCategoryBodyNameMin = 0;
+export const updateCategoryBodyNameMax = 200;
 
-export const update3BodySlaHoursMax = 720;
+export const updateCategoryBodySlaHoursMax = 720;
 
 
 
-export const update3Body = zod.object({
-  "code": zod.string().min(update3BodyCodeMin).max(update3BodyCodeMax).regex(update3BodyCodeRegExp),
-  "name": zod.string().min(update3BodyNameMin).max(update3BodyNameMax),
-  "slaHours": zod.number().min(1).max(update3BodySlaHoursMax).optional()
+export const updateCategoryBody = zod.object({
+  "code": zod.string().min(updateCategoryBodyCodeMin).max(updateCategoryBodyCodeMax).regex(updateCategoryBodyCodeRegExp),
+  "name": zod.string().min(updateCategoryBodyNameMin).max(updateCategoryBodyNameMax),
+  "slaHours": zod.number().min(1).max(updateCategoryBodySlaHoursMax).optional()
 })
 
 /**
  * @summary Create a complaint category
  */
-export const create3BodyCodeMin = 0;
-export const create3BodyCodeMax = 50;
+export const createCategoryBodyCodeMin = 0;
+export const createCategoryBodyCodeMax = 50;
 
 
-export const create3BodyCodeRegExp = new RegExp('^[A-Z0-9_]+$');
-export const create3BodyNameMin = 0;
-export const create3BodyNameMax = 200;
+export const createCategoryBodyCodeRegExp = new RegExp('^[A-Z0-9_]+$');
+export const createCategoryBodyNameMin = 0;
+export const createCategoryBodyNameMax = 200;
 
-export const create3BodySlaHoursMax = 720;
+export const createCategoryBodySlaHoursMax = 720;
 
 
 
-export const create3Body = zod.object({
-  "code": zod.string().min(create3BodyCodeMin).max(create3BodyCodeMax).regex(create3BodyCodeRegExp),
-  "name": zod.string().min(create3BodyNameMin).max(create3BodyNameMax),
-  "slaHours": zod.number().min(1).max(create3BodySlaHoursMax).optional()
+export const createCategoryBody = zod.object({
+  "code": zod.string().min(createCategoryBodyCodeMin).max(createCategoryBodyCodeMax).regex(createCategoryBodyCodeRegExp),
+  "name": zod.string().min(createCategoryBodyNameMin).max(createCategoryBodyNameMax),
+  "slaHours": zod.number().min(1).max(createCategoryBodySlaHoursMax).optional()
 })
 
-export const deactivate3Params = zod.object({
+/**
+ * @summary Deactivate a complaint category
+ */
+export const deactivateCategoryParams = zod.object({
   "id": zod.number()
 })
 
-export const activate3Params = zod.object({
+/**
+ * @summary Activate a complaint category
+ */
+export const activateCategoryParams = zod.object({
   "id": zod.number()
 })
 

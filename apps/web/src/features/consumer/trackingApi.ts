@@ -21,7 +21,7 @@ import { customFetch, type Schemas } from '@complaints/api';
 
 const CONSUMER_LIST_BASE = '/api/v1/consumer/complaints';
 
-export type ConsumerComplaintStatusFilter = Schemas.ListStatus | undefined;
+export type ConsumerComplaintStatusFilter = Schemas.ListConsumerComplaintsStatus | undefined;
 
 export interface ConsumerComplaintsListPage {
   page: number;

@@ -6,12 +6,12 @@
  * OpenAPI spec version: v1
  */
 
-export type SearchRole = typeof SearchRole[keyof typeof SearchRole];
+export type DeviceTokenResponsePlatform = typeof DeviceTokenResponsePlatform[keyof typeof DeviceTokenResponsePlatform];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const SearchRole = {
-  ADMIN: 'ADMIN',
-  ENGINEER: 'ENGINEER',
-  TECHNICIAN: 'TECHNICIAN',
+export const DeviceTokenResponsePlatform = {
+  ANDROID: 'ANDROID',
+  IOS: 'IOS',
+  WEB: 'WEB',
 } as const;

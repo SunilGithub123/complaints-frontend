@@ -1,14 +1,14 @@
 /**
  * ProfileScreen — 2 tests, per minimum-test policy.
  *
- *  1. Happy: valid submit → useUpdateMyProfile fires with the expected
+ *  1. Happy: valid submit → useUpdateMyStaffProfile fires with the expected
  *     payload; the auth store is updated via setValidatedStaff with
  *     the response's fresh StaffSummaryResponse; success toast renders.
  *  2. Unhappy: BE returns 400 VALIDATION_FAILED with `details.email`
  *     populated → field-level error appears under Email and the store
  *     stays untouched.
  *
- * `useUpdateMyProfile` is module-mocked; `useGetSubdivision` / `useGetDc`
+ * `useUpdateMyStaffProfile` is module-mocked; `useGetSubdivision` / `useGetDistributionCenter`
  * are stubbed so the header has a deterministic resolved name.
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -26,13 +26,13 @@ vi.mock('@complaints/api', async () => {
   const actual = await vi.importActual<typeof import('@complaints/api')>('@complaints/api');
   return {
     ...actual,
-    useUpdateMyProfile: () => ({ mutateAsync: updateMutateAsync, isPending: false }),
+    useUpdateMyStaffProfile: () => ({ mutateAsync: updateMutateAsync, isPending: false }),
     useGetSubdivision: () => ({
       data: {
         data: { success: true, data: { id: 42, code: 'PUN', name: 'Pune' } },
       },
     }),
-    useGetDc: () => ({
+    useGetDistributionCenter: () => ({
       data: {
         data: { success: true, data: { id: 7, code: 'DC-PUNE-01', name: 'Pune Central' } },
       },

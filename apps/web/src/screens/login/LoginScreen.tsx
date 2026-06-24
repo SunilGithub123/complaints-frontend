@@ -2,7 +2,7 @@
  * Staff login screen.
  *
  * Maps the backend's `POST /staff/auth/login` (Stage 1) to a single form.
- * Uses the orval-generated `useLogin` mutation hook (Stage 3) — no manual
+ * Uses the orval-generated `useLoginStaff` mutation hook (Stage 3) — no manual
  * fetch, no hand-rolled axios. Validation is driven by the generated zod
  * schema `loginBody` from `@complaints/api` extended with min(1) on the
  * password (the OpenAPI spec only enforces max length there).
@@ -19,7 +19,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
-import { useLogin, ApiError, type Schemas } from '@complaints/api';
+import { useLoginStaff, ApiError, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { useAuthStore } from '@/auth/authStore';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,7 @@ export default function LoginScreen(): React.JSX.Element {
     defaultValues: { employeeId: '', password: '' },
   });
 
-  const { mutateAsync, isPending } = useLogin();
+  const { mutateAsync, isPending } = useLoginStaff();
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);

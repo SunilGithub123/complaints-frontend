@@ -1,7 +1,7 @@
 /**
  * AssignDialog — 2 tests, per minimum-test policy.
  *
- *  1. Happy path: pick a technician, change severity, submit → useAssign
+ *  1. Happy path: pick a technician, change severity, submit → useAssignComplaint
  *     mutation fires with the expected `{ id, data }` payload and
  *     `onSuccess` is called.
  *  2. Unhappy path: BE returns TECHNICIAN_NOT_IN_DC → the field-level
@@ -25,7 +25,7 @@ vi.mock('@complaints/api', async () => {
     await vi.importActual<typeof import('@complaints/api')>('@complaints/api');
   return {
     ...actual,
-    useAssign: () => ({ mutateAsync: mockAssign, isPending: false }),
+    useAssignComplaint: () => ({ mutateAsync: mockAssign, isPending: false }),
   };
 });
 

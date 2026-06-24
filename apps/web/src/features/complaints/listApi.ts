@@ -2,10 +2,10 @@
  * Hand-rolled list hooks for the engineer/admin + technician complaint
  * tables (BE Stage 16).
  *
- * Why not the generated `useList2` / `useList1`?
+ * Why not the generated `useList3` / `useList2`?
  *
  *   orval's URL builder calls `.toString()` on every top-level param.
- *   `List2Params` has nested `filters` + `pageable` objects, so the
+ *   `List3Params` has nested `filters` + `pageable` objects, so the
  *   generated client emits `?filters=[object Object]&pageable=[object
  *   Object]` — Spring quietly falls back to `page=0, size=20` defaults
  *   (the same bug already silently affects `useListStaff` — pre-Stage 16

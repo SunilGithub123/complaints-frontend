@@ -12,15 +12,15 @@ import * as zod from 'zod';
  * Server pins consumer_master_id = caller.consumerMasterId(). Optional ?status=… filter. Default sort is createdAt,desc (latest first).
  * @summary Paged tracking list of every complaint the verified consumer has raised
  */
-export const listQueryPageablePageMin = 0;
+export const listConsumerComplaintsQueryPageablePageMin = 0;
 
 
 
 
-export const listQueryParams = zod.object({
+export const listConsumerComplaintsQueryParams = zod.object({
   "status": zod.enum(['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED', 'REJECTED', 'DUPLICATE']).optional(),
   "pageable": zod.object({
-  "page": zod.number().min(listQueryPageablePageMin).optional(),
+  "page": zod.number().min(listConsumerComplaintsQueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 })
@@ -30,25 +30,25 @@ export const listQueryParams = zod.object({
  * Multipart contract: one JSON part named `complaint` (SubmitComplaintRequest) plus 0..3 image parts named `images` (image/jpeg or image/png, each ≤ 1 MB). Ticket number, SLA deadline and signed image URLs are returned in one response — no follow-up calls required for the confirmation screen.
  * @summary Submit a new complaint with up to 3 images in a single multipart request
  */
-export const submitBodyComplaintConsumerIdMin = 0;
-export const submitBodyComplaintConsumerIdMax = 50;
+export const submitComplaintBodyComplaintConsumerIdMin = 0;
+export const submitComplaintBodyComplaintConsumerIdMax = 50;
 
-export const submitBodyComplaintMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
-export const submitBodyComplaintDescriptionMin = 0;
-export const submitBodyComplaintDescriptionMax = 4000;
+export const submitComplaintBodyComplaintMobileRegExp = new RegExp('^\\+?[0-9]{7,15}$');
+export const submitComplaintBodyComplaintDescriptionMin = 0;
+export const submitComplaintBodyComplaintDescriptionMax = 4000;
 
-export const submitBodyComplaintLocationMin = 0;
-export const submitBodyComplaintLocationMax = 500;
+export const submitComplaintBodyComplaintLocationMin = 0;
+export const submitComplaintBodyComplaintLocationMax = 500;
 
 
 
-export const submitBody = zod.object({
+export const submitComplaintBody = zod.object({
   "complaint": zod.object({
-  "consumerId": zod.string().min(submitBodyComplaintConsumerIdMin).max(submitBodyComplaintConsumerIdMax),
-  "mobile": zod.string().regex(submitBodyComplaintMobileRegExp),
+  "consumerId": zod.string().min(submitComplaintBodyComplaintConsumerIdMin).max(submitComplaintBodyComplaintConsumerIdMax),
+  "mobile": zod.string().regex(submitComplaintBodyComplaintMobileRegExp),
   "categoryId": zod.number(),
-  "description": zod.string().min(submitBodyComplaintDescriptionMin).max(submitBodyComplaintDescriptionMax),
-  "location": zod.string().min(submitBodyComplaintLocationMin).max(submitBodyComplaintLocationMax).optional()
+  "description": zod.string().min(submitComplaintBodyComplaintDescriptionMin).max(submitComplaintBodyComplaintDescriptionMax),
+  "location": zod.string().min(submitComplaintBodyComplaintLocationMin).max(submitComplaintBodyComplaintLocationMax).optional()
 }).optional(),
   "images": zod.array(zod.instanceof(File)).optional().describe('0..3 image parts (image\/jpeg or image\/png)')
 }).describe('multipart\/form-data layout for POST \/api\/v1\/consumer\/complaints')
@@ -85,24 +85,24 @@ export const submitFeedbackBody = zod.object({
  * Consumer-driven withdrawal. Once an engineer has assigned the complaint, MSEB owns the workflow and the consumer can no longer cancel — that's a 409 COMPLAINT_NOT_IN_SUBMITTED_STATE. Body carries an optional free-text reason.
  * @summary Cancel an owned complaint (only while status = SUBMITTED)
  */
-export const cancelParams = zod.object({
+export const cancelComplaintParams = zod.object({
   "ticketNo": zod.string()
 })
 
-export const cancelBodyReasonMin = 0;
-export const cancelBodyReasonMax = 500;
+export const cancelComplaintBodyReasonMin = 0;
+export const cancelComplaintBodyReasonMax = 500;
 
 
 
-export const cancelBody = zod.object({
-  "reason": zod.string().min(cancelBodyReasonMin).max(cancelBodyReasonMax).optional()
+export const cancelComplaintBody = zod.object({
+  "reason": zod.string().min(cancelComplaintBodyReasonMin).max(cancelComplaintBodyReasonMax).optional()
 })
 
 /**
  * Owner-checked. Stage 17 enriched the payload with severity, slaBreached, resolvedAt, closedAt. Staff identities and internal reason fields remain on the staff-side DTO only.
  * @summary Fetch the verified consumer's own complaint by ticket number
  */
-export const getByTicketParams = zod.object({
+export const getConsumerComplaintParams = zod.object({
   "ticketNo": zod.string()
 })
 
@@ -110,7 +110,7 @@ export const getByTicketParams = zod.object({
  * Same chronological ordering as the staff endpoint, but without changedByUserId — consumers don't see staff IDs.
  * @summary Consumer-safe status-change history for an owned complaint
  */
-export const getHistory1Params = zod.object({
+export const getConsumerComplaintHistoryParams = zod.object({
   "ticketNo": zod.string()
 })
 

@@ -2,7 +2,7 @@
  * CloseDialog — 2 tests, per minimum-test policy.
  *
  *  1. Happy path: complaint is NOT SLA-breached → no reason textarea
- *     renders, clicking Close fires useClose mutation with empty body,
+ *     renders, clicking Close fires useCloseComplaint mutation with empty body,
  *     `onSuccess` is called.
  *  2. Unhappy path: complaint IS SLA-breached AND BE has no reason on
  *     file → textarea renders as required; submitting blank surfaces
@@ -25,7 +25,7 @@ vi.mock('@complaints/api', async () => {
     await vi.importActual<typeof import('@complaints/api')>('@complaints/api');
   return {
     ...actual,
-    useClose: () => ({ mutateAsync: mockClose, isPending: false }),
+    useCloseComplaint: () => ({ mutateAsync: mockClose, isPending: false }),
   };
 });
 

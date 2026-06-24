@@ -11,92 +11,92 @@ import * as zod from 'zod';
 /**
  * @summary Update severity of a non-terminal complaint
  */
-export const updateSeverityParams = zod.object({
+export const updateComplaintSeverityParams = zod.object({
   "id": zod.number()
 })
 
-export const updateSeverityBody = zod.object({
+export const updateComplaintSeverityBody = zod.object({
   "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH'])
 })
 
 /**
  * @summary Reject a SUBMITTED complaint with a reason
  */
-export const rejectParams = zod.object({
+export const rejectComplaintParams = zod.object({
   "id": zod.number()
 })
 
-export const rejectBodyReasonMin = 0;
-export const rejectBodyReasonMax = 500;
+export const rejectComplaintBodyReasonMin = 0;
+export const rejectComplaintBodyReasonMax = 500;
 
 
 
-export const rejectBody = zod.object({
-  "reason": zod.string().min(rejectBodyReasonMin).max(rejectBodyReasonMax)
+export const rejectComplaintBody = zod.object({
+  "reason": zod.string().min(rejectComplaintBodyReasonMin).max(rejectComplaintBodyReasonMax)
 })
 
 /**
  * @summary Reassign an already-assigned complaint to a different technician
  */
-export const reassignParams = zod.object({
+export const reassignComplaintParams = zod.object({
   "id": zod.number()
 })
 
-export const reassignBodyReasonMin = 0;
-export const reassignBodyReasonMax = 500;
+export const reassignComplaintBodyReasonMin = 0;
+export const reassignComplaintBodyReasonMax = 500;
 
 
 
-export const reassignBody = zod.object({
+export const reassignComplaintBody = zod.object({
   "technicianId": zod.number(),
-  "reason": zod.string().min(reassignBodyReasonMin).max(reassignBodyReasonMax).optional()
+  "reason": zod.string().min(reassignComplaintBodyReasonMin).max(reassignComplaintBodyReasonMax).optional()
 })
 
 /**
  * @summary Mark a SUBMITTED complaint as a duplicate of another (by ticket number)
  */
-export const markDuplicateParams = zod.object({
+export const markComplaintDuplicateParams = zod.object({
   "id": zod.number()
 })
 
-export const markDuplicateBodyParentTicketNoMin = 0;
-export const markDuplicateBodyParentTicketNoMax = 20;
+export const markComplaintDuplicateBodyParentTicketNoMin = 0;
+export const markComplaintDuplicateBodyParentTicketNoMax = 20;
 
-export const markDuplicateBodyReasonMin = 0;
-export const markDuplicateBodyReasonMax = 500;
+export const markComplaintDuplicateBodyReasonMin = 0;
+export const markComplaintDuplicateBodyReasonMax = 500;
 
 
 
-export const markDuplicateBody = zod.object({
-  "parentTicketNo": zod.string().min(markDuplicateBodyParentTicketNoMin).max(markDuplicateBodyParentTicketNoMax),
-  "reason": zod.string().min(markDuplicateBodyReasonMin).max(markDuplicateBodyReasonMax).optional()
+export const markComplaintDuplicateBody = zod.object({
+  "parentTicketNo": zod.string().min(markComplaintDuplicateBodyParentTicketNoMin).max(markComplaintDuplicateBodyParentTicketNoMax),
+  "reason": zod.string().min(markComplaintDuplicateBodyReasonMin).max(markComplaintDuplicateBodyReasonMax).optional()
 })
 
 /**
  * Returns the post-close detail (status=CLOSED + bumped version) so the FE can update its cache in one round-trip without a follow-up GET.
  * @summary Engineer / Admin close-on-behalf of a RESOLVED complaint
  */
-export const closeParams = zod.object({
+export const closeComplaintParams = zod.object({
   "id": zod.number()
 })
 
-export const closeBodySlaBreachReasonMin = 0;
-export const closeBodySlaBreachReasonMax = 500;
+export const closeComplaintBodySlaBreachReasonMin = 0;
+export const closeComplaintBodySlaBreachReasonMax = 500;
 
 
 
-export const closeBody = zod.object({
-  "slaBreachReason": zod.string().min(closeBodySlaBreachReasonMin).max(closeBodySlaBreachReasonMax).optional()
+export const closeComplaintBody = zod.object({
+  "slaBreachReason": zod.string().min(closeComplaintBodySlaBreachReasonMin).max(closeComplaintBodySlaBreachReasonMax).optional()
 })
 
 /**
  * @summary Assign a SUBMITTED complaint to a technician and set severity
  */
-export const assignParams = zod.object({
+export const assignComplaintParams = zod.object({
   "id": zod.number()
 })
 
-export const assignBody = zod.object({
+export const assignComplaintBody = zod.object({
   "technicianId": zod.number(),
   "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH'])
 })
@@ -105,12 +105,12 @@ export const assignBody = zod.object({
  * Filters compose with caller-scope: engineer = own DC, admin = own subdivision. Default sort is createdAt,desc.
  * @summary Paged complaint search for engineer / admin
  */
-export const list3QueryPageablePageMin = 0;
+export const searchStaffComplaintsQueryPageablePageMin = 0;
 
 
 
 
-export const list3QueryParams = zod.object({
+export const searchStaffComplaintsQueryParams = zod.object({
   "filters": zod.object({
   "status": zod.enum(['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED', 'REJECTED', 'DUPLICATE']).optional(),
   "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
@@ -123,7 +123,7 @@ export const list3QueryParams = zod.object({
   "q": zod.string().optional()
 }),
   "pageable": zod.object({
-  "page": zod.number().min(list3QueryPageablePageMin).optional(),
+  "page": zod.number().min(searchStaffComplaintsQueryPageablePageMin).optional(),
   "size": zod.number().min(1).optional(),
   "sort": zod.array(zod.string()).optional()
 })
@@ -132,14 +132,14 @@ export const list3QueryParams = zod.object({
 /**
  * @summary Engineer / Admin detail view of a complaint (scope-checked)
  */
-export const getById1Params = zod.object({
+export const getStaffComplaintParams = zod.object({
   "id": zod.number()
 })
 
 /**
  * @summary Status-change audit trail for a complaint (chronological)
  */
-export const getHistoryParams = zod.object({
+export const getStaffComplaintHistoryParams = zod.object({
   "id": zod.number()
 })
 

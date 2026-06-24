@@ -2067,6 +2067,206 @@ pnpm --filter web build                   → 146.31 KB gz entry (+0.43 from 5 E
 
 ---
 
+### Stage 21.1  Device-token endpoints codegen pickup — ✅ 2026-06-25
+
+> Pairs with BE Stage 21.1 (schema + endpoints shipped). BE published
+> the refreshed OpenAPI snapshot with 4 new operations + 2 new
+> schemas. This entry covers the codegen pickup + barrel aliases.
+> No call sites consume the hooks yet — that wiring lands with the
+> `apps/mobile` bootstrap (deferred from Stage 12.2) for the
+> consumer flow, and with the staff-logout reducer update for the
+> staff flow (Stage 21.3 carry-over).
+
+#### Scope delivered
+
+- **`packages/api/openapi.json`** — re-copied from
+  `../complaints/docs/openapi.json`. Spec now has 55 paths
+  (was 51 in Stage 13). New schemas: `DeviceRegistrationRequest`,
+  `DeviceTokenResponse` (+ their `Platform` enums + the
+  `ApiResponseDeviceTokenResponse` envelope). The `pushToken`
+  field is intentionally absent from `DeviceTokenResponse` per
+  contract §6.2 (never echoed) — typecheck confirms.
+- **`packages/api/src/generated/{consumer,staff}-devices/`** — 4
+  new generated files (hooks + imperative + request transformers,
+  plus matching zod schemas).
+- **`packages/api/src/endpoints.ts`** — added 12 friendly aliases
+  for the device hooks + their query/mutation option getters +
+  their imperative request functions:
+  - `useRegisterStaffDevice` / `useRevokeStaffDevice` / `registerStaffDevice` / `revokeStaffDevice`
+  - `useRegisterConsumerDevice` / `useRevokeConsumerDevice` / `registerConsumerDevice` / `revokeConsumerDevice`
+  - Imperative `register*` / `revoke*` exposed so the staff-logout
+    reducer can do a fire-and-forget DELETE per contract §9.4.
+- **Numeric-suffix shift bookkeeping** — Stage 21.1 added two new
+  tags before `staff-complaint-management` in iteration order,
+  bumping:
+  - `useClose` (staff manager-close) → `useClose1`. Re-aliased
+    `useClose1 as useClose` to keep `CloseDialog.tsx` /
+    `CloseDialog.test.tsx` import sites untouched.
+  - `useList2` (staff paged complaint search) → `useList3`. The
+    hand-rolled `listApi.ts` wrapper bypasses orval entirely
+    (pageable bug), so only the doc-comment needed updating —
+    no behavioural change.
+  - `useList1` (technician list, also bypassed) → `useList2`.
+    Same comment-only update.
+- **`apps/web/src/features/complaints/listApi.ts`** — comment
+  updated to reflect the new `List3Params` / `List2Params` mapping
+  so the next regen reviewer doesn't think it's stale.
+
+#### Incidents fixed during implementation
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | `useClose` no longer exported by `staff-complaint-management.ts` after regen. | Tags-split orval iterates tags alphabetically and gives the un-suffixed slot to the first one seen. Adding `staff-devices` shifted iteration order; technician-complaints (which also has `close`) now claims the un-suffixed `useClose`. | Aliased `useClose1 as useClose` at the barrel. Call sites unchanged. Documented the shift in the endpoints.ts comment for the next regen. |
+| 2 | Same shift bumped staff paged-list operationId by one slot (`useList2` → `useList3`). | Same iteration-order mechanism. | Hand-rolled list wrapper already bypasses orval — comment-only update; no code change. |
+
+#### Tests added
+
+None. The codegen pickup adds no new behaviour to the web app
+(hooks aren't consumed yet). Real registration / revoke / logout
+DELETE flow tests land with Stage 21.3 when the call sites
+materialise — at which point we'll cover the happy path + the
+401 / 403 / 409 error code paths the contract §8 reserves.
+
+#### Build status
+
+```
+pnpm api:gen                              → clean (4 new operations, 2 new schemas)
+pnpm typecheck                            → 5 packages, 0 errors
+pnpm lint                                 → 0 warnings
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.31 KB gz entry (unchanged; device hooks tree-shaken)
+```
+
+#### Carry-overs
+
+- **FE → BE** — none. Stage 21.1 contract fully consumed.
+- **FE-owned, Stage 21.3 (gated on `apps/mobile` bootstrap)**:
+  - Consumer flow: prompt for permission after first successful
+    complaint submit (§9.6), acquire push token via Expo, call
+    `useRegisterConsumerDevice` with `{ deviceId, platform: 'ANDROID'|'IOS', pushToken, appVersion }`,
+    re-register on cold start + `onTokenRefresh` per §9.3.
+    `INVALID_PUSH_TOKEN_FORMAT` path: re-fetch token once and
+    retry the POST.
+  - Consumer revoke: detect later OS-level permission revoke via
+    `getPermissionsAsync()` on next launch → call
+    `useRevokeConsumerDevice` per §9.6.
+  - `setBackgroundMessageHandler` / `onMessage` router consuming
+    the §4 payload (`type → screen + params` map keyed off
+    `COMPLAINT_SUBMITTED` / `COMPLAINT_ASSIGNED` /
+    `COMPLAINT_REASSIGNED` / `COMPLAINT_RESOLVED` /
+    `COMPLAINT_CLOSED` / `SLA_BREACHED` / `FEEDBACK_RECEIVED` /
+    `COMPLAINT_CANCELLED` / `COMPLAINT_REJECTED`). Use
+    `eventOccurredAt` (server IST) for "n minutes ago" labels,
+    never FCM receipt time.
+- **FE-owned, Stage 21.3 (ships in `apps/web`)**:
+  - Staff logout reducer — call `revokeStaffDevice(deviceId)`
+    before clearing the JWT in `authStore.logout`, wrapped in
+    try/catch with a short timeout. Best-effort fire-and-forget
+    per §9.4. The imperative re-export is in place for exactly
+    this.
+- **Stage 21.2 awaited (BE side, ~1.5 days)**: actual push
+  fan-out. Registering a device today does not yet result in a
+  push being delivered when a complaint event fires. The
+  endpoint persists; the listeners that emit pushes land in 21.2.
+- **Unchanged FE-owned**: optimistic-concurrency `version`,
+  URL-synced filter state, orval `?pageable=[object Object]`
+  upstream PR, `apps/mobile` Expo bootstrap.
+
+---
+
+### Stage 21.2.1  Stable operationIds — barrel cleanup — ✅ 2026-06-25
+
+> Pairs with BE Stage 21.2.1. BE added intention-revealing
+> `@Operation(operationId = …)` annotations to every controller
+> method. 61 stable IDs, zero numeric suffixes. Future stages
+> will not reshuffle hook names — the entire `endpoints.ts` alias
+> dance becomes obsolete.
+
+#### Scope delivered
+
+- **`packages/api/openapi.json`** — re-copied from
+  `../complaints/docs/openapi.json`.
+- **`packages/api/src/generated/**`** — regenerated. Every
+  generated hook now has the intention-revealing name (e.g.
+  `useLoginStaff`, `useGetMyStaffProfile`, `useListDistributionCenters`,
+  `useCloseComplaint`, `useRegisterConsumerDevice`,
+  `useSearchStaffComplaints`). Numeric suffixes (`useList1`,
+  `useClose1`, `useGetById1`, `useGetHistory1`) are gone.
+- **`packages/api/src/endpoints.ts`** — collapsed from a
+  176-line alias-renaming surface to a 65-line pure barrel:
+  12 `export *` lines, one per tag, plus targeted comments
+  marking the four paged hooks the web app intentionally
+  bypasses (`useSearchStaffComplaints`,
+  `useListTechnicianComplaints`, `useListConsumerComplaints`,
+  `useGetStaffDirectoryEntries`) due to the orval
+  `?pageable=[object Object]` upstream bug. Future tags only
+  need a single `export *` line here.
+- **24 hook / type renames** across 36 `apps/web/src` files —
+  scripted via a single perl pass for word-boundary safety
+  (BSD `sed` `\b` is unreliable). Highlights:
+  - `useMe` → `useGetMyStaffProfile`
+  - `useLogin` / `useLogout` / `useChangePassword` → `useLoginStaff` / `useLogoutStaff` / `useChangeStaffPassword`
+  - `useSendOtp` / `useVerifyOtp` → `useSendConsumerOtp` / `useVerifyConsumerOtp`
+  - `useListDcs` → `useListDistributionCenters`
+  - `useListActiveCategories` → `useListActiveCategoriesForConsumer`
+  - `useGetComplaintByTicket` → `useGetConsumerComplaint`
+  - `useGetStaffComplaintById` → `useGetStaffComplaint`
+  - `useAssign` / `useReassign` / `useReject` / `useMarkDuplicate` / `useUpdateSeverity` / `useClose` → `use{Assign,Reassign,Reject,MarkComplaintDuplicate,UpdateComplaintSeverity,CloseComplaint}`
+  - `useGetDc` → `useGetDistributionCenter`
+  - `useUpdateMyProfile` → `useUpdateMyStaffProfile`
+  - `Schemas.List1Params` / `List1Role` / `ListStatus` →
+    `Schemas.ListStaffParams` / `ListStaffRole` /
+    `ListConsumerComplaintsStatus`
+  - Query-key getters tracked the rename
+    (`getGetComplaintByTicketQueryKey` → `getGetConsumerComplaintQueryKey`,
+    `getStaffComplaintByIdQueryKey` → `getGetStaffComplaintQueryKey`,
+    `getStaffComplaintHistoryQueryKey` → `getGetStaffComplaintHistoryQueryKey`,
+    `getListDcsQueryKey` → `getListDistributionCentersQueryKey`).
+
+#### Incidents fixed during implementation
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | `tsc` exploded with `TS1443 Module declaration names may only use ' or " quoted strings.` on every line of the rewritten `endpoints.ts`. | The JSDoc block at the top referenced `apps/web/src/features/**/api.ts` — the `**/` sequence inside the block comment closes the comment early (`*/`), then TS tries to parse the path strings as `export * from <unquoted-identifier>`. | Replaced `**/api.ts` with `<feature>/api.ts` in the comment. Belt-and-braces for next time: avoid `**/` inside any block comment. |
+| 2 | First-pass batch rename via `sed -i '' -e 's/\bX\b/Y/g'` left every identifier untouched. | BSD `sed` on macOS does not implement `\b` word boundaries (GNU extension). The substitutions silently no-op'd. | Switched the batch script to `perl -i -pe 's/\bX\b/Y/g;…'`. Perl's `\b` behaves as expected on macOS. |
+
+#### Tests added
+
+None. Pure-rename refactor — every existing test mock
+(`useLogin` → `useLoginStaff`, `useMe` → `useGetMyStaffProfile`,
+etc.) was renamed alongside its production import, so the same
+19-files / 37-tests suite asserts the same behaviour under the
+new names. No behavioural surface changed.
+
+#### Build status
+
+```
+pnpm api:gen                              → clean (zero numeric suffixes)
+pnpm typecheck                            → 5 packages, 0 errors
+pnpm lint                                 → 0 warnings
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.31 KB gz entry (unchanged; pure-identifier refactor)
+```
+
+#### Carry-overs
+
+- **FE → BE** — none. Stable-operationId rollout matched the
+  promised "drop the alias edits in the barrel" outcome line-for-line.
+- **Stage 21.2 smoke test (waiting on `apps/mobile`)**: BE
+  message confirms 21.2 listeners are live on dev — registering
+  a real device + assigning a complaint should fan out a
+  `COMPLAINT_ASSIGNED` push with the §4 frame
+  (`eventOccurredAt` + `schemaVersion=1` included). FE can't
+  exercise this until `apps/mobile` is bootstrapped; flagging
+  the regression risk on the BE log so 21.3 wiring catches any
+  payload divergence the moment mobile lands.
+- **Unchanged FE-owned**: optimistic-concurrency `version`,
+  URL-synced filter state, orval `?pageable=[object Object]`
+  upstream PR, `apps/mobile` Expo bootstrap, staff-logout
+  `revokeStaffDevice` call (apps/web — lands in 21.3).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

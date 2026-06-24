@@ -6,7 +6,7 @@
  *  2. Unhappy: BE returns OTP_RATE_LIMIT on the resend click — friendly
  *     localized copy is shown and the cooldown lock holds.
  *
- * `useSendOtp` / `useVerifyOtp` are mocked, the same shape the
+ * `useSendConsumerOtp` / `useVerifyConsumerOtp` are mocked, the same shape the
  * LoginScreen test uses.
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -24,8 +24,8 @@ vi.mock('@complaints/api', async () => {
   const actual = await vi.importActual<typeof import('@complaints/api')>('@complaints/api');
   return {
     ...actual,
-    useSendOtp: () => ({ mutateAsync: sendMutate, isPending: false }),
-    useVerifyOtp: () => ({ mutateAsync: verifyMutate, isPending: false }),
+    useSendConsumerOtp: () => ({ mutateAsync: sendMutate, isPending: false }),
+    useVerifyConsumerOtp: () => ({ mutateAsync: verifyMutate, isPending: false }),
   };
 });
 

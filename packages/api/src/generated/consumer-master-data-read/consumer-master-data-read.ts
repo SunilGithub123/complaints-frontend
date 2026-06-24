@@ -22,7 +22,7 @@ import type {
 
 import type {
   ApiResponsePageResponseComplaintCategoryResponse,
-  ListActiveCategoriesParams
+  ListActiveCategoriesForConsumerParams
 } from '.././schemas';
 
 import { customFetch } from '../../client';
@@ -36,19 +36,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * Returns only categories where active = true. Inactive rows are never surfaced to consumers.
  * @summary List active complaint categories for the consumer submit dropdown
  */
-export type listActiveCategoriesResponse200 = {
+export type listActiveCategoriesForConsumerResponse200 = {
   data: ApiResponsePageResponseComplaintCategoryResponse
   status: 200
 }
     
-export type listActiveCategoriesResponseSuccess = (listActiveCategoriesResponse200) & {
+export type listActiveCategoriesForConsumerResponseSuccess = (listActiveCategoriesForConsumerResponse200) & {
   headers: Headers;
 };
 ;
 
-export type listActiveCategoriesResponse = (listActiveCategoriesResponseSuccess)
+export type listActiveCategoriesForConsumerResponse = (listActiveCategoriesForConsumerResponseSuccess)
 
-export const getListActiveCategoriesUrl = (params: ListActiveCategoriesParams,) => {
+export const getListActiveCategoriesForConsumerUrl = (params: ListActiveCategoriesForConsumerParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -63,9 +63,9 @@ export const getListActiveCategoriesUrl = (params: ListActiveCategoriesParams,) 
   return stringifiedParams.length > 0 ? `/api/v1/consumer/masterdata/categories?${stringifiedParams}` : `/api/v1/consumer/masterdata/categories`
 }
 
-export const listActiveCategories = async (params: ListActiveCategoriesParams, options?: RequestInit): Promise<listActiveCategoriesResponse> => {
+export const listActiveCategoriesForConsumer = async (params: ListActiveCategoriesForConsumerParams, options?: RequestInit): Promise<listActiveCategoriesForConsumerResponse> => {
   
-  return customFetch<listActiveCategoriesResponse>(getListActiveCategoriesUrl(params),
+  return customFetch<listActiveCategoriesForConsumerResponse>(getListActiveCategoriesForConsumerUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -78,69 +78,69 @@ export const listActiveCategories = async (params: ListActiveCategoriesParams, o
 
 
 
-export const getListActiveCategoriesQueryKey = (params?: ListActiveCategoriesParams,) => {
+export const getListActiveCategoriesForConsumerQueryKey = (params?: ListActiveCategoriesForConsumerParams,) => {
     return [
     `/api/v1/consumer/masterdata/categories`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListActiveCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listActiveCategories>>, TError = unknown>(params: ListActiveCategoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getListActiveCategoriesForConsumerQueryOptions = <TData = Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError = unknown>(params: ListActiveCategoriesForConsumerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListActiveCategoriesQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getListActiveCategoriesForConsumerQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listActiveCategories>>> = () => listActiveCategories(params, requestOptions);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>> = () => listActiveCategoriesForConsumer(params, requestOptions);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listActiveCategories>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type ListActiveCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listActiveCategories>>>
-export type ListActiveCategoriesQueryError = unknown
+export type ListActiveCategoriesForConsumerQueryResult = NonNullable<Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>>
+export type ListActiveCategoriesForConsumerQueryError = unknown
 
 
-export function useListActiveCategories<TData = Awaited<ReturnType<typeof listActiveCategories>>, TError = unknown>(
- params: ListActiveCategoriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategories>>, TError, TData>> & Pick<
+export function useListActiveCategoriesForConsumer<TData = Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError = unknown>(
+ params: ListActiveCategoriesForConsumerParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listActiveCategories>>,
+          Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>,
           TError,
-          Awaited<ReturnType<typeof listActiveCategories>>
+          Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListActiveCategories<TData = Awaited<ReturnType<typeof listActiveCategories>>, TError = unknown>(
- params: ListActiveCategoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategories>>, TError, TData>> & Pick<
+export function useListActiveCategoriesForConsumer<TData = Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError = unknown>(
+ params: ListActiveCategoriesForConsumerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listActiveCategories>>,
+          Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>,
           TError,
-          Awaited<ReturnType<typeof listActiveCategories>>
+          Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListActiveCategories<TData = Awaited<ReturnType<typeof listActiveCategories>>, TError = unknown>(
- params: ListActiveCategoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useListActiveCategoriesForConsumer<TData = Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError = unknown>(
+ params: ListActiveCategoriesForConsumerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List active complaint categories for the consumer submit dropdown
  */
 
-export function useListActiveCategories<TData = Awaited<ReturnType<typeof listActiveCategories>>, TError = unknown>(
- params: ListActiveCategoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useListActiveCategoriesForConsumer<TData = Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError = unknown>(
+ params: ListActiveCategoriesForConsumerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listActiveCategoriesForConsumer>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getListActiveCategoriesQueryOptions(params,options)
+  const queryOptions = getListActiveCategoriesForConsumerQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 

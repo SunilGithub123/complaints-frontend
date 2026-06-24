@@ -1,4 +1,4 @@
-import { useListDcs, type Schemas } from '@complaints/api';
+import { useListDistributionCenters, type Schemas } from '@complaints/api';
 import { useT } from '@complaints/i18n';
 import { ActiveBadge, MasterdataTable } from './MasterdataTable';
 
@@ -6,7 +6,7 @@ const DEFAULT_PAGE: Schemas.Pageable = { page: 0, size: 50, sort: ['code,asc'] }
 
 export default function DistributionCentersScreen(): React.JSX.Element {
   const t = useT();
-  const { data, isLoading, error } = useListDcs({ pageable: DEFAULT_PAGE });
+  const { data, isLoading, error } = useListDistributionCenters({ pageable: DEFAULT_PAGE });
   const envelope = (data as
     | { data: Schemas.ApiResponsePageResponseDistributionCenterResponse }
     | undefined)?.data;

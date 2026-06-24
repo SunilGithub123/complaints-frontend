@@ -6,7 +6,7 @@
  *   2. Unhappy path: `ApiError('BAD_CREDENTIALS')` → inline error shown,
  *      and `navigate` was NOT called.
  *
- * We mock `useLogin` from `@complaints/api` rather than going through the
+ * We mock `useLoginStaff` from `@complaints/api` rather than going through the
  * transport — testing TanStack Query's retry/cache behaviour is not the
  * value here. `useNavigate` is mocked likewise.
  */
@@ -34,7 +34,7 @@ vi.mock('@complaints/api', async () => {
   const actual = await vi.importActual<typeof import('@complaints/api')>('@complaints/api');
   return {
     ...actual,
-    useLogin: () => ({ mutateAsync: loginMutateMock, isPending: false }),
+    useLoginStaff: () => ({ mutateAsync: loginMutateMock, isPending: false }),
   };
 });
 
