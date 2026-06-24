@@ -1981,6 +1981,92 @@ chunk via the consumer-flow lazy boundary.
 
 ---
 
+### Stage 21.0  Device-token contract sign-off + pre-21.1 prerequisites — ✅ 2026-06-25
+
+> Pairs with BE Stage 21.0. BE authored
+> `docs/STAGE_21_DEVICE_TOKEN_CONTRACT.md`, FE reviewed and signed off,
+> two deltas folded into the frozen v1.0 (§4 `eventOccurredAt`, §8
+> `INVALID_PUSH_TOKEN_FORMAT` + `DEVICE_TOKEN_LIMIT_EXCEEDED`). No BE
+> endpoints exist yet — Stage 21.1 ships them next. This entry covers
+> the FE prerequisites that can land **before** the OpenAPI snapshot
+> bumps, so the consuming Stage 21.3 PR has nothing to wait on.
+
+#### Scope delivered
+
+- **`packages/i18n/src/locales/{en,mr}.json`** — `errors.*` keys for
+  the 5 Stage 21 codes (`DEVICE_PLATFORM_UNSUPPORTED`,
+  `DEVICE_NOT_OWNED_BY_CONSUMER`, `DEVICE_NOT_OWNED_BY_USER`,
+  `INVALID_PUSH_TOKEN_FORMAT`, `DEVICE_TOKEN_LIMIT_EXCEEDED`) in EN
+  and MR. `mapApiError` (apps/web/src/lib/apiErrors.ts) is
+  auto-pickup: any new `errors.<CODE>` key Just Works.
+- **`packages/utils/src/index.ts`** — `DEVICE_ID_STORAGE_KEY`
+  (`'crs.deviceId'`) + `getOrCreateDeviceId()` web helper.
+  `crypto.randomUUID()` on first read, persisted to `localStorage`,
+  module-scope cached for subsequent calls. Try/catch falls back to
+  in-memory-only UUID on Safari private mode / disabled storage / SSR
+  — per contract §9 additional confirmations, a fresh UUID just
+  creates a new server-side row and the old one ages out via the
+  nightly sweep.
+
+#### Out of scope (deferred to Stage 21.3, gated on `apps/mobile`)
+
+The contract sign-off cover note lists five FE pre-work items.
+Three of them — `expo-secure-store` deviceId persistence, push-token
+acquisition stubs, `setBackgroundMessageHandler` / `onMessage`
+skeleton — are **mobile-app-only** per §9.2 ("No web push in v1").
+`apps/mobile` is still the Stage 12.2 Expo-bootstrap carry-over, so
+these wait on that. Permission UX wiring (§9.6: post-submit for
+consumer, post-login-change-password for staff) is the same — both
+prompt sites live in mobile screens that don't exist yet.
+
+Web side has no consumer of `getOrCreateDeviceId()` in v1 either
+(web push is out), but the helper is cheap, contract-spec'd, and
+unblocks the moment WEB platform is enabled in a later stage.
+
+#### Incidents fixed during implementation
+
+None — review-only contract round, no code surprises.
+
+#### Tests added
+
+None. `getOrCreateDeviceId()` is a 12-line localStorage round-trip
+and `@complaints/utils` has no test runner wired (would I miss it if
+it broke in prod tomorrow → no, the apps/web call site would
+immediately fail any registration smoke). Real coverage lands when
+Stage 21.3 wires `POST /devices` and the registration unit/e2e
+covers the helper end-to-end.
+
+#### Build status
+
+```
+pnpm typecheck                            → 5 packages, 0 errors
+pnpm lint                                 → 0 warnings
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.31 KB gz entry (+0.43 from 5 EN errorCodes strings; 33.69 KB headroom; helper not yet imported)
+```
+
+#### Carry-overs
+
+- **FE → BE** — none. Sign-off is what unblocks BE Stage 21.1; no
+  open contract questions.
+- **FE-owned, gated on `apps/mobile` bootstrap**:
+  expo-secure-store deviceId persistence, push-token acquisition,
+  message handler skeleton, permission UX (consumer post-submit /
+  staff post-login). All ship in Stage 21.3 against the frozen §4
+  payload + generated client.
+- **FE-owned, gated on Stage 21.1 OpenAPI snapshot**: re-run
+  `pnpm api:gen`, alias the four generated hooks
+  (`useRegisterConsumerDevice` / `useRevokeConsumerDevice` /
+  `useRegisterStaffDevice` / `useRevokeStaffDevice`) in
+  `packages/api/src/endpoints.ts`, wire the cold-start +
+  `onTokenRefresh` re-register flow (§9.3), wire the staff
+  best-effort `DELETE` on logout (§9.4).
+- **Unchanged FE-owned**: optimistic-concurrency `version`,
+  URL-synced filter state, orval `?pageable=[object Object]`
+  upstream PR.
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

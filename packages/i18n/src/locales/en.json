@@ -239,7 +239,12 @@
     "SELF_REFERENCING_DUPLICATE": "A complaint can't be marked as a duplicate of itself.",
     "COMPLAINT_NOT_IN_SUBMITTED_STATE": "This complaint can no longer be cancelled — an engineer has already picked it up.",
     "FEEDBACK_ALREADY_SUBMITTED": "We've already received feedback for this complaint.",
-    "COMPLAINT_NOT_CLOSED": "Feedback can only be submitted after a complaint is closed."
+    "COMPLAINT_NOT_CLOSED": "Feedback can only be submitted after a complaint is closed.",
+    "DEVICE_PLATFORM_UNSUPPORTED": "This device platform isn't supported for push notifications.",
+    "DEVICE_NOT_OWNED_BY_CONSUMER": "This device isn't registered to your verified mobile number.",
+    "DEVICE_NOT_OWNED_BY_USER": "This device isn't registered to your account.",
+    "INVALID_PUSH_TOKEN_FORMAT": "Your notification setup is out of date. We'll refresh it and try again.",
+    "DEVICE_TOKEN_LIMIT_EXCEEDED": "Too many devices registered. Remove one from another phone to add this one."
   },
   "consumer": {
     "landing": {
