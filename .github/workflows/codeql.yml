@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Initialise CodeQL with our custom config that scopes paths to
       # src/ directories only (skip dist/, generated/, fixtures, etc.).
