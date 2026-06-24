@@ -2,14 +2,16 @@
  * Hand-rolled list hooks for the engineer/admin + technician complaint
  * tables (BE Stage 16).
  *
- * Why not the generated `useList3` / `useList2`?
+ * Why not the generated `useSearchStaffComplaints` /
+ * `useListTechnicianComplaints`?
  *
  *   orval's URL builder calls `.toString()` on every top-level param.
- *   `List3Params` has nested `filters` + `pageable` objects, so the
- *   generated client emits `?filters=[object Object]&pageable=[object
- *   Object]` — Spring quietly falls back to `page=0, size=20` defaults
- *   (the same bug already silently affects `useListStaff` — pre-Stage 16
- *   that screen only ever needed the first page so it didn't bite).
+ *   `SearchStaffComplaintsParams` has nested `filters` + `pageable`
+ *   objects, so the generated client emits
+ *   `?filters=[object Object]&pageable=[object Object]` — Spring quietly
+ *   falls back to `page=0, size=20` defaults (the same bug already
+ *   silently affects `useListStaff` — pre-Stage 16 that screen only ever
+ *   needed the first page so it didn't bite).
  *
  *   Fixing orval is upstream work; for now we serialise the URL by
  *   hand the way Spring's `PageableHandlerMethodArgumentResolver`
