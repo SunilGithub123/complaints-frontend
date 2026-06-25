@@ -2267,6 +2267,168 @@ pnpm --filter web build                   → 146.31 KB gz entry (unchanged; pur
 
 ---
 
+### Stage 21.3 prep  Push transport decision — ✅ 2026-06-25
+
+> Decided ahead of `apps/mobile` bootstrap, recorded here so the
+> Stage 21.3-c push slice doesn't re-litigate the choice.
+
+#### Decisions
+
+- **Native push transport on mobile: raw FCM via
+  `@react-native-firebase/messaging`** — not Expo Push API.
+  Stage 21 contract §4 is a pure FCM `data` message with
+  string-only values; going through Expo Push API would add a
+  relay hop that could reshape the frame (e.g. coerce
+  `eventOccurredAt` or `schemaVersion`). Raw FCM lines up 1:1
+  with the frozen §4 schema. Confirmed in BE update 2026-06-25
+  with "we will reference it from Stage 21.3 BE notes when
+  FcmPushService lands".
+- **iOS variant**: APNs token wrapped by RN-Firebase so the same
+  registration path POSTs a unified `pushToken` to
+  `POST /api/v1/{consumer,staff}/devices`. `platform: 'IOS'`
+  per the §3.1 enum.
+- **Dev CORS**: confirmed non-issue. BE allows
+  `http://localhost:*` via `allowedOriginPatterns` in
+  `application-dev.yml`, and Expo Go's native `fetch` sends no
+  `Origin` header anyway — CORS only matters for the web
+  preview, which already works.
+
+#### Carry-overs
+
+- This entry is doc-only; no code shipped. Implementation lands
+  with Stage 21.3-c (push wiring).
+- **FE-owned, unchanged**: same list as Stage 21.2.1 above.
+
+---
+
+### Stage 21.3-a  Mobile bare Expo shell — ✅ 2026-06-25
+
+> Bootstraps `apps/mobile` so Stage 21.3-b (auth screens) and
+> Stage 21.3-c (push) have somewhere to land. Closes the
+> longest-standing FE carry-over (deferred since Stage 12.2).
+
+#### Scope delivered
+
+- **`apps/mobile/package.json`** — Expo SDK 52 / RN 0.76 / React
+  18.3 pins. Workspace deps `@complaints/{api,i18n,ui-tokens,utils}`
+  re-used verbatim. `@react-native-firebase/messaging` deliberately
+  **not** added in 21.3-a — lands with 21.3-c push wiring.
+- **`apps/mobile/tsconfig.json`** — extends repo-root
+  `tsconfig.base.json`; overrides `jsx: "react-native"`, drops
+  `DOM` libs, adds `expo/types` + `react-native`.
+- **`apps/mobile/app.json`** — Expo config: bundle id
+  `com.crs.complaints`, scheme `crs:` for deep links, plugins for
+  `expo-router` + `expo-secure-store` (Face ID copy ready for
+  21.3-c). `newArchEnabled: true` since SDK 52 supports it
+  cleanly.
+- **`apps/mobile/babel.config.js`** — `babel-preset-expo` only,
+  no custom transforms (kept minimal — every plugin is measurable
+  Metro startup cost).
+- **`apps/mobile/metro.config.js`** — monorepo-aware:
+  `watchFolders = [monorepoRoot]`, dual `nodeModulesPaths`, and
+  `disableHierarchicalLookup = true` to stop pnpm's nested
+  `.pnpm/` dirs from confusing Metro's resolver.
+- **`apps/mobile/app/_layout.tsx`** — expo-router root. Boots
+  `wireApi()` + `initI18n()` synchronously at module scope (same
+  pattern as `apps/web/src/App.tsx`), then renders
+  `SafeAreaProvider` → `QueryClientProvider` → `Stack`.
+- **`apps/mobile/app/index.tsx`** — single smoke screen rendering
+  a translated string + the current `formatIstDateTime` output.
+  Proves TS strict, workspace package resolution, i18n, IST
+  helper, SafeArea, expo-router, and Metro monorepo config all
+  light up together.
+- **`apps/mobile/src/lib/wireApi.ts`** — mobile twin of the web
+  `wireApi.ts`. Stubs all token getters to `null` for 21.3-a
+  (bare shell makes no authenticated requests); the real getters
+  land in 21.3-b alongside the auth stores. `setAuthHooks`
+  accepts partials so calling it again later merges in the real
+  hooks. Default `baseUrl` is `http://localhost:8080`; overridable
+  via `EXPO_PUBLIC_API_BASE_URL`.
+- **`apps/mobile/expo-env.d.ts`**, **`.gitignore`**, **`README.md`** —
+  standard Expo housekeeping + a run-locally guide and a clear
+  out-of-scope list pointing at 21.3-b/c.
+- **`docs/IMPLEMENTATION_LOG.md`** — this entry.
+
+#### Incidents fixed during implementation
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | `pnpm typecheck` failed across the workspace the moment `apps/mobile/package.json` shipped — `TS2688 Cannot find type definition file for 'expo/types' / 'react-native'`. | The mobile `tsconfig.json` references type packages that aren't on disk until `pnpm install` adds them, but the parent turbo gate runs the child `typecheck` script regardless. | Guarded the mobile `typecheck` script: `if [ -d node_modules/expo ]; then tsc; else echo noop …; fi`. Once any contributor runs `pnpm install`, the gate becomes real; until then it no-ops with a clear "run pnpm install first" message. Same pattern as the existing `@complaints/{utils,ui-tokens}` noops. |
+
+#### Tests added
+
+None. Bare shell with one smoke screen — would-I-miss-it test:
+no. `jest-expo` plumbing lands in 21.3-b when the first real
+screen with logic worth asserting arrives (probably the OTP
+modal — same one-happy / one-unhappy bar as web).
+
+#### Build status
+
+```
+pnpm typecheck                            → 6 packages, 0 errors (mobile noops until install)
+pnpm lint                                 → 6 packages, 0 warnings (mobile lint also noop until 21.3-b)
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.31 KB gz entry (unchanged; web untouched)
+```
+
+Mobile gates land in 21.3-b alongside the first real screen.
+
+#### Verifying locally
+
+```bash
+pnpm install
+pnpm --filter mobile prebuild        # once, after each native-dep change
+pnpm --filter mobile ios             # or `android`
+```
+
+Should boot to the "Stage 21.3-a complete" screen with a live
+IST timestamp. If Metro complains about missing
+`@react-native-firebase/messaging` — good: that's correct, it
+arrives in 21.3-c. The shell intentionally has no native push
+deps yet.
+
+#### Carry-overs
+
+- **Stage 21.3-b (next FE slice)**: real auth stores
+  (`authStore` / `consumerAuthStore` mirroring the web split),
+  the consumer landing → OTP → submit flow, the staff login →
+  change-password flow, MSW for dev-mode offline work,
+  `jest-expo` + RTL native plumbing. Re-call `wireApi()` (or
+  `setAuthHooks`) with the real token getters at the same time.
+- **Stage 21.3-c (push wiring)**:
+  `@react-native-firebase/messaging` install + native config,
+  `expo-secure-store` deviceId persistence (mobile twin of
+  `getOrCreateDeviceId`), `useRegisterConsumerDevice` POST on
+  the §9.6 trigger points, `onTokenRefresh` re-register per
+  §9.3, `setBackgroundMessageHandler` + `onMessage` consuming
+  the §4 payload (`type → screen + params` router using
+  `eventOccurredAt` for relative-time labels), `INVALID_PUSH_TOKEN_FORMAT`
+  fetch-fresh-and-retry-once path, OS-permission-revoke detection
+  on next launch → `useRevokeConsumerDevice`. **This is where
+  the Stage 21.2 payload smoke-test happens** and closes the
+  entire FE side of the Stage 21 bracket.
+- **Stage 21.3-d (mobile staff)**: staff login + change-password
+  flows on mobile + best-effort `revokeStaffDevice` on logout
+  per §9.4. Smaller than the consumer slice (no OTP, no
+  multi-step submit). The "staff side (apps/web)" the BE
+  flagged on 2026-06-25 is a no-op for v1 per §9.2 — only
+  mobile staff matters.
+- **i18n locale persistence on mobile**: `@complaints/i18n`'s
+  `readPersistedLocale()` checks `typeof window === 'undefined'`
+  and falls back to `DEFAULT_LOCALE`; mobile boots in English
+  until we wire an AsyncStorage-backed override. Cheap to add
+  in 21.3-b; flagged so it doesn't get forgotten.
+- **`@complaints/api` peerDeps React 19**: mobile pulls React
+  18.3 (RN 0.76 ships with it). pnpm warns; works at runtime
+  because `@complaints/api` doesn't actually use any React-19
+  APIs. Loosen the peerDep range to `>=18.3` when convenient
+  (one-line change in `packages/api/package.json`).
+- **Unchanged FE-owned**: optimistic-concurrency `version`,
+  URL-synced filter state, orval `?pageable=[object Object]`
+  upstream PR, Sentry `beforeSend` §6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

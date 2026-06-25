@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Complaints",
+    "slug": "complaints",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "crs",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.crs.complaints",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.crs.complaints",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": "Allow $(PRODUCT_NAME) to access your Face ID biometric data for secure device-token storage."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
+
