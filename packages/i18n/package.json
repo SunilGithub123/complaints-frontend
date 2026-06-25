@@ -7,11 +7,18 @@
   "types": "./src/index.ts",
   "scripts": {
     "lint": "echo 'noop'",
-    "typecheck": "echo 'noop'",
+    "typecheck": "tsc --noEmit",
     "test": "echo 'noop'"
   },
   "dependencies": {
     "i18next": "^23.16.8",
     "react-i18next": "^15.7.4"
+  },
+  "peerDependencies": {
+    "react": ">=18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "typescript": "^5.6.3"
   }
 }

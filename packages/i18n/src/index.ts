@@ -24,9 +24,22 @@ export const DEFAULT_LOCALE: SupportedLocale = 'en';
 const STORAGE_KEY = 'complaints:locale';
 
 function readPersistedLocale(): SupportedLocale {
-  if (typeof window === 'undefined') return DEFAULT_LOCALE;
-  const v = window.localStorage.getItem(STORAGE_KEY);
-  return v === 'mr' || v === 'en' ? v : DEFAULT_LOCALE;
+  // Guard against three contexts where `localStorage` is unavailable:
+  //   1. SSR / Node — no `window` at all.
+  //   2. React Native — `window` exists (polyfilled) but `localStorage`
+  //      does not. The mobile app gets locale persistence via AsyncStorage
+  //      in a future slice; for now it falls back to `DEFAULT_LOCALE`.
+  //   3. Safari private mode — `window.localStorage` exists but the
+  //      `getItem` call throws. Wrap in try/catch.
+  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+    return DEFAULT_LOCALE;
+  }
+  try {
+    const v = window.localStorage.getItem(STORAGE_KEY);
+    return v === 'mr' || v === 'en' ? v : DEFAULT_LOCALE;
+  } catch {
+    return DEFAULT_LOCALE;
+  }
 }
 
 let initialised = false;

@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-native",
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "DOM"],
     "types": ["expo/types", "react-native"],
     "baseUrl": ".",
     "paths": {
