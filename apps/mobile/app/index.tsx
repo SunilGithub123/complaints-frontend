@@ -1,58 +1,110 @@
 /**
- * Stage 21.3-a smoke screen.
+ * Authenticated mobile home — replaces the Stage 21.3-a smoke screen.
  *
- * Proves the dep chain end-to-end: TypeScript strict + workspace packages
- * (`@complaints/i18n`, `@complaints/utils`) + expo-router resolution +
- * Metro monorepo config + SafeArea wiring all light up before we add any
- * real flows. Replace this with the consumer landing route in 21.3-b.
+ * Two states:
+ *  - No access token (and not still rehydrating) → `<Redirect>` to
+ *    `/(auth)/staff-login`. Subscribing to `accessToken` via the zustand
+ *    selector means the redirect re-fires automatically the moment
+ *    `onUnauthenticated` clears the store (the transport's 401 path).
+ *  - Authenticated → tiny greeting + logout button. This is NOT the
+ *    real staff dashboard (no master-data, no complaints) — that lands
+ *    later in the mobile roadmap. The point at 21.3-b.2 is to make the
+ *    staff login loop end-to-end testable.
+ *
+ * Consumer flow has its own landing route (lands in 21.3-b.3); for
+ * now this screen only handles the staff side.
  */
-import { View, Text, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Redirect } from 'expo-router';
 import { useT } from '@complaints/i18n';
-import { IST_TIMEZONE, formatIstDateTime } from '@complaints/utils';
 
-export default function HelloScreen(): React.JSX.Element {
+import {
+  useAuthStore,
+  selectAccessToken,
+  selectStaff,
+} from '@/auth/authStore';
+
+export default function HomeScreen(): React.JSX.Element {
   const t = useT();
   const insets = useSafeAreaInsets();
-  const now = formatIstDateTime(new Date().toISOString());
+  const accessToken = useAuthStore(selectAccessToken);
+  const staff = useAuthStore(selectStaff);
+  const clear = useAuthStore((s) => s.clear);
+  const hydrated = usePersistHydrated();
+
+  // Wait for SecureStore rehydration before deciding to redirect — the
+  // first render after a cold start always sees `null` tokens even when
+  // a valid session is on disk. Without this gate we'd briefly bounce
+  // an authenticated user back to the login screen.
+  if (!hydrated) {
+    return <View style={[styles.container, styles.center]} />;
+  }
+
+  if (!accessToken) {
+    return <Redirect href="/(auth)/staff-login" />;
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 32 }]}>
-      <Text style={styles.title}>Complaints CRS — mobile</Text>
-      <Text style={styles.body}>
-        Shell is alive. Stage 21.3-a complete.
+      <Text style={styles.title}>
+        {t('staff.dashboard.welcome', { name: staff?.fullName ?? '' })}
       </Text>
-      <Text style={styles.meta}>
-        i18n: {t('common.loading')} · TZ: {IST_TIMEZONE}
-      </Text>
-      <Text style={styles.meta}>Now (IST): {now}</Text>
+      {staff?.role ? (
+        <Text style={styles.meta}>{t('staff.dashboard.role', { role: staff.role })}</Text>
+      ) : null}
+      <Text style={styles.body}>{t('staff.dashboard.homeBody')}</Text>
+
+      <Pressable
+        accessibilityRole="button"
+        onPress={clear}
+        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+      >
+        <Text style={styles.buttonText}>{t('common.logout')}</Text>
+      </Pressable>
     </View>
   );
+}
+
+/**
+ * Tracks whether the persisted authStore has rehydrated from SecureStore.
+ * zustand exposes `useAuthStore.persist.onFinishHydration` + a synchronous
+ * `useAuthStore.persist.hasHydrated()`. Sync check covers the case where
+ * hydration completed before this component mounted; the subscription
+ * covers the cold-start race.
+ */
+function usePersistHydrated(): boolean {
+  const [hydrated, setHydrated] = useState<boolean>(() =>
+    useAuthStore.persist.hasHydrated(),
+  );
+  useEffect(() => {
+    if (hydrated) return;
+    const unsub = useAuthStore.persist.onFinishHydration(() => setHydrated(true));
+    return unsub;
+  }, [hydrated]);
+  return hydrated;
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
     backgroundColor: '#ffffff',
     paddingHorizontal: 24,
+    gap: 8,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 12,
-    color: '#0f172a',
+  center: { alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
+  meta: { fontSize: 13, color: '#64748b' },
+  body: { fontSize: 14, color: '#475569', marginTop: 12, marginBottom: 24 },
+  button: {
+    backgroundColor: '#0f172a',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
-  body: {
-    fontSize: 16,
-    marginBottom: 24,
-    color: '#475569',
-    textAlign: 'center',
-  },
-  meta: {
-    fontSize: 13,
-    color: '#64748b',
-    marginBottom: 4,
-  },
+  buttonPressed: { opacity: 0.85 },
+  buttonText: { color: '#ffffff', fontWeight: '600' },
 });
 

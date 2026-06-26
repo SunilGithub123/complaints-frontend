@@ -13,7 +13,9 @@ yet, just enough to boot and prove the dep chain.
 | Language | TypeScript strict (extends repo-root `tsconfig.base.json`) |
 | Router | `expo-router` v4 (file-based, typed routes) |
 | Server state | `@tanstack/react-query` against `@complaints/api` (shared with web) |
-| Client state | `zustand` (lands in 21.3-b with the auth stores) |
+| Client state | `zustand` (auth stores live in `src/auth/` as of 21.3-b.1) |
+| Forms | `react-hook-form` + `zod` via `@hookform/resolvers/zod` (as of 21.3-b.2) |
+| Routing | `expo-router` v4 file-based; `(auth)` route group hosts the unauthenticated stack |
 | Secure storage | `expo-secure-store` (`deviceId` in 21.3-c per contract §9) |
 | Push | `@react-native-firebase/messaging` (raw FCM, **not** Expo Push API — lands in 21.3-c per BE-confirmed transport decision 2026-06-25) |
 | i18n | `@complaints/i18n` re-used verbatim |
@@ -71,15 +73,24 @@ CORS is a non-issue on mobile — Expo's native `fetch` sends no `Origin`
 header, and the BE's dev profile allows `http://localhost:*` anyway
 (confirmed by BE 2026-06-25).
 
-## What's NOT in 21.3-a (lands in 21.3-b / 21.3-c)
+## What's NOT in 21.3-b.2 (lands in 21.3-b.3 / 21.3-c)
 
-- Auth stores (`authStore` / `consumerAuthStore`) — stubbed to `null` in
-  `wireApi.ts` for now.
-- Real screens (landing, OTP, submit, tracking, detail).
-- ESLint config and `jest-expo` test plumbing.
-- Push permission UX, FCM token acquisition, `setBackgroundMessageHandler`.
-- `expo-secure-store` `deviceId` persistence (mobile twin of
-  `@complaints/utils#getOrCreateDeviceId`).
+- **Consumer flow** — landing → OTP → submit → tracking. Lands in 21.3-b.3.
+- **MSW** for dev-mode offline work — 21.3-b.3.
+- **`jest-expo` + `@testing-library/react-native`** plumbing — deliberately
+  deferred to 21.3-b.3 so the setup cost is amortised across the staff
+  login screen *and* the consumer OTP / submit screens (three tests
+  worth setting up jest for, versus one). Staff-login is presently
+  exercised manually via the simulator + dev backend; same RTL pattern
+  as `apps/web/src/screens/login/LoginScreen.test.tsx` ports over
+  unchanged when plumbing arrives.
+- **Push** — permission UX, FCM token acquisition, foreground /
+  background handlers — 21.3-c.
+- **`expo-secure-store` `deviceId`** persistence (mobile twin of
+  `@complaints/utils#getOrCreateDeviceId`) — 21.3-c.
+- **Best-effort `revokeStaffDevice` on logout** per contract §9.4 — 21.3-d.
+- **i18n locale persistence** on mobile (currently always boots English
+  because `readPersistedLocale()` no-ops without `window`) — 21.3-b.3.
 
-See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-a entry for the full carry-over list.
+See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-b.2 entry for the full carry-over list.
 

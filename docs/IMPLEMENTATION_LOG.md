@@ -2429,6 +2429,259 @@ deps yet.
 
 ---
 
+### Stage 21.3-b.1  Mobile auth stores + transport rewire — ✅ 2026-06-26
+
+> First substantive slice of Stage 21.3-b. Splits the originally-scoped
+> 21.3-b into three landings so each is reviewable: **b.1** = stores
+> + transport wiring (this entry), **b.2** = staff login / change-password
+> screens + jest-expo plumbing, **b.3** = consumer landing → OTP →
+> submit flow + MSW dev mode. Push wiring stays as 21.3-c.
+
+#### Scope delivered
+
+- **`apps/mobile/src/auth/authStore.ts`** — line-for-line twin of
+  `apps/web/src/auth/authStore.ts`. Same fields (`accessToken`,
+  `refreshToken`, `staff`, `lastValidatedAt`), same setters
+  (`setSession` / `setTokens` / `setStaff` / `setValidatedStaff` /
+  `clear`), same selectors. Persists via `zustand/middleware`'s
+  `persist` adapter backed by the existing `secureStorage`
+  (`expo-secure-store` → Keychain on iOS, EncryptedSharedPreferences
+  on Android). `partialize` mirrors web: tokens + staff snapshot, not
+  `lastValidatedAt` (so a cold start always re-validates against
+  `/staff/me`).
+- **`apps/mobile/src/auth/consumerAuthStore.ts`** — twin of
+  `apps/web/src/features/consumer/consumerAuthStore.ts`. Same shape
+  (`token`, `expiresAt`, `consumerId`, `mobile`) + same selectors
+  (`selectIsVerified`, `selectMinutesRemaining`, `selectConsumerToken`).
+  Uses `secureStorage` instead of web's `sessionStorage` (RN has no
+  per-session storage tier and the token is sensitive). Wall-clock
+  `expiresAt` check is the real gate — surviving process death is
+  fine because the BE rejects any cached token past the 5-minute TTL
+  regardless.
+- **`apps/mobile/src/lib/wireApi.ts`** — replaces the Stage 21.3-a
+  `() => null` stubs with real getters that pull from both stores at
+  call time. `onTokensRefreshed` → `authStore.setTokens`,
+  `onUnauthenticated` → `authStore.clear`. Navigation side-effect on
+  401 lives with the first guarded screen (lands in 21.3-b.2);
+  until then a 401 silently clears the session and the user
+  re-authenticates on next interaction.
+- **`docs/IMPLEMENTATION_LOG.md`** — this entry.
+
+#### Incidents fixed during implementation
+
+None. Web → mobile port was a clean mirror; only behavioural deltas
+(secureStorage's async semantics, the no-sessionStorage decision)
+needed doc-comment justification, not code workarounds.
+
+#### Tests added
+
+None — per the minimum-test policy, both stores are 1:1 passthroughs
+of their web equivalents (which themselves have no direct unit tests;
+coverage comes via the consuming guards / screens). `jest-expo` +
+`@testing-library/react-native` plumbing lands with the first real
+screen in 21.3-b.2 where there's logic worth asserting.
+
+#### Build status
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings (mobile lint noops until 21.3-b.2)
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.31 KB gz entry (unchanged; web untouched)
+```
+
+#### Carry-overs
+
+- **Stage 21.3-b.2 (next slice)**: `apps/mobile/app/(auth)/staff-login.tsx`
+  + `staff-change-password.tsx` using RHF + Zod + the generated
+  `useStaffLogin` / `useChangeStaffPassword` mutation hooks; tiny
+  authenticated home screen swapping the 21.3-a smoke screen;
+  `jest-expo` + `@testing-library/react-native` + ESLint flat config
+  for `apps/mobile`; the 1-happy / 1-unhappy RTL test on staff-login.
+  Wire the 401-on-staff-routes navigation side-effect at the same
+  time so `onUnauthenticated` is end-to-end useful.
+- **Stage 21.3-b.3**: consumer landing → OTP → submit flow on mobile,
+  MSW for dev-mode offline work, i18n locale persistence via
+  AsyncStorage (so the mobile boot doesn't always default to English).
+- **Stage 21.3-c (push wiring)**: unchanged from the 21.3-a
+  carry-over list — `@react-native-firebase/messaging` install,
+  `useRegisterConsumerDevice` POST on the 9.6 triggers,
+  `onTokenRefresh` re-register, foreground/background message
+  handlers consuming the v1 frame, `INVALID_PUSH_TOKEN_FORMAT`
+  retry-once path, OS-permission-revoke detection →
+  `useRevokeConsumerDevice`. Stage 21.2 payload smoke-test runs here.
+- **Stage 21.3-d**: mobile staff-logout `revokeStaffDevice` best-effort
+  call per contract 9.4.
+- **Async rehydration window** on both mobile stores: `getState()`
+  returns default `null` values for the few ms before SecureStore
+  rehydrates. Not a problem today (first authenticated request only
+  fires after user interaction). If a deep-link route ever needs the
+  token before the first paint, gate the root layout on
+  `useAuthStore.persist.hasHydrated()` then.
+- **`@complaints/api` peerDeps React 19**: unchanged from 21.3-a —
+  one-line loosen to `>=18.3` when convenient.
+- **Unchanged FE-owned**: optimistic-concurrency `version`,
+  URL-synced filter state, orval `?pageable=[object Object]`
+  upstream PR, Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
+### Stage 21.3-b.2  Mobile staff login + change-password screens — ✅ 2026-06-26
+
+> Second slice of Stage 21.3-b (see 21.3-b.1 for context on the
+> b.1 / b.2 / b.3 split). Stands up the first real authenticated
+> flow on mobile so the staff login loop is end-to-end testable
+> against the dev backend. Consumer flow + MSW + jest-expo plumbing
+> remain queued for 21.3-b.3; push for 21.3-c.
+
+#### Scope delivered
+
+- **`apps/mobile/app/(auth)/_layout.tsx`** — expo-router route group
+  for the unauthenticated stack. Header-hidden Stack; `(auth)` is a
+  group folder so it does NOT appear in URLs (`/staff-login`, not
+  `/auth/staff-login`).
+- **`apps/mobile/app/(auth)/staff-login.tsx`** — twin of the web
+  `LoginScreen`. RHF + Zod via `@hookform/resolvers/zod`, generated
+  `useLoginStaff` mutation, same BRD §4.1 generic error contract
+  (BAD_CREDENTIALS + any other 4xx collapse to "Employee ID or
+  password is incorrect"; 5xx + network failures get their own copy).
+  On success → `setSession` then `router.replace` to
+  `/(auth)/staff-change-password` if `passwordResetRequired` else `/`.
+  Native styling only (`StyleSheet`), `KeyboardAvoidingView` for iOS,
+  `accessibilityLabel` on every TextInput + `accessibilityState` on
+  the submit button.
+- **`apps/mobile/app/(auth)/staff-change-password.tsx`** — twin of the
+  web `ChangePasswordScreen`. Same complexity regex + i18n keys
+  (`staff.changePassword.*`). Generated `useChangeStaffPassword`,
+  rotated session-triple read from the response. The three near-identical
+  password fields share a file-local `PasswordField` helper (third
+  use within one file earns it; NOT promoted to a shared component).
+  No `?from=profile` deep-link return — the profile screen doesn't
+  exist on mobile yet, so always route home on success.
+- **`apps/mobile/app/index.tsx`** — replaces the 21.3-a smoke screen
+  with a guarded home: gated on `useAuthStore.persist.hasHydrated()`
+  (sync check + `onFinishHydration` subscription) to avoid bouncing
+  an authenticated user back to login during the SecureStore
+  rehydration window — see incident #2. Unauthenticated →
+  `<Redirect href="/(auth)/staff-login">`. Authenticated → greeting +
+  role + logout button calling `useAuthStore.clear`. The redirect
+  re-fires automatically when the transport's `onUnauthenticated`
+  hook clears the store (no extra navigation glue needed for the
+  401 path while there's only one protected route).
+- **`apps/mobile/eslint.config.mjs`** — flat config (ESLint 9), RN-aware.
+  Drops web-only plugins (`jsx-a11y` targets HTML semantics that
+  don't exist in RN; `react-refresh` produces false positives on
+  expo-router route files). Keeps the same `no-restricted-imports`
+  ban list as `apps/web/eslint.config.js`. `__DEV__` declared as a
+  readonly RN global. Filename is `.mjs` because `apps/mobile/package.json`
+  is not `"type": "module"` — see incident #1.
+- **`apps/mobile/package.json`** — added runtime deps:
+  `react-hook-form`, `@hookform/resolvers`, `zod` (versions matched to
+  web). Added devDeps: `eslint`, `@eslint/js`, `typescript-eslint`,
+  `eslint-plugin-react`, `eslint-plugin-react-hooks`, `globals`.
+  `lint` script now guards on `node_modules/eslint` and runs
+  `eslint . --max-warnings=0`; the `test` script still noops with a
+  pointer at 21.3-b.3 (jest-expo plumbing is deliberately deferred
+  — see "Tests added" below for the rationale).
+- **`apps/mobile/README.md`** — refreshed stack table (zustand auth
+  stores live; RHF + Zod live; `(auth)` route group documented) and
+  replaced the "what's NOT in 21.3-a" list with a 21.3-b.2-shaped
+  one cross-linking to b.3 / c / d.
+- **`docs/IMPLEMENTATION_LOG.md`** — this entry.
+
+#### Incidents fixed during implementation
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | `pnpm --filter mobile lint` exploded with `SyntaxError: Cannot use import statement outside a module` parsing `eslint.config.js`. | `apps/mobile/package.json` is intentionally CommonJS (no `"type": "module"`) because Metro / Expo's resolver historically gets twitchy with ESM `package.json`. ESLint 9's flat config can live happily in CJS but the recommended idiom uses `import` syntax, which then requires either `"type": "module"` or the `.mjs` extension. | Renamed to `eslint.config.mjs` and added the new filename to the ignores list so ESLint doesn't try to self-lint it. Same shape the web config gets away with via `"type": "module"`. |
+| 2 | Considered (and rejected) a "first-paint shows login flash" bug: on a cold start, `useAuthStore.getState().accessToken` returns `null` for a few ms while `expo-secure-store` rehydrates. Without a gate the home screen would emit `<Redirect>` before rehydration finished, bouncing the user to login even with a valid session on disk. | Async rehydration window flagged as a Stage 21.3-b.1 carry-over. | Gated `app/index.tsx` on `useAuthStore.persist.hasHydrated()` (sync check) + `onFinishHydration` subscription. While `!hydrated` the screen renders a blank container — no spinner since the rehydration window is well under a frame on warm starts. Closes the 21.3-b.1 carry-over. |
+
+#### Tests added
+
+**None for 21.3-b.2 — `jest-expo` + `@testing-library/react-native`
+plumbing deliberately deferred to 21.3-b.3.** The minimum-test policy
+asks "would I miss this if it broke in prod?" — yes, eventually. But
+the cost of standing up jest-expo (preset + transformIgnorePatterns
+for ~15 RN packages, jest.setup with extend-expect, async-storage and
+SecureStore mocks, RN Animated mock) is ~150 LOC of plumbing for one
+test. 21.3-b.3 ships the consumer OTP modal + submit form, at which
+point three forms share the setup cost and the same RTL pattern as
+`apps/web/src/screens/login/LoginScreen.test.tsx` ports over for all
+of them in one batch.
+
+Until then staff-login is exercised manually against the dev backend
+(`pnpm --filter mobile ios` + a known fixture employee). The risk
+this defers is "a regression in the form-wiring path between b.2
+landing and b.3 plumbing"; mitigated by the screen being a 1:1 port
+of web's `LoginScreen` (which IS tested) and by the fact that we'll
+manually smoke the flow before merging any further mobile changes.
+
+#### Build status
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.31 KB gz entry (unchanged; web untouched)
+```
+
+#### Verifying locally
+
+```bash
+pnpm install                           # picks up RHF / zod / eslint
+pnpm --filter mobile prebuild          # only if you haven't built the dev client yet
+pnpm --filter mobile ios               # or android
+```
+
+With the dev backend running (`docker compose up -d` + `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev` in `../complaints`),
+the app should boot straight to the staff login screen, accept a
+valid `ADMIN001` / dev-fixture password, and route to the greeting
+screen. Tapping "Logout" clears the secure-store-persisted session
+and bounces back to login.
+
+#### Carry-overs
+
+- **Stage 21.3-b.3 (next slice)**: consumer landing → OTP → submit
+  flow on mobile, MSW for dev-mode offline work, `jest-expo` +
+  `@testing-library/react-native` plumbing **with the staff-login
+  + consumer-OTP + consumer-submit tests landed together** (one
+  happy + one unhappy per screen — three screens, six tests, one
+  jest setup), AsyncStorage-backed i18n locale persistence so cold
+  boots remember the user's last-selected locale instead of always
+  defaulting to English.
+- **Stage 21.3-c (push wiring)**: unchanged from 21.3-b.1's list —
+  `@react-native-firebase/messaging` install + native config,
+  `expo-secure-store` `deviceId` persistence (mobile twin of
+  `getOrCreateDeviceId`), `useRegisterConsumerDevice` POST on the
+  9.6 triggers, `onTokenRefresh` re-register per 9.3,
+  `setBackgroundMessageHandler` + `onMessage` consuming the v1 frame,
+  `INVALID_PUSH_TOKEN_FORMAT` fetch-fresh-and-retry-once path,
+  OS-permission-revoke detection on next launch →
+  `useRevokeConsumerDevice`. Stage 21.2 payload smoke-test runs
+  here and closes the FE side of the Stage 21 bracket.
+- **Stage 21.3-d**: mobile staff-logout best-effort `revokeStaffDevice`
+  per contract 9.4. Wire into the logout button's onPress in
+  `app/index.tsx` at the same time.
+- **Global 401 → navigation glue**: the redirect-on-token-clear
+  trick used in `app/index.tsx` works because home is presently
+  the only protected route. Once there are 2+ protected routes
+  (lands with the mobile staff dashboard much later in the
+  roadmap) promote this to a single mounted listener in
+  `app/_layout.tsx` that calls `router.replace('/(auth)/staff-login')`
+  on any `accessToken` clear, instead of relying on each route
+  to re-evaluate its own guard.
+- **`@complaints/ui-tokens` placeholder**: still a one-line stub.
+  Inline values in the three mobile screens are intentional — the
+  package fills out the third time we'd repeat a value (per the
+  "third use" rule). Watch for a 4th mobile screen in 21.3-b.3.
+- **`@complaints/api` peerDeps React 19**: unchanged from 21.3-a —
+  one-line loosen to `>=18.3` when convenient.
+- **Unchanged FE-owned**: optimistic-concurrency `version`,
+  URL-synced filter state, orval `?pageable=[object Object]`
+  upstream PR, Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

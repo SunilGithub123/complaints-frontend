@@ -8,9 +8,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "prebuild": "expo prebuild --clean",
-    "lint": "echo 'noop (eslint config lands in 21.3-b alongside the first real screens)'",
+    "lint": "if [ -d node_modules/eslint ]; then eslint . --max-warnings=0; else echo 'noop (run pnpm install before mobile lint)'; fi",
     "typecheck": "if [ -d node_modules/expo ]; then tsc --noEmit -p tsconfig.json; else echo 'noop (run pnpm install before mobile typecheck — Expo and RN type packages are not yet on disk)'; fi",
-    "test": "echo 'noop (jest-expo lands in 21.3-b alongside the first real screens)'",
+    "test": "echo 'noop (jest-expo lands in 21.3-b.3 alongside the consumer OTP flow — see docs/IMPLEMENTATION_LOG.md)'",
     "clean": "rm -rf .expo dist android ios node_modules"
   },
   "dependencies": {
@@ -19,6 +19,7 @@
     "@complaints/ui-tokens": "workspace:*",
     "@complaints/utils": "workspace:*",
     "@expo/metro-runtime": "~4.0.0",
+    "@hookform/resolvers": "^3.10.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@tanstack/react-query": "^5.101.0",
     "expo": "~52.0.0",
@@ -32,18 +33,26 @@
     "i18next": "^23.16.8",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "react-hook-form": "^7.80.0",
     "react-i18next": "^15.7.4",
     "react-native": "0.76.5",
     "react-native-gesture-handler": "~2.20.0",
     "react-native-reanimated": "~3.16.0",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
+    "zod": "^3.25.76",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
+    "@eslint/js": "^9.39.4",
     "@types/react": "~18.3.12",
-    "typescript": "^5.6.3"
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^15.15.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.61.1"
   },
   "dependenciesMeta": {
     "@complaints/api": { "injected": true },
