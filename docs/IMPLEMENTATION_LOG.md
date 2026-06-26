@@ -2682,6 +2682,170 @@ and bounces back to login.
 
 ---
 
+### Stage 21.3-b.3-a  Mobile consumer landing + OTP + i18n locale persistence — ✅ 2026-06-26
+
+> Third slice of the original Stage 21.3-b. Stage 21.3-b.3 split
+> further into **b.3-a** (consumer auth route chain + AsyncStorage
+> locale plumbing — this entry), **b.3-b** (real submit form with
+> photo capture + jest-expo plumbing + the three-form test batch),
+> **b.3-c** (MSW dev mode). The ~1000 LOC of web consumer flow was
+> too big to land as one mobile slice; the auth boundary and the
+> submit form have independent failure modes (transport / form
+> validation / native module wiring) and earn their own incident
+> column.
+
+#### Scope delivered
+
+- **`packages/i18n/src/index.ts`** — refactored locale persistence to
+  a pluggable storage adapter. New exports: `configureLocaleStorage`
+  (inject a `{ getItem, setItem }` adapter that may be sync or async)
+  and `loadPersistedLocale` (async read + apply). Web behaviour is
+  unchanged because the package now falls back to an internal
+  `localStorage` adapter when none is configured. `setLocale` writes
+  via the active adapter, swallowing rejections so locale persistence
+  is best-effort on all platforms (Safari private mode and Android
+  AsyncStorage quota are the realistic failure modes).
+- **`apps/mobile/src/lib/wireI18n.ts`** — new. Binds
+  `@react-native-async-storage/async-storage` into the i18n adapter
+  and kicks off `loadPersistedLocale()` fire-and-forget. Worst case
+  is one frame of English flicker before the saved locale loads —
+  preferable to blocking the splash on an async read.
+- **`apps/mobile/app/_layout.tsx`** — calls `wireI18n()` after the
+  existing `initI18n()` at module scope.
+- **`apps/mobile/app/(consumer)/_layout.tsx`** — header-hidden Stack
+  for the consumer route group. Group folder so URLs are `/landing`,
+  `/otp`, `/submit` (no `/consumer` prefix in the URL — matches web's
+  `/consumer/*` from the URL surface, just one level shallower).
+- **`apps/mobile/app/(consumer)/landing.tsx`** — twin of web's
+  `LandingScreen`. RHF + Zod (same shape: consumerId + mobile,
+  `/^\+?[0-9]{7,15}$/` regex), generated `useSendConsumerOtp`. On
+  success → `setIdentity` + `router.push('/(consumer)/otp')`. Same
+  already-verified shortcut as web (renders a "Resume" CTA rather
+  than auto-navigating). RN twist: `KeyboardAvoidingView` for iOS,
+  `keyboardType="phone-pad"` for the mobile field.
+- **`apps/mobile/app/(consumer)/otp.tsx`** — twin of web's `OtpModal`,
+  but as a full-screen route (idiomatic mobile pattern; the OS
+  back-gesture doubles as the "use a different Consumer ID"
+  affordance). Two deltas vs the web overlay:
+  - **Identity reads from the store, not props**. Landing calls
+    `setIdentity` before navigating; otp reads it back. No identity
+    in the store → `<Redirect>` to landing.
+  - **Cooldown anchor is mount time**, not a `lastSentAt` prop. The
+    sub-second gap between sendOtp's response and the OTP screen's
+    mount is well under the BE per-mobile cooldown window, so this
+    is honest enough. Resend updates the anchor.
+  - Wall-clock-driven 1 s tick survives app background / suspend.
+  - On `OTP_TOO_MANY_ATTEMPTS` the input locks until a resend
+    (`accessibilityState.disabled: true` for screen readers).
+  - Per-`ErrorCode` copy is deliberately NOT in this slice — the
+    mobile `mapApiError` helper lands in b.3-b; until then errors
+    collapse to the generic message so we don't ship half-translated
+    copy that disagrees with the eventual mapping.
+- **`apps/mobile/app/(consumer)/submit.tsx`** — **placeholder**.
+  Verified-only (redirects to landing if not). Shows the existing
+  `consumer.submit.title` + `consumer.submit.tokenExpiresIn` copy +
+  a yellow notice pointing at the b.3-b carry-over + a "Start over"
+  button (clears the consumer store + bounces to landing) so manual
+  QA doesn't need a process kill to reset.
+- **`apps/mobile/app/(auth)/staff-login.tsx`** — appended a
+  `<Pressable>` linking to `/(consumer)/landing` ("Lodge a complaint").
+  Until the mobile home grows a dedicated role-chooser, the staff
+  login screen doubles as the unauthenticated landing — this is the
+  only non-deep-link path into the consumer flow.
+- **`apps/mobile/README.md`** — refreshed "What's NOT in" section
+  pointing at b.3-b / b.3-c / c / d.
+- **`docs/IMPLEMENTATION_LOG.md`** — this entry.
+
+#### Incidents fixed during implementation
+
+None. The i18n refactor preserved its existing API surface
+(`initI18n`, `setLocale`, `useT`, `i18next`) so no consumers needed
+edits; web's typecheck stayed cache-hot. The consumer route chain
+was a clean port of the web equivalents.
+
+#### Tests added
+
+**None for b.3-a — `jest-expo` plumbing still queued for b.3-b.**
+Three forms (staff-login, consumer landing/OTP, consumer submit)
+amortise the jest-expo setup cost (~150 LOC of preset +
+transformIgnorePatterns + native-module mocks) into one batch of six
+tests (1 happy + 1 unhappy each) instead of paying for one screen
+at a time. Until then the new screens are exercised manually
+against the dev backend.
+
+Risk this defers: a regression between b.3-a (form wiring lands)
+and b.3-b (tests land). Mitigated by the screens being near 1:1
+ports of web's LandingScreen / OtpModal (which IS tested) and by
+manual smoke before any further mobile merge.
+
+#### Build status
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.38 KB gz entry (+70 B
+                                            vs b.2 — the new
+                                            `configureLocaleStorage` /
+                                            `loadPersistedLocale` exports
+                                            from @complaints/i18n. Well
+                                            inside the 180 KB budget.)
+```
+
+#### Verifying locally
+
+```bash
+pnpm install
+pnpm --filter mobile ios               # or android (assumes dev client built)
+```
+
+From staff-login, tap "Lodge a complaint" → enter a known dev-fixture
+consumerId + mobile → "Send OTP" → enter the OTP printed in the
+backend logs → land on the placeholder submit screen. "Start over"
+clears the consumer session and bounces back to landing.
+
+#### Carry-overs
+
+- **Stage 21.3-b.3-b (next slice)**: real consumer submit form on
+  mobile (category dropdown, description, optional photos via
+  `expo-image-picker` + `expo-image-manipulator` — mobile twin of
+  web's `browser-image-compression` path), draft persistence (twin of
+  `apps/web/src/features/consumer/draftStorage.ts`), mobile
+  `mapApiError` helper for per-`ErrorCode` copy on landing / OTP /
+  submit, `jest-expo` + `@testing-library/react-native` plumbing
+  with the three-form test batch (staff-login + landing/OTP + submit,
+  six tests total).
+- **Stage 21.3-b.3-c**: MSW dev mode (mobile twin of the web MSW
+  carry-over from earlier stages).
+- **Stage 21.3-c (push wiring)**: unchanged — RN-Firebase install +
+  native config, device-registration POST on 9.6 triggers, FCM
+  token-refresh re-register, foreground / background handlers,
+  `INVALID_PUSH_TOKEN_FORMAT` retry-once, OS-permission-revoke
+  detection. Stage 21.2 payload smoke-test runs here.
+- **Stage 21.3-d**: mobile staff-logout best-effort `revokeStaffDevice`
+  per contract §9.4.
+- **Mobile role chooser**: today the staff-login screen also routes
+  to consumer landing. Promote to a dedicated `app/index.tsx`
+  chooser screen ("I'm a consumer" vs "Staff sign in") once the
+  consumer flow has its own polish pass — not blocking.
+- **i18n locale selector UI**: the AsyncStorage adapter is wired and
+  `setLocale` will persist correctly, but there is no UI to call it
+  yet. Lands whenever a settings / profile screen exists.
+- **Global 401 → navigation glue**: still using per-route `<Redirect>`
+  guards. Promote to a mounted listener in `app/_layout.tsx` once
+  there are 2+ staff-protected routes (today there is one).
+- **`@complaints/ui-tokens` placeholder**: still inline values. The
+  mobile screens now share enough repeated values (#0f172a, #475569,
+  the 8 px radius, the alert palette) that promoting them to tokens
+  is the next obvious cleanup — flag it for the b.3-b styling pass.
+- **`@complaints/api` peerDeps React 19**: unchanged — one-line
+  loosen to `>=18.3` when convenient.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

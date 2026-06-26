@@ -174,6 +174,21 @@ export default function StaffLoginScreen(): React.JSX.Element {
             <Text style={styles.buttonText}>{t('staff.login.submit')}</Text>
           )}
         </Pressable>
+
+        {/*
+          Consumer entry point. Until the mobile home screen grows a
+          dedicated role-chooser (later in the roadmap), the staff
+          login screen doubles as the unauthenticated landing — this
+          link is the only way an unauthenticated user reaches the
+          consumer flow without a deep link.
+        */}
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/(consumer)/landing')}
+          style={styles.linkButton}
+        >
+          <Text style={styles.linkText}>{t('consumer.landing.title')}</Text>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
@@ -219,5 +234,11 @@ const styles = StyleSheet.create({
   },
   buttonPressed: { opacity: 0.85 },
   buttonText: { color: '#ffffff', fontWeight: '600', fontSize: 15 },
+  linkButton: { alignItems: 'center', marginTop: 12 },
+  linkText: {
+    color: '#0f172a',
+    fontSize: 13,
+    textDecorationLine: 'underline',
+  },
 });
 

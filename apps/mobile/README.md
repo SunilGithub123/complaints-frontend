@@ -73,24 +73,27 @@ CORS is a non-issue on mobile — Expo's native `fetch` sends no `Origin`
 header, and the BE's dev profile allows `http://localhost:*` anyway
 (confirmed by BE 2026-06-25).
 
-## What's NOT in 21.3-b.2 (lands in 21.3-b.3 / 21.3-c)
+## What's NOT in 21.3-b.3-a (lands in 21.3-b.3-b / 21.3-b.3-c / 21.3-c)
 
-- **Consumer flow** — landing → OTP → submit → tracking. Lands in 21.3-b.3.
-- **MSW** for dev-mode offline work — 21.3-b.3.
-- **`jest-expo` + `@testing-library/react-native`** plumbing — deliberately
-  deferred to 21.3-b.3 so the setup cost is amortised across the staff
-  login screen *and* the consumer OTP / submit screens (three tests
-  worth setting up jest for, versus one). Staff-login is presently
-  exercised manually via the simulator + dev backend; same RTL pattern
-  as `apps/web/src/screens/login/LoginScreen.test.tsx` ports over
-  unchanged when plumbing arrives.
+- **Consumer submit form** — category dropdown, description, photos via
+  `expo-image-picker` + `expo-image-manipulator`, draft persistence.
+  Currently a placeholder at `/(consumer)/submit`. Lands in 21.3-b.3-b.
+- **`jest-expo` + `@testing-library/react-native`** plumbing + the
+  three-form test batch (staff-login + consumer landing/OTP +
+  consumer submit). Lands in 21.3-b.3-b once submit is in.
+- **Per-`ErrorCode` copy on consumer screens** — the mobile
+  `mapApiError` helper (twin of `apps/web/src/lib/apiErrors.ts`). Lands
+  in 21.3-b.3-b. Until then send-OTP / verify-OTP failures collapse
+  to the generic message.
+- **MSW** for dev-mode offline work — 21.3-b.3-c.
 - **Push** — permission UX, FCM token acquisition, foreground /
   background handlers — 21.3-c.
 - **`expo-secure-store` `deviceId`** persistence (mobile twin of
   `@complaints/utils#getOrCreateDeviceId`) — 21.3-c.
 - **Best-effort `revokeStaffDevice` on logout** per contract §9.4 — 21.3-d.
-- **i18n locale persistence** on mobile (currently always boots English
-  because `readPersistedLocale()` no-ops without `window`) — 21.3-b.3.
+- **Locale selector UI** — the i18n adapter is wired and reads /
+  writes AsyncStorage, but there is no UI yet to call `setLocale`.
+  Lands whenever a settings / profile screen exists.
 
-See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-b.2 entry for the full carry-over list.
+See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-b.3-a entry for the full carry-over list.
 

@@ -8,6 +8,11 @@
  *   import { initI18n, useT, type SupportedLocale } from '@complaints/i18n';
  *   initI18n(); // once at app boot
  *
+ * On platforms where `localStorage` does not exist (React Native), call
+ * `configureLocaleStorage` once at boot with an async adapter
+ * (`AsyncStorage`) and then `loadPersistedLocale()` to apply the stored
+ * choice. See `apps/mobile/src/lib/wireI18n.ts` for the mobile binding.
+ *
  * Backend `ErrorCode` strings map to the `errors.*` key namespace — see
  * ../../../complaints/src/main/java/com/example/complaints/common/exception/ErrorCode.java.
  */
@@ -23,29 +28,66 @@ export const DEFAULT_LOCALE: SupportedLocale = 'en';
 
 const STORAGE_KEY = 'complaints:locale';
 
-function readPersistedLocale(): SupportedLocale {
-  // Guard against three contexts where `localStorage` is unavailable:
-  //   1. SSR / Node — no `window` at all.
-  //   2. React Native — `window` exists (polyfilled) but `localStorage`
-  //      does not. The mobile app gets locale persistence via AsyncStorage
-  //      in a future slice; for now it falls back to `DEFAULT_LOCALE`.
-  //   3. Safari private mode — `window.localStorage` exists but the
-  //      `getItem` call throws. Wrap in try/catch.
+/**
+ * Pluggable storage adapter. Both methods may return sync or async; we
+ * always `await` the result. Web uses an internal `localStorage` adapter;
+ * mobile injects an `AsyncStorage`-backed one via `configureLocaleStorage`.
+ */
+export interface LocaleStorageAdapter {
+  getItem(key: string): string | null | Promise<string | null>;
+  setItem(key: string, value: string): void | Promise<void>;
+}
+
+let storageAdapter: LocaleStorageAdapter | null = null;
+
+/** Inject an async storage adapter. Call once at boot before `setLocale`. */
+export function configureLocaleStorage(adapter: LocaleStorageAdapter): void {
+  storageAdapter = adapter;
+}
+
+function webLocalStorageAdapter(): LocaleStorageAdapter | null {
   if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
-    return DEFAULT_LOCALE;
+    return null;
   }
-  try {
-    const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === 'mr' || v === 'en' ? v : DEFAULT_LOCALE;
-  } catch {
-    return DEFAULT_LOCALE;
-  }
+  return {
+    getItem: (k) => {
+      try {
+        return window.localStorage.getItem(k);
+      } catch {
+        // Safari private mode throws here — treat as "no preference".
+        return null;
+      }
+    },
+    setItem: (k, v) => {
+      try {
+        window.localStorage.setItem(k, v);
+      } catch {
+        // Quota / private-mode — locale change is best-effort.
+      }
+    },
+  };
+}
+
+function activeAdapter(): LocaleStorageAdapter | null {
+  return storageAdapter ?? webLocalStorageAdapter();
+}
+
+function readPersistedLocaleSync(): SupportedLocale {
+  // Sync fast-path for `initI18n` defaults. Only sees a value if the
+  // active adapter happens to be synchronous (i.e. the web localStorage
+  // adapter). Mobile callers should pass `DEFAULT_LOCALE` to `initI18n`
+  // and then call `loadPersistedLocale()` to switch async.
+  const a = activeAdapter();
+  if (!a) return DEFAULT_LOCALE;
+  const v = a.getItem(STORAGE_KEY);
+  if (typeof v === 'string') return v === 'mr' || v === 'en' ? v : DEFAULT_LOCALE;
+  return DEFAULT_LOCALE;
 }
 
 let initialised = false;
 
 /** Initialise the i18next singleton. Idempotent — safe to call from tests. */
-export function initI18n(locale: SupportedLocale = readPersistedLocale()): I18n {
+export function initI18n(locale: SupportedLocale = readPersistedLocaleSync()): I18n {
   if (!initialised) {
     void i18next.use(initReactI18next).init({
       resources: {
@@ -64,8 +106,27 @@ export function initI18n(locale: SupportedLocale = readPersistedLocale()): I18n 
   return i18next;
 }
 
+/**
+ * Read the persisted locale (async) and apply it if different from the
+ * current language. Use this on mobile right after `initI18n()` — the
+ * sync boot defaults to English, then this swaps to the saved choice
+ * on the next frame.
+ *
+ * Returns the locale that ended up active.
+ */
+export async function loadPersistedLocale(): Promise<SupportedLocale> {
+  const a = activeAdapter();
+  if (!a) return (i18next.language as SupportedLocale) ?? DEFAULT_LOCALE;
+  const raw = await a.getItem(STORAGE_KEY);
+  const locale: SupportedLocale = raw === 'mr' || raw === 'en' ? raw : DEFAULT_LOCALE;
+  if (i18next.language !== locale) await i18next.changeLanguage(locale);
+  return locale;
+}
+
+/** User-facing locale switcher. Persists via the active adapter (fire-and-forget). */
 export function setLocale(locale: SupportedLocale): void {
-  if (typeof window !== 'undefined') window.localStorage.setItem(STORAGE_KEY, locale);
+  const a = activeAdapter();
+  if (a) void Promise.resolve(a.setItem(STORAGE_KEY, locale)).catch(() => undefined);
   void i18next.changeLanguage(locale);
 }
 
