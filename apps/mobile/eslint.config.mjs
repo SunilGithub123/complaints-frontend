@@ -61,6 +61,7 @@ export default [
       'eslint.config.mjs',
       'babel.config.js',
       'metro.config.js',
+      'jest.config.js',
     ],
   },
 
@@ -116,6 +117,21 @@ export default [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+
+  // Test files — Jest globals + relaxed display-name rule for inline
+  // wrapper components. Same shape as the web config's test override.
+  {
+    files: ['**/*.test.{ts,tsx}', 'jest.setup.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
+    },
+    rules: {
+      'react/display-name': 'off',
     },
   },
 ];

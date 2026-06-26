@@ -44,6 +44,7 @@ import {
 import { useT } from '@complaints/i18n';
 
 import { useConsumerAuthStore } from '@/auth/consumerAuthStore';
+import { mapApiError } from '@/lib/apiErrors';
 
 const RESEND_COOLDOWN_MS = 30_000;
 
@@ -168,7 +169,7 @@ function OtpForm({
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === 'OTP_TOO_MANY_ATTEMPTS') setLocked(true);
-        setError(t('errors.generic'));
+        setError(mapApiError(err, t).message);
       } else {
         setError(t('errors.network'));
       }
@@ -184,7 +185,7 @@ function OtpForm({
       reset({ otp: '' });
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(t('errors.generic'));
+        setError(mapApiError(err, t).message);
       } else {
         setError(t('errors.network'));
       }

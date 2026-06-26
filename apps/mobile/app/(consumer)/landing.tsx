@@ -36,6 +36,7 @@ import {
   useConsumerAuthStore,
   selectIsVerified,
 } from '@/auth/consumerAuthStore';
+import { mapApiError } from '@/lib/apiErrors';
 
 const landingSchema = z.object({
   consumerId: z.string().min(1).max(50),
@@ -91,12 +92,11 @@ export default function ConsumerLandingScreen(): React.JSX.Element {
       router.push('/(consumer)/otp');
     } catch (err) {
       if (err instanceof ApiError) {
-        // Per Stage 11 BE contract: send-OTP errors collapse to "couldn't
-        // send" copy. Specific codes (OTP_COOLDOWN, OTP_RATE_LIMIT,
-        // CONSUMER_NOT_FOUND) get their own copy in 21.3-b.3-b once
-        // the mobile `mapApiError` helper lands — for now fall back to
-        // the generic message so we don't ship half-translated copy.
-        setFormError(t('errors.generic'));
+        // Per-code copy (e.g. OTP_COOLDOWN, OTP_RATE_LIMIT,
+        // CONSUMER_NOT_FOUND) when an `errors.<code>` key exists in
+        // @complaints/i18n; falls back to the BE message and then a
+        // generic string. Mirrors web LandingScreen.
+        setFormError(mapApiError(err, t).message);
       } else {
         setFormError(t('errors.network'));
       }

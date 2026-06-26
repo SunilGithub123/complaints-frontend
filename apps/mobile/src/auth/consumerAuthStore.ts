@@ -52,7 +52,9 @@ export interface ConsumerAuthState {
   clear: () => void;
 }
 
-const STORAGE_KEY = 'complaints:consumer-auth';
+// See authStore.ts for the colon-vs-underscore rationale — same
+// expo-secure-store key validator applies here.
+const STORAGE_KEY = 'complaints_consumer_auth';
 
 export const useConsumerAuthStore = create<ConsumerAuthState>()(
   persist(

@@ -2846,6 +2846,156 @@ clears the consumer session and bounces back to landing.
 
 ---
 
+### Stage 21.3-b.3-b-1  Mobile jest-expo plumbing + mapApiError + 6-test batch — ✅ 2026-06-26
+
+> Splits the originally-scoped 21.3-b.3-b into **b.3-b-1** (test
+> harness + per-`ErrorCode` copy on the existing screens + 6 RTL
+> tests — this entry) and **b.3-b-2** (real submit form with photo
+> capture via `expo-image-picker` + its 1-happy/1-unhappy test pair).
+> Photo capture pulls in three new native modules and a non-trivial
+> image-compression pipeline; splitting it out keeps this slice's
+> incident column readable.
+
+#### Scope delivered
+
+- **`apps/mobile/src/lib/apiErrors.ts`** — twin of
+  `apps/web/src/lib/apiErrors.ts`. Same `MappedError` shape, same
+  `errors.<code>` key lookup → BE message → `errors.generic` ladder,
+  same `fieldErrors` pass-through. Kept in mobile-local code (not
+  promoted to `@complaints/utils`) because it depends on
+  `@complaints/api`'s `ApiError`; promoting would pull the API
+  package into utils' dep graph, which utils deliberately avoids.
+- **`apps/mobile/app/(consumer)/landing.tsx`** — `mapApiError(err, t).message`
+  replaces the b.3-a generic-fallback placeholder on the send-OTP
+  catch arm. Now surfaces the localized `OTP_RATE_LIMIT` /
+  `OTP_COOLDOWN` / `CONSUMER_NOT_FOUND` copy automatically.
+- **`apps/mobile/app/(consumer)/otp.tsx`** — same change on both the
+  verify catch arm and the resend catch arm. The
+  `OTP_TOO_MANY_ATTEMPTS` branch still calls `setLocked(true)`
+  before delegating the message to `mapApiError`.
+- **`apps/mobile/jest.config.js`** — new. `preset: jest-expo`,
+  `setupFilesAfterEnv` for the matcher import +
+  `initI18n()` bootstrap, plus a pnpm-aware `transformIgnorePatterns`
+  regex that recognises both the hoisted (`node_modules/<pkg>`) and
+  sandboxed (`node_modules/.pnpm/<id>/node_modules/<pkg>`) layouts.
+  The allow-list covers RN ecosystem packages (`react-native[\w-]*`,
+  `@react-native[\w-]*`, `expo[\w-]*`, `@expo[\w-]*`, …) **and**
+  workspace packages (`@complaints/*`) because the latter ship raw
+  TypeScript source via pnpm's `injected: true` linker — both need
+  the same Babel pass. See incidents #2, #3, #4.
+- **`apps/mobile/jest.setup.ts`** — new. Two responsibilities:
+  `@testing-library/react-native/extend-expect` (native matchers)
+  and `initI18n()` (without it every label / button renders as the
+  raw i18n key and breaks every `getByLabelText` query — see
+  incident #6).
+- **`apps/mobile/tsconfig.json`** — added `"jest"` to `compilerOptions.types`
+  and included `jest.setup.ts` in `include` so the extend-expect
+  module augmentations land on `JestMatchers`.
+- **`apps/mobile/eslint.config.mjs`** — added a test-files override
+  (jest globals + `react/display-name: off` for the
+  `Redirect: ({ href }) => …` mock factory shape). Added
+  `jest.config.js` to the ignores so ESLint doesn't try to parse the
+  CJS module file under TS rules.
+- **`apps/mobile/package.json`** — added `jest@^29.7.0`,
+  `jest-expo@~52.0.0`, `@testing-library/react-native@^12.9.0`,
+  `@types/jest@^29.5.14`, `react-test-renderer@18.3.1`. Wired the
+  `test` script to `jest` (drops the b.3-a noop).
+- **`apps/mobile/src/auth/authStore.ts`** + **`consumerAuthStore.ts`** —
+  changed `STORAGE_KEY` from `complaints:auth` / `complaints:consumer-auth`
+  to `complaints_auth` / `complaints_consumer_auth`. See incident #5
+  — colon is not a valid `expo-secure-store` key character; would have
+  crashed on first authenticated request on a real device. Caught by
+  the jest-expo SecureStore validator, fixed before either store ever
+  shipped to a build.
+- **Tests added** (see below): `app/(auth)/staff-login.test.tsx`,
+  `app/(consumer)/landing.test.tsx`, `app/(consumer)/otp.test.tsx`.
+- **`apps/mobile/README.md`** — refreshed "What's NOT in" section.
+- **`docs/IMPLEMENTATION_LOG.md`** — this entry.
+
+#### Incidents fixed during implementation
+
+| # | Symptom | Root cause | Fix |
+|---|---------|-----------|-----|
+| 1 | `Unknown option "setupFilesAfterEach"` warning + setup file never ran. | Misremembered the jest config option name. Jest 29's actual key is `setupFilesAfterEnv` (Env, not Each). Reading too many `afterEach` test hooks the same week. | Renamed to `setupFilesAfterEnv` in `jest.config.js`. Documented in `jest.setup.ts`'s docstring so the next contributor doesn't repeat the mistake. |
+| 2 | `SyntaxError: Unexpected identifier 'ErrorHandler'` in `@react-native/js-polyfills/error-guard.js`. | jest-expo's stock `transformIgnorePatterns` regex matches packages at `node_modules/<pkg>/…`, but pnpm puts them at `node_modules/.pnpm/<id>/node_modules/<pkg>/…`. Babel was therefore NOT transforming RN's Flow-typed polyfills. | Added an optional `(?:\.pnpm/[^/]+/node_modules/)?` prefix inside the regex's lookahead, so the same allow-list works for both hoisted and sandboxed layouts. |
+| 3 | After fixing #2 — `SyntaxError: Cannot use import statement outside a module` in `expo-modules-core/src/web/index.web.ts`. | The strict allow-list (`expo(?:nent)?`) didn't match `expo-modules-core`, `expo-router`, `react-native-reanimated`, etc. — every RN/Expo "second-tier" package fell through to the ignore. | Loosened the allow-list to glob patterns: `expo[\w-]*`, `@expo[\w-]*(?:/.*)?`, `react-native[\w-]*`, `@react-native[\w-]*`. One pattern covers an entire family without itemising each release. |
+| 4 | After fixing #3 — `SyntaxError: Unexpected token 'export'` in `@complaints/api/src/index.ts`. | Our workspace packages ship raw TypeScript via pnpm's `injected: true` linker. They live under `node_modules/.pnpm/@complaints+api@file+…/node_modules/@complaints/api/` and were not in the Babel allow-list. | Added `@complaints(?:/.*)?` to the same allow-list. |
+| 5 | `Invalid key provided to SecureStore. Keys must not be empty and contain only alphanumeric characters, ".", "-", and "_".` | Both mobile stores used the web-borrowed `complaints:auth` / `complaints:consumer-auth` keys. `expo-secure-store` validates keys against `^[\w.-]+$` (no colons) on ALL platforms — this would have crashed on the first authenticated request on a real device. The jest-expo mock applies the same validator, which is how it surfaced. | Renamed both keys to underscore variants (`complaints_auth`, `complaints_consumer_auth`). Mobile and web don't share storage so the divergence is safe; both stores added a comment cross-linking to the SecureStore validator. |
+| 6 | After fixing #1-5 — tests rendered with literal i18n keys (`consumer.otp.verify` instead of "Verify"), breaking every `getByLabelText(/enter otp/i)` query. | `initI18n()` is normally called at module-scope in `_layout.tsx`. The test files render screens in isolation without the layout, so i18next never booted. | Added `initI18n()` to `jest.setup.ts` (right after the matcher import). i18n is idempotent so this is safe; cost is ~30ms once per worker. |
+| 7 | `jest.mock()` factories couldn't reference `replaceMock`, `loginMutateMock`, etc. (`ReferenceError: ... is not allowed to reference any out-of-scope variables`). | Jest hoists `jest.mock()` calls above all imports and variable declarations. Only top-level names matching `/^mock/i` are exempt from the out-of-scope check. The friendly `XxxMock` suffix order is the wrong way round. | Renamed all test-file mock holders to the `mock*` prefix (`mockReplace`, `mockLoginMutate`, …). Documented the convention in each test's header comment. |
+
+#### Tests added
+
+Exactly **6 tests across 3 files** — one happy + one unhappy each,
+per the minimum-test policy:
+
+- **`app/(auth)/staff-login.test.tsx`** — port of
+  `apps/web/src/screens/login/LoginScreen.test.tsx`.
+  - Happy: valid credentials → session stored, `router.replace('/')`.
+  - Unhappy: `BAD_CREDENTIALS` → BRD §4.1 generic copy ("Employee ID
+    or password is incorrect"), `replace` NOT called, store stays empty.
+- **`app/(consumer)/landing.test.tsx`** — also exercises `mapApiError`.
+  - Happy: valid `consumerId` + mobile → identity persisted,
+    `router.push('/(consumer)/otp')`, token NOT yet set.
+  - Unhappy: `OTP_RATE_LIMIT` → localized "Too many OTPs for this
+    number" copy, `push` NOT called.
+- **`app/(consumer)/otp.test.tsx`** — identity pre-seeded.
+  - Happy: verify resolves with a `verificationToken` →
+    consumer store gets `{ token, consumerId }`,
+    `router.replace('/(consumer)/submit')`.
+  - Unhappy: `OTP_TOO_MANY_ATTEMPTS` → localized "Too many incorrect
+    attempts" copy, input becomes `editable={false}`, no token committed.
+
+No tests on the `submit` placeholder screen (it's a verified-only
+redirect-or-render passthrough; would-I-miss-it = no). No
+identity-redirect test on the OTP screen (3-line `if (!consumerId)`
+passthrough). Submit's own test pair lands with the real form in
+21.3-b.3-b-2.
+
+#### Build status
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter mobile test                 → 3 files / 6 tests
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.38 KB gz entry (unchanged; web untouched)
+```
+
+#### Carry-overs
+
+- **Stage 21.3-b.3-b-2 (next slice)**: real consumer submit form on
+  mobile (category dropdown sourced from
+  `useGetActiveCategoriesConsumer`, description, location, optional
+  photos via `expo-image-picker` + `expo-image-manipulator` — mobile
+  twin of web's `browser-image-compression` path), draft persistence
+  (twin of `apps/web/src/features/consumer/draftStorage.ts` over
+  AsyncStorage), 1-happy / 1-unhappy RTL test pair, replace the
+  b.3-a placeholder at `app/(consumer)/submit.tsx`.
+- **Stage 21.3-b.3-c**: MSW dev mode (mobile twin of the web MSW
+  carry-over from earlier stages).
+- **Stage 21.3-c (push wiring)**: unchanged — RN-Firebase install +
+  native config, device-registration POST on 9.6 triggers, FCM
+  token-refresh re-register, foreground / background handlers,
+  `INVALID_PUSH_TOKEN_FORMAT` retry-once, OS-permission-revoke
+  detection. Stage 21.2 payload smoke-test runs here.
+- **Stage 21.3-d**: mobile staff-logout best-effort `revokeStaffDevice`
+  per contract §9.4.
+- **Test perf**: jest currently ~2 s on a warm cache for 6 tests
+  because each file re-loads i18next + the @complaints/api transport
+  module. Acceptable today; revisit when we hit 20+ tests and the
+  cold/warm gap becomes noticeable. The first cheap win would be a
+  test-scoped `globalSetup` that pre-warms babel-jest's transform
+  cache.
+- **Mobile role chooser**, **i18n locale selector UI**, **Global 401
+  → navigation glue**, **`@complaints/ui-tokens` promotion**,
+  **`@complaints/api` peerDeps React 19** — all unchanged from b.3-a.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

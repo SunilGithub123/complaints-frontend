@@ -55,7 +55,13 @@ export interface AuthState {
   clear: () => void;
 }
 
-const STORAGE_KEY = 'complaints:auth';
+// `expo-secure-store` validates keys against `^[\w.-]+$`, which rejects
+// the `:` used in the web store's `complaints:auth`. Underscores keep
+// the storage namespace recognisable without tripping the validator
+// (latent bug caught by the b.3-b-1 test plumbing — would have crashed
+// on first staff login on a real device). Mobile and web don't share
+// storage so the divergence is safe.
+const STORAGE_KEY = 'complaints_auth';
 
 export const useAuthStore = create<AuthState>()(
   persist(

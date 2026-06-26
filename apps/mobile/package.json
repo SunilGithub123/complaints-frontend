@@ -10,7 +10,7 @@
     "prebuild": "expo prebuild --clean",
     "lint": "if [ -d node_modules/eslint ]; then eslint . --max-warnings=0; else echo 'noop (run pnpm install before mobile lint)'; fi",
     "typecheck": "if [ -d node_modules/expo ]; then tsc --noEmit -p tsconfig.json; else echo 'noop (run pnpm install before mobile typecheck — Expo and RN type packages are not yet on disk)'; fi",
-    "test": "echo 'noop (jest-expo lands in 21.3-b.3 alongside the consumer OTP flow — see docs/IMPLEMENTATION_LOG.md)'",
+    "test": "if [ -d node_modules/jest-expo ]; then jest; else echo 'noop (run pnpm install before mobile test)'; fi",
     "clean": "rm -rf .expo dist android ios node_modules"
   },
   "dependencies": {
@@ -46,11 +46,16 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@eslint/js": "^9.39.4",
+    "@testing-library/react-native": "^12.9.0",
+    "@types/jest": "^29.5.14",
     "@types/react": "~18.3.12",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^15.15.0",
+    "jest": "^29.7.0",
+    "jest-expo": "~52.0.0",
+    "react-test-renderer": "18.3.1",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.61.1"
   },
