@@ -39,6 +39,14 @@ export interface AuthState {
    * again. Mirrors the web Stage 8a semantics.
    */
   lastValidatedAt: number | null;
+  /**
+   * `deviceId` last successfully registered under THIS staff principal
+   * via `POST /api/v1/staff/devices`. Contract §9.3 additional
+   * confirmations: each auth store tracks its own flag so a
+   * session-resume cheap-skip works. Cleared on logout so the next
+   * login re-registers.
+   */
+  lastRegisteredDeviceId: string | null;
   /** Set the full session triple after a successful login. */
   setSession: (input: {
     accessToken: string;
@@ -51,6 +59,8 @@ export interface AuthState {
   setStaff: (staff: StaffSummary) => void;
   /** Mark a successful /me round-trip as the source-of-truth snapshot. */
   setValidatedStaff: (staff: StaffSummary) => void;
+  /** Update the persisted push-registration flag. */
+  setLastRegisteredDeviceId: (deviceId: string | null) => void;
   /** Wipe everything — used on logout and refresh failure. */
   clear: () => void;
 }
@@ -70,14 +80,23 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       staff: null,
       lastValidatedAt: null,
+      lastRegisteredDeviceId: null,
       setSession: ({ accessToken, refreshToken, staff }) =>
         set({ accessToken, refreshToken, staff, lastValidatedAt: null }),
       setTokens: ({ accessToken, refreshToken }) =>
         set({ accessToken, refreshToken, lastValidatedAt: null }),
       setStaff: (staff) => set({ staff }),
       setValidatedStaff: (staff) => set({ staff, lastValidatedAt: Date.now() }),
+      setLastRegisteredDeviceId: (lastRegisteredDeviceId) =>
+        set({ lastRegisteredDeviceId }),
       clear: () =>
-        set({ accessToken: null, refreshToken: null, staff: null, lastValidatedAt: null }),
+        set({
+          accessToken: null,
+          refreshToken: null,
+          staff: null,
+          lastValidatedAt: null,
+          lastRegisteredDeviceId: null,
+        }),
     }),
     {
       name: STORAGE_KEY,
@@ -86,6 +105,7 @@ export const useAuthStore = create<AuthState>()(
         accessToken: s.accessToken,
         refreshToken: s.refreshToken,
         staff: s.staff,
+        lastRegisteredDeviceId: s.lastRegisteredDeviceId,
       }),
     },
   ),

@@ -35,6 +35,17 @@ export interface ConsumerAuthState {
   /** What the consumer typed on the landing form; needed by the submit body. */
   consumerId: string | null;
   mobile: string | null;
+  /**
+   * `deviceId` last successfully registered under THIS consumer via
+   * `POST /api/v1/consumer/devices`. Contract §9.3 additional
+   * confirmations — each auth store tracks its own flag.
+   *
+   * NOT cleared on `clear()` — consumer sessions are ephemeral (5-min
+   * JWT), but the device row is not. §9.4 explicitly says consumer
+   * has no logout-revoke path; the flag lets a re-verify skip the
+   * POST when the same consumer / device pair is already known.
+   */
+  lastRegisteredDeviceId: string | null;
   /** Commits a successful OTP verification. */
   setVerified: (input: {
     token: string;
@@ -48,6 +59,8 @@ export interface ConsumerAuthState {
    * "Send OTP" and "Verify OTP".
    */
   setIdentity: (input: { consumerId: string; mobile: string }) => void;
+  /** Update the persisted push-registration flag. */
+  setLastRegisteredDeviceId: (deviceId: string | null) => void;
   /** Wipes everything — used on manual "start over" and on detected expiry. */
   clear: () => void;
 }
@@ -63,12 +76,22 @@ export const useConsumerAuthStore = create<ConsumerAuthState>()(
       expiresAt: null,
       consumerId: null,
       mobile: null,
+      lastRegisteredDeviceId: null,
       setVerified: ({ token, expiresAt, consumerId, mobile }) =>
         set({ token, expiresAt, consumerId, mobile }),
       setIdentity: ({ consumerId, mobile }) =>
         set({ consumerId, mobile }),
+      setLastRegisteredDeviceId: (lastRegisteredDeviceId) =>
+        set({ lastRegisteredDeviceId }),
       clear: () =>
-        set({ token: null, expiresAt: null, consumerId: null, mobile: null }),
+        set({
+          token: null,
+          expiresAt: null,
+          consumerId: null,
+          mobile: null,
+          // NB: `lastRegisteredDeviceId` deliberately NOT cleared —
+          // see the type doc for the rationale.
+        }),
     }),
     {
       name: STORAGE_KEY,

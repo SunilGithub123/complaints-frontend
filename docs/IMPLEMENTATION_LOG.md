@@ -3232,6 +3232,179 @@ pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web
 
 ---
 
+### Stage 21.3-c.1  Push registration foundation (no native modules) — ✅ 2026-07-05
+
+> First slice of Stage 21.3-c. Ships the registration orchestration
+> and the `deviceId` primitive **without** the RN-Firebase native
+> install — that lands in c.2 alongside real permission UX and the
+> Firebase project credentials. The `PushProvider` Strategy makes
+> this split possible: the register-retry-once logic is testable
+> today, and c.2's swap is a one-line
+> `configurePushProvider(fcmProvider)` at boot.
+
+#### Scope decisions
+
+- **b.3-c (mobile MSW) was skipped.** Neither web nor mobile has felt
+  the need for MSW in months of stages, and the copilot-instructions
+  Strategy-pattern hint (`VITE_USE_MSW`) explicitly says "add only
+  when mocking earns its keep". YAGNI. Left in the carry-overs
+  should the need surface.
+- Original 21.3-c splits into three slices (**c.1** foundation, **c.2**
+  real FCM install + permission UX, **c.3** foreground/background
+  handlers + type→screen map). c.1 is the widest reviewable slice
+  that doesn't require Firebase project credentials or `expo prebuild`.
+- **21.3-d** (staff-logout revoke) also lands cleanly on c.1: the
+  `revokeStaff` helper is already in this slice, wiring into
+  `logout()` is the whole delta.
+
+#### What shipped
+
+- `apps/mobile/src/lib/deviceId.ts` — SecureStore-backed persistent
+  UUID per contract §2.3 / §9. Mobile twin of
+  `@complaints/utils#getOrCreateDeviceId` (web uses `localStorage`).
+  Async by necessity (SecureStore has no sync surface), coalesced
+  through a single in-flight promise so a rapid double call on cold
+  start doesn't generate two UUIDs. Never throws — a SecureStore
+  read failure falls back to an in-memory UUID that the nightly BE
+  sweep collects (matches the web contract's "clearing site data
+  spawns a new row" behaviour).
+- `apps/mobile/src/lib/pushProvider.ts` — the Strategy boundary.
+  `PushProvider` interface + a **stub** default (`stubPushProvider`)
+  that hands out `stub-token-<platform>` in dev + returns `true` from
+  `hasPermission` / `requestPermission`. Also exports `currentPlatform()`
+  → `'ANDROID' | 'IOS'` from RN's `Platform.OS`, contract §2.3 v1.0.1
+  says WEB is intentionally not sent from mobile. `configurePushProvider(...)`
+  is c.2's one-line swap point for the real FCM impl.
+- `apps/mobile/src/lib/pushRegistration.ts` — the orchestration:
+  - `registerConsumer(hooks)` / `registerStaff(hooks)` — non-React,
+    calls the generated `registerConsumerDevice` / `registerStaffDevice`
+    async functions directly (not the hooks — this is a lifecycle-
+    driven fire-and-forget, not query cache).
+  - **Retry-once** on `INVALID_PUSH_TOKEN_FORMAT` per contract §8:
+    fetch a fresh token from the provider, retry the POST with the
+    same `deviceId` and the new `pushToken`. If retry fails, throw
+    up to the caller.
+  - `revokeStaff(hooks)` — best-effort DELETE for §9.4 logout;
+    catches all errors so a failed revoke never blocks the JWT
+    clear.
+  - `revokeConsumer(hooks)` — symmetric, not wired in v1 (§9.4:
+    consumer has no explicit revoke path); ships so a future
+    "log out of all devices" screen has the helper.
+- `apps/mobile/src/auth/authStore.ts` + `consumerAuthStore.ts` — new
+  `lastRegisteredDeviceId` field per §9.3 additional confirmations,
+  persisted, cleared on staff `clear()` (so re-login re-registers)
+  but **deliberately preserved** on consumer `clear()` (§9.4:
+  consumer sessions are ephemeral, the device row is not; only a
+  new consumer on the same device triggers a re-register). New
+  `setLastRegisteredDeviceId` setter on both stores.
+- `apps/mobile/src/lib/deviceId.test.ts` — 2 tests (happy: generate +
+  cache; unhappy: SecureStore read throws → in-memory fallback, no
+  crash).
+- `apps/mobile/src/lib/pushRegistration.test.ts` — 3 tests: happy
+  register + `lastRegisteredDeviceId` set; **load-bearing**
+  `INVALID_PUSH_TOKEN_FORMAT` retry-once (asserts BOTH POST bodies
+  and that the second uses the fresh token); best-effort `revokeStaff`
+  round trip. The retry-once branch is the whole reason contract §8
+  reserved a distinct error code — worth the third test.
+- `apps/mobile/package.json` — `expo-crypto@~14.0.0` (for
+  `Crypto.randomUUID()`). Also added the missing `"expo": "~52.0.0"`
+  top-level dep (see incident #1).
+
+#### What bit us
+
+1. **`expo` was never a direct dep** — a `pnpm install` after adding
+   `expo-crypto` broke the transitive hoist and
+   `apps/mobile/node_modules/expo` disappeared, tripping the
+   `[ -d node_modules/expo ]` guard in the typecheck script. Earlier
+   stages worked by pure luck of hoisting order. Fixed by adding
+   `"expo": "~52.0.0"` explicitly to `apps/mobile/package.json`
+   dependencies. Belt-and-braces so a future dep add doesn't
+   silently disable the mobile typecheck again.
+2. **`jest.mock` factory scope for expo modules** — the
+   `deviceId.test.ts` mock initially referenced `store` from the
+   test-file scope. Jest's `mockCall` factory hoisting rejects any
+   non-`mock*`-prefixed reference (same rule that bit us in
+   `staff-login.test.tsx` for the mutation holders). Fixed by
+   defining the `Map` INSIDE the factory and exposing it via a
+   `__store` property on the mock object, then reading it via
+   `SecureStore as unknown as { __store: Map<string, string> }`
+   in the test body. Same trick works for future expo-module mocks.
+
+#### What we tested (minimum policy)
+
+- 2 tests on `deviceId` (cache round trip + fallback on read error).
+- 3 tests on `pushRegistration` (happy, retry-once, revoke). The
+  retry-once branch is the highest-value assertion in this slice —
+  if it regresses, every FCM token rotation silently fails.
+- Zero tests on `pushProvider` itself — the stub is 15 LOC of
+  hard-coded returns and the Strategy `configurePushProvider` swap
+  is exercised by `pushRegistration.test.ts`.
+- No RTL tests — this slice adds no screens; the auth-store schema
+  changes are covered by the existing `authStore.getState().clear()`
+  assertions in the landing / submit tests.
+
+#### Gates
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter mobile test                 → 7 files / 15 tests
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web untouched)
+```
+
+#### Carry-overs
+
+- **Stage 21.3-c.2 (next slice)**: real FCM install +
+  permission UX + `google-services.json` / `GoogleService-Info.plist`
+  plumbing. Concretely:
+  - `pnpm --filter mobile add @react-native-firebase/app @react-native-firebase/messaging`.
+  - `apps/mobile/app.json` — add the Firebase config plugin and
+    the platform-specific credential paths.
+  - `apps/mobile/src/lib/fcmPushProvider.ts` — real
+    `PushProvider` impl calling `messaging().getToken()`,
+    `.requestPermission()`, `.hasPermission()`, `.onTokenRefresh()`.
+  - `apps/mobile/src/lib/wirePushProvider.ts` at boot to
+    `configurePushProvider(fcmPushProvider)`.
+  - **Trigger wiring** per §9.6: staff after first successful login
+    post password-change gate; consumer after first successful
+    submit. 7-day debounce on re-prompt after denial (client-side
+    Zustand slice).
+  - **Permission-revoke detection** on next cold start via
+    `hasPermission()` → `revokeStaffDevice(...)` /
+    `revokeConsumerDevice(...)`.
+  - **BE-user action required**: place real
+    `google-services.json` / `GoogleService-Info.plist` (or Firebase
+    project shim credentials for dev) in the paths c.2 will document.
+- **Stage 21.3-c.3**: `setBackgroundMessageHandler` +
+  foreground `onMessage`, v1 frame parser +
+  `schemaVersion` guard, `type → screen + params` route map
+  (COMPLAINT_ASSIGNED → complaint detail, etc.). Closes Stage 21.2
+  smoke test (the outstanding BE ping-back from earlier stages).
+- **Stage 21.3-d**: wire `revokeStaff(...)` into the staff logout
+  reducer. Two-line change once the logout button exists (currently
+  a placeholder on the home screen).
+- **Mobile MSW (was b.3-c)**: parked — none of the FE stages have
+  actually asked for it. Add when a real "BE is down, keep
+  developing" moment surfaces.
+- **`getOrCreateDeviceId` promotion to `@complaints/utils`**: hold
+  until a second RN app / bare Expo module needs it, per the
+  "abstract at the second use" rule. Web + mobile have divergent
+  storage primitives; the shared surface would be an interface, not
+  code reuse.
+- **Mobile role chooser**, **i18n locale selector UI**, **Global 401
+  → navigation glue**, **`@complaints/ui-tokens` promotion**,
+  **`@complaints/api` peerDeps React 19**, **route typegen refresh
+  in CI (as-never cast paper cut)**, **shared BottomSheet primitive**,
+  **camera-capture button**, **confirmation-screen share / copy /
+  refresh polish**, **jest test-perf globalSetup** — all unchanged
+  from b.3-b-3.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.
