@@ -3829,6 +3829,125 @@ polish items below:
 
 ---
 
+### Stage 21.3-d  Staff-logout device revoke — ✅ 2026-07-05
+
+> Fifth and final Stage 21 mobile slice. Wires `revokeStaff(...)`
+> into the staff logout button per contract §9.4. Small, self-
+> contained; **closes the Stage 21 mobile bracket** — the whole
+> device-registration + push-fan-out lifecycle is now covered end
+> to end on the client side.
+
+#### What shipped
+
+- `apps/mobile/src/auth/staffLogout.ts` — `performStaffLogout()`
+  helper that:
+  1. Snapshots `lastRegisteredDeviceId` BEFORE the store clear (so
+     the revoke targets the right row even if the store races the
+     fetch).
+  2. `void revokeStaff({...})` — best-effort DELETE per §9.4.
+  3. `state.clear()` — wipes the session synchronously so the UI
+     subscription bounces to `/(auth)/staff-login` on the same
+     tick.
+  - **No timeout guard needed**: `packages/api/src/client.ts`'s
+    `customFetch` reads the Bearer token SYNCHRONOUSLY via
+    `selectAuthToken(url)` before the first `await`, then hands
+    the request to `fetch()` with the header baked in. `clear()`
+    running one line later cannot beat the fetch to the header;
+    if the network hangs, the promise is garbage-collected. The
+    header-safety is documented inline so a future reader
+    doesn't reintroduce the classic "revoke then clear ordering
+    bug" as a fix.
+- `apps/mobile/app/index.tsx` — home screen's logout button now
+  calls `performStaffLogout` instead of the raw `authStore.clear()`.
+  The old `clear` binding on the component is dropped.
+- `apps/mobile/src/auth/staffLogout.test.ts` — 2 tests:
+  1. Happy: seeded session → `revokeStaffDevice('device-abc-123')`
+     called AND the store cleared synchronously (asserts the
+     `accessToken` and `lastRegisteredDeviceId` are `null` before
+     any microtask flush).
+  2. **Load-bearing** — offline logout: `revokeStaffDevice`
+     rejects → store STILL cleared (§9.4 "must not block JWT
+     clear"). Without this test the classic "await the revoke,
+     then clear" regression is invisible.
+
+#### What bit us
+
+Nothing. The synchronous-header-capture argument was worth
+verifying up front — a naïve `await revokeStaff(...); clear();`
+would have introduced a 100-500 ms hang on every logout under a
+degraded network, and the alternative
+`void revokeStaff(...); clear();` looks like it might race the
+token. Neither is the case — the transport's synchronous token
+read closes both windows. Inline comment documents this so
+future refactors don't "fix" a non-bug.
+
+#### What we tested (minimum policy)
+
+- 2 tests on `staffLogout`. The unhappy-path test is the highest-
+  value assertion in the slice — it locks in the §9.4 "best-effort"
+  contract as a behaviour, not a comment.
+- Zero tests on the home-screen wiring (`app/index.tsx`) — swapping
+  one `onPress` handler for another is a one-line delta the
+  existing test coverage of `usePushRegistration` + the auth store
+  already exercises in aggregate.
+
+#### Gates
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter mobile test                 → 12 files / 25 tests
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web untouched)
+```
+
+#### Stage 21 mobile bracket — CLOSED
+
+Every mobile responsibility in `docs/STAGE_21_DEVICE_TOKEN_CONTRACT.md`
+is now implemented:
+
+| § | Item                                         | Status |
+|---|----------------------------------------------|--------|
+| 2.3 | `deviceId` in `expo-secure-store` (keychain / EncryptedSharedPreferences) | ✅ c.1 |
+| 2.4 | Multi-account on one device — separate stores, shared `deviceId` | ✅ c.1 |
+| 3.1 | Consumer register/refresh + retry-once on `INVALID_PUSH_TOKEN_FORMAT` | ✅ c.1 |
+| 3.3 | Staff register/refresh | ✅ c.1 |
+| 4  | v1 frame parser + `schemaVersion` guard | ✅ c.3 |
+| 5  | FE-owned `type → screen + params` map | ✅ c.3 |
+| 6.2 | never-log rules (title/body/eventOccurredAt) | ✅ c.3 |
+| 9.3 | Cold-start re-register + `onTokenRefresh` re-register | ✅ c.1 (`lastRegisteredDeviceId` + `onTokenRefresh` passthrough); trigger fires on next authenticated home render |
+| 9.4 | Staff logout → DELETE `/staff/devices/{deviceId}`, best-effort | ✅ **d (this slice)** |
+| 9.6 | Permission triggers (post-login / post-submit), 7-day debounce, cold-start revoke detection | ✅ c.2-b |
+
+Outstanding items are all **user-side** (Firebase credentials +
+manual QA) or **out-of-Stage-21 polish**:
+
+- Place real `google-services.json` / `GoogleService-Info.plist`
+  per `apps/mobile/credentials/README.md` → run the payload
+  smoke (steps in the c.3 log entry).
+- Local-notification banner display for foreground / background
+  frames via `expo-notifications` (polish; payload is still
+  received without it).
+- Real staff/consumer complaint-detail routes for
+  `pushRouteMap.ts`'s two TODO pathnames (post-21 mobile roadmap).
+
+#### Carry-overs
+
+- **Mobile MSW (was b.3-c)**, **`getOrCreateDeviceId` promotion**,
+  **Mobile role chooser**, **i18n locale selector UI**, **Global 401
+  → navigation glue**, **`@complaints/ui-tokens` promotion**,
+  **`@complaints/api` peerDeps React 19**, **route typegen refresh
+  in CI (as-never cast paper cut)**, **shared BottomSheet primitive**,
+  **camera-capture button**, **confirmation-screen share / copy /
+  refresh polish**, **jest test-perf globalSetup**, **local-notif
+  display via expo-notifications**, **staff / consumer complaint-detail
+  routes for `pushRouteMap.ts` TODOs** — all unchanged from c.3.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

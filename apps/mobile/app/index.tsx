@@ -25,6 +25,7 @@ import {
   selectAccessToken,
   selectStaff,
 } from '@/auth/authStore';
+import { performStaffLogout } from '@/auth/staffLogout';
 import { usePushRegistration } from '@/lib/usePushRegistration';
 
 export default function HomeScreen(): React.JSX.Element {
@@ -32,7 +33,6 @@ export default function HomeScreen(): React.JSX.Element {
   const insets = useSafeAreaInsets();
   const accessToken = useAuthStore(selectAccessToken);
   const staff = useAuthStore(selectStaff);
-  const clear = useAuthStore((s) => s.clear);
   const hydrated = usePersistHydrated();
   const { runIfNeeded: runPushRegistration } = usePushRegistration('staff');
 
@@ -71,7 +71,7 @@ export default function HomeScreen(): React.JSX.Element {
 
       <Pressable
         accessibilityRole="button"
-        onPress={clear}
+        onPress={performStaffLogout}
         style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
       >
         <Text style={styles.buttonText}>{t('common.logout')}</Text>

@@ -74,26 +74,22 @@ CORS is a non-issue on mobile — Expo's native `fetch` sends no `Origin`
 header, and the BE's dev profile allows `http://localhost:*` anyway
 (confirmed by BE 2026-06-25).
 
-## What's NOT in 21.3-c.3 (lands in 21.3-d / post-21)
+## What's NOT in 21.3-d (Stage 21 mobile bracket closed; carry-overs post-21)
 
-- **Staff-logout `revokeStaffDevice`** wiring per contract §9.4 —
-  21.3-d (two-line change on the home screen's logout button).
-- **Local-notification display** for foreground / background frames
-  via `expo-notifications` — polish; payloads are received either
-  way, users just don't see a banner while the app is open.
-- **Real staff/consumer complaint-detail routes** — the current
-  `pushRouteMap.ts` falls through to `/` (staff) and
-  `/(consumer)/landing` (consumer). Lands with the real detail
-  screens in the post-21 mobile roadmap; only the two `TODO`
-  pathname constants change.
 - **Real Firebase credentials** — gated on user supplying
   `google-services.json` / `GoogleService-Info.plist` per
-  `credentials/README.md`. Also required to run the Stage 21.2
-  payload smoke end-to-end.
+  `credentials/README.md`. Required to run the Stage 21.2 payload
+  smoke end-to-end.
+- **Local-notification banner display** for foreground / background
+  frames via `expo-notifications` — polish; payload is received
+  regardless.
+- **Real staff/consumer complaint-detail routes** for
+  `pushRouteMap.ts`'s two `TODO` pathnames — post-21 mobile
+  roadmap; only the constants change.
 - **MSW dev mode** — parked.
 - **Locale selector UI**, **camera-capture button**, **confirmation
   polish (share/copy/refresh)** — polish.
 
-See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-c.3 entry for the full
-carry-over list.
+See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-d entry for the full
+carry-over list and the Stage 21 contract-conformance table.
 
