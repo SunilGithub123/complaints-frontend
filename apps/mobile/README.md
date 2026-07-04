@@ -18,7 +18,7 @@ yet, just enough to boot and prove the dep chain.
 | Routing | `expo-router` v4 file-based; `(auth)` route group hosts the unauthenticated stack, `(consumer)` hosts landing → OTP → submit → submitted |
 | Photos | `expo-image-picker` + `expo-image-manipulator` (0..3 per complaint, ≤ 1 MB post-compression) — 21.3-b.3-b-2 |
 | Secure storage | `expo-secure-store` (`deviceId` in 21.3-c per contract §9) |
-| Push | `@react-native-firebase/messaging` (raw FCM, **not** Expo Push API — lands in 21.3-c.2 per BE-confirmed transport decision 2026-06-25). Foundation (`deviceId`, `PushProvider` Strategy, register-retry-once, `revokeStaff`) shipped in 21.3-c.1 with a stub provider. |
+| Push | `@react-native-firebase/messaging` (raw FCM, **not** Expo Push API — per BE-confirmed transport decision 2026-06-25). Foundation (`deviceId`, `PushProvider` Strategy, register-retry-once, `revokeStaff`) shipped in 21.3-c.1 with a stub provider. Real FCM transport shipped in 21.3-c.2-a behind `EXPO_PUBLIC_ENABLE_PUSH=true` — see `credentials/README.md` for setup. |
 | i18n | `@complaints/i18n` re-used verbatim |
 | UI tokens | `@complaints/ui-tokens` consumed via `StyleSheet` (no CSS-in-JS per copilot-instructions rule #11) |
 
@@ -74,27 +74,23 @@ CORS is a non-issue on mobile — Expo's native `fetch` sends no `Origin`
 header, and the BE's dev profile allows `http://localhost:*` anyway
 (confirmed by BE 2026-06-25).
 
-## What's NOT in 21.3-c.1 (lands in 21.3-c.2 / 21.3-c.3 / 21.3-d)
+## What's NOT in 21.3-c.2-a (lands in 21.3-c.2-b / 21.3-c.3 / 21.3-d)
 
-- **Real FCM install + credentials** — `@react-native-firebase/{app,messaging}`,
-  `google-services.json` (Android), `GoogleService-Info.plist` (iOS),
-  Firebase config plugin in `app.json`. Requires user to supply real
-  Firebase project credentials for E2E testing. Ships in 21.3-c.2.
-- **Push permission UX** and the §9.6 trigger wiring (staff after
-  first successful login post password-change; consumer after first
-  successful submit; 7-day debounce on re-prompt after denial) —
-  21.3-c.2.
-- **Permission-revoke detection** on cold start → DELETE — 21.3-c.2.
+- **Permission prompts + trigger wiring** — the §9.6 post-login /
+  post-submit prompts, 7-day debounce on denial, cold-start
+  permission-revoke detection → 21.3-c.2-b.
 - **Foreground / background message handlers** and the type→screen
   routing map — 21.3-c.3. Closes the Stage 21.2 payload smoke test.
 - **Staff-logout `revokeStaffDevice`** wiring per contract §9.4 —
-  21.3-d (two-line change once the logout button lands).
-- **MSW dev mode** — parked. Add if a real "BE offline" development
-  moment surfaces; none has in five stages.
+  21.3-d.
+- **Real Firebase credentials** — placeholder + docs shipped;
+  actual `google-services.json` / `GoogleService-Info.plist` must be
+  supplied per `credentials/README.md` before an
+  `EXPO_PUBLIC_ENABLE_PUSH=true` build will work end-to-end.
+- **MSW dev mode** — parked (see IMPLEMENTATION_LOG.md).
 - **Locale selector UI**, **camera-capture button**, **confirmation
-  polish (share/copy/refresh)** — all polish; ship when user testing
-  asks for them.
+  polish (share/copy/refresh)** — all polish.
 
-See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-c.1 entry for the full
+See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-c.2-a entry for the full
 carry-over list.
 

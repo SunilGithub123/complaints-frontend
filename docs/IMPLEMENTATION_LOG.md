@@ -3405,6 +3405,146 @@ pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web
 
 ---
 
+### Stage 21.3-c.2-a  Real FCM provider + env-gated boot swap — ✅ 2026-07-05
+
+> Second slice of Stage 21.3-c. Ships the real
+> `@react-native-firebase/messaging` transport behind an env flag +
+> credential-file scaffolding + docs. Trigger wiring (post-login /
+> post-submit prompts, 7-day debounce, cold-start revoke detection)
+> stays for **c.2-b** so this slice is a reviewable "swap-the-transport
+> without changing UX" chunk.
+
+#### Scope decisions
+
+- Original 21.3-c.2 further split into **c.2-a** (transport + native
+  install + credentials plumbing) and **c.2-b** (permission UX +
+  triggers + cooldown + revoke detection). c.2-a is code +
+  docs-only, doesn't change any user-visible flow, and doesn't
+  require Firebase credentials to be present for gates to pass.
+- `wirePushProvider()` is guarded on `EXPO_PUBLIC_ENABLE_PUSH === 'true'`
+  so a dev boot without credentials keeps running against the stub
+  provider silently. Dynamic-import behind the flag also keeps the
+  RN native-module lookup off the boot path when disabled.
+
+#### What shipped
+
+- `apps/mobile/src/lib/fcmPushProvider.ts` — the real `PushProvider`
+  wrapping `messaging()`. Contract: `getPushToken()` swallows on
+  error → returns `null` (so pushRegistration treats it as a
+  no-token skip, not a crash). `hasPermission` / `requestPermission`
+  map both `AUTHORIZED` and `PROVISIONAL` (iOS silent notifications)
+  to `true` — PROVISIONAL still gets the BE fan-out; the user just
+  doesn't see banners until they promote in Settings. `onTokenRefresh`
+  passes through the Firebase SDK's own unsubscribe.
+- `apps/mobile/src/lib/wirePushProvider.ts` — env-gated boot swap.
+  Dynamic `import('./fcmPushProvider')` behind
+  `EXPO_PUBLIC_ENABLE_PUSH === 'true'` keeps the RN native-module
+  lookup off the boot path when disabled; import failure falls back
+  to the stub silently.
+- `apps/mobile/app/_layout.tsx` — calls `wirePushProvider()`
+  alongside `wireApi()` / `initI18n()` / `wireI18n()`.
+- `apps/mobile/app.json` — `@react-native-firebase/app` config plugin
+  registered; `googleServicesFile` paths bound for both platforms.
+  `expo-build-properties` gains `ios.useFrameworks: static` (RN
+  Firebase requires it for iOS static-framework linking).
+- `apps/mobile/credentials/README.md` — placement instructions for
+  `google-services.json` (Android) + `GoogleService-Info.plist`
+  (iOS) + how to enable the transport via `EXPO_PUBLIC_ENABLE_PUSH`
+  + the prebuild dance.
+- `apps/mobile/.gitignore` — added the two credential filenames so a
+  real project keyfile can never slip into a commit.
+- `apps/mobile/jest.setup.ts` — global jest mock for
+  `@react-native-firebase/messaging` (in-memory stub of the four
+  methods `fcmPushProvider` touches + the `AuthorizationStatus`
+  enum). Per-test overrides land in the test files.
+- `apps/mobile/src/lib/fcmPushProvider.test.ts` — 2 tests (happy
+  path returns the FCM token + AUTHORIZED → true; `getToken` throw
+  → returns `null` per the no-token skip contract).
+- `apps/mobile/package.json` — `@react-native-firebase/app@^21.6.1`,
+  `@react-native-firebase/messaging@^21.6.1`.
+
+#### What bit us
+
+Nothing new — the jest-expo preset once again didn't ship a native
+module mock (this time for `@react-native-firebase/messaging`,
+mirroring the b.3-b-3 AsyncStorage story). Wired the mock the same
+way in `jest.setup.ts`. Every future RN native module we add will
+need the same treatment; the jest-setup file is becoming the mock
+registry, which is fine.
+
+#### What we tested (minimum policy)
+
+- 2 tests on `fcmPushProvider`. The retry-once / registration
+  orchestration was already covered by
+  `pushRegistration.test.ts` in c.1 — this slice is a pure
+  Strategy-implementation swap and doesn't touch the orchestration.
+- Zero tests on `wirePushProvider`: it's a 3-line env-flag guard
+  around a dynamic import. Would fail the "would I miss this in
+  prod tomorrow" bar.
+- No RTL tests — no screens touched.
+
+#### Gates
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter mobile test                 → 8 files / 17 tests
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web untouched)
+```
+
+#### Carry-overs
+
+- **Stage 21.3-c.2-b (next slice)**: user-facing wiring.
+  - `apps/mobile/src/lib/pushPromptCooldown.ts` — AsyncStorage-backed
+    7-day debounce timestamps, one per principal kind (staff /
+    consumer), per §9.6.
+  - `apps/mobile/src/lib/usePushRegistration.ts` — hook that fires
+    `requestPermission` + `registerStaff` / `registerConsumer` at
+    the trigger moment, respecting the cooldown. Sets the cooldown
+    if the user denies.
+  - Wire the staff-side trigger in `app/index.tsx` after
+    `isAuthenticated` + `lastRegisteredDeviceId === null`.
+  - Wire the consumer-side trigger in `app/(consumer)/submit.tsx`
+    right after the submit mutation success (before the
+    `router.replace` to `/(consumer)/submitted`), so §9.6's "after
+    first successful submit" trigger fires and the token lands
+    before the confirmation screen renders.
+  - Cold-start revoke detection: at `_layout.tsx` boot, if
+    `hasPermission() === false` and `lastRegisteredDeviceId !== null`,
+    fire `revokeStaff(...)` / `revokeConsumer(...)` best-effort.
+  - Tests: 1 hook happy path + 1 cooldown round trip.
+- **Stage 21.3-c.3**: `setBackgroundMessageHandler` +
+  foreground `onMessage`, v1 frame parser + `schemaVersion` guard,
+  `type → screen + params` route map. Closes Stage 21.2 payload
+  smoke.
+- **Stage 21.3-d**: wire `revokeStaff(...)` into the staff logout
+  reducer (two-line change once a real logout button lives on the
+  home screen).
+- **Placeholder credentials**: user must supply real
+  `google-services.json` / `GoogleService-Info.plist` before an
+  `EXPO_PUBLIC_ENABLE_PUSH=true` build will function end-to-end.
+  Documented in `apps/mobile/credentials/README.md`. Not a
+  blocker for the code slices themselves.
+- **Static frameworks on iOS** — `ios.useFrameworks: 'static'` is a
+  build knob RN Firebase requires. If a future dep asks for
+  dynamic frameworks we'll have to switch to `use_frameworks!
+  :linkage => :static` in the Podfile via a different plugin;
+  no-op today.
+- **Mobile MSW (was b.3-c)**, **`getOrCreateDeviceId` promotion**,
+  **Mobile role chooser**, **i18n locale selector UI**, **Global 401
+  → navigation glue**, **`@complaints/ui-tokens` promotion**,
+  **`@complaints/api` peerDeps React 19**, **route typegen refresh
+  in CI (as-never cast paper cut)**, **shared BottomSheet primitive**,
+  **camera-capture button**, **confirmation-screen share / copy /
+  refresh polish**, **jest test-perf globalSetup** — all unchanged
+  from c.1.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

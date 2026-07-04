@@ -17,14 +17,19 @@ import { initI18n } from '@complaints/i18n';
 
 import { wireApi } from '@/lib/wireApi';
 import { wireI18n } from '@/lib/wireI18n';
+import { wirePushProvider } from '@/lib/wirePushProvider';
 
 // Single boot wiring — synchronous so `setAuthHooks` is in place by the
 // time the first generated TanStack Query hook fires. `wireI18n()` plugs
 // AsyncStorage into the i18n adapter and kicks off the async load of the
-// persisted locale (Stage 21.3-b.3-a).
+// persisted locale (Stage 21.3-b.3-a). `wirePushProvider()` swaps the
+// default stub `PushProvider` for the real FCM one when the app is
+// built with `EXPO_PUBLIC_ENABLE_PUSH=true` and real Firebase
+// credentials are in place (see credentials/README.md).
 wireApi();
 initI18n();
 wireI18n();
+wirePushProvider();
 
 const queryClient = new QueryClient({
   defaultOptions: {

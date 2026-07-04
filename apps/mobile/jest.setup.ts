@@ -36,6 +36,33 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
+// `@react-native-firebase/messaging` binds to a native TurboModule the
+// moment its default export is invoked. jest-expo does not stub it —
+// left alone, any test that transitively imports `fcmPushProvider`
+// crashes with `Native module RNFBMessagingModule not found`. Ship an
+// in-memory stub that mirrors the tiny slice of the API `fcmPushProvider`
+// touches (`getToken`, `hasPermission`, `requestPermission`,
+// `onTokenRefresh` + the `AuthorizationStatus` enum on the default
+// export function itself). Per-test overrides live in the test files.
+jest.mock('@react-native-firebase/messaging', () => {
+  const AuthorizationStatus = {
+    NOT_DETERMINED: -1,
+    DENIED: 0,
+    AUTHORIZED: 1,
+    PROVISIONAL: 2,
+    EPHEMERAL: 3,
+  };
+  const impl = jest.fn(() => ({
+    getToken: jest.fn(async () => 'fcm-fixture-token'),
+    hasPermission: jest.fn(async () => AuthorizationStatus.AUTHORIZED),
+    requestPermission: jest.fn(async () => AuthorizationStatus.AUTHORIZED),
+    onTokenRefresh: jest.fn(() => () => undefined),
+  }));
+  (impl as unknown as { AuthorizationStatus: typeof AuthorizationStatus }).AuthorizationStatus =
+    AuthorizationStatus;
+  return { __esModule: true, default: impl };
+});
+
 initI18n();
 
 

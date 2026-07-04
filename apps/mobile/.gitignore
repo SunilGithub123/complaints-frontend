@@ -15,6 +15,11 @@ android/
 .env.local
 .env.*.local
 
+# Firebase / FCM credentials — see credentials/README.md for placement.
+# Never commit real project credentials to the repo.
+google-services.json
+GoogleService-Info.plist
+
 # macOS
 .DS_Store
 
