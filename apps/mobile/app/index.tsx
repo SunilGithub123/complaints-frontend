@@ -25,6 +25,7 @@ import {
   selectAccessToken,
   selectStaff,
 } from '@/auth/authStore';
+import { usePushRegistration } from '@/lib/usePushRegistration';
 
 export default function HomeScreen(): React.JSX.Element {
   const t = useT();
@@ -33,6 +34,18 @@ export default function HomeScreen(): React.JSX.Element {
   const staff = useAuthStore(selectStaff);
   const clear = useAuthStore((s) => s.clear);
   const hydrated = usePersistHydrated();
+  const { runIfNeeded: runPushRegistration } = usePushRegistration('staff');
+
+  // §9.6 staff trigger: fire the OS permission prompt + register the
+  // device the FIRST time an authenticated home screen renders per
+  // install. `runIfNeeded` short-circuits when `lastRegisteredDeviceId`
+  // is already set (cheap re-mount case) and when the user recently
+  // denied (7-day cooldown). Fire-and-forget — push failures MUST NOT
+  // block the home render.
+  useEffect(() => {
+    if (!hydrated || !accessToken) return;
+    void runPushRegistration();
+  }, [hydrated, accessToken, runPushRegistration]);
 
   // Wait for SecureStore rehydration before deciding to redirect — the
   // first render after a cold start always sees `null` tokens even when

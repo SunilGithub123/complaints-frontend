@@ -75,6 +75,7 @@ import {
   type PreparedImage,
 } from '@/lib/imageCompression';
 import { mapApiError } from '@/lib/apiErrors';
+import { usePushRegistration } from '@/lib/usePushRegistration';
 
 const PAGE: Schemas.Pageable = { page: 0, size: 100, sort: ['name,asc'] };
 
@@ -151,6 +152,7 @@ function SubmitForm({
   const categories = categoriesEnvelope?.data?.content ?? [];
 
   const submitMutation = useSubmitComplaint();
+  const { runIfNeeded: runPushRegistration } = usePushRegistration('consumer');
 
   const {
     control,
@@ -278,6 +280,12 @@ function SubmitForm({
       // have a ticket number, clear it so a re-visit to the form
       // starts fresh.
       void clearDraft();
+      // §9.6 consumer trigger: request push permission + register the
+      // device on the FIRST successful submit. Fire-and-forget — push
+      // failures MUST NOT block the confirmation-screen redirect
+      // (worst case: no push for this consumer this session; a future
+      // submit re-triggers per the same short-circuit logic).
+      void runPushRegistration();
       router.replace({
         // Cast: expo-router's route-typegen runs on `expo start` /
         // `expo build`; it hasn't observed `submitted.tsx` yet in the

@@ -3545,6 +3545,127 @@ pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web
 
 ---
 
+### Stage 21.3-c.2-b  Push permission UX + trigger wiring + revoke detection — ✅ 2026-07-05
+
+> Third slice of Stage 21.3-c. Closes contract §9.6 (permission
+> triggers + 7-day debounce + cold-start revoke detection) on top of
+> the c.2-a transport swap. From here, the only push work left is
+> Stage 21.3-c.3 (foreground / background message handlers +
+> type→screen map) and 21.3-d (staff-logout revoke).
+
+#### What shipped
+
+- `apps/mobile/src/lib/pushPromptCooldown.ts` — AsyncStorage-backed
+  7-day debounce per contract §9.6. Two keys, one per principal
+  kind (staff / consumer), so a shared household device can prompt
+  each independently. Records only the "last denied at" timestamp
+  — grant is inferred from `lastRegisteredDeviceId !== null` on the
+  auth store (single source of truth). Corrupt payloads read back
+  as `null` per the same shape-guard contract as `draftStorage`.
+- `apps/mobile/src/lib/usePushRegistration.ts` — imperative hook
+  exposing `runIfNeeded(): Promise<RunOutcome>`. Short-circuits on
+  `lastRegisteredDeviceId` already set, on cooldown active, on
+  permission denied (records the cooldown), or on no-token. NEVER
+  throws — push failures MUST NOT block auth / submit flows.
+- `apps/mobile/src/lib/detectRevokedPushPermission.ts` — cold-start
+  reconciliation per §9.6. Fire-and-forget from `_layout.tsx`.
+  Waits for both auth stores to finish SecureStore hydration before
+  inspecting `lastRegisteredDeviceId` (otherwise a bare `null` would
+  false-negative and skip the DELETE). Iterates both stores in
+  parallel with the best-effort `revokeStaff` / `revokeConsumer`
+  helpers from c.1. No-ops entirely when the stub provider is
+  active (`EXPO_PUBLIC_ENABLE_PUSH !== 'true'`) — the stub's
+  `hasPermission: true` would otherwise make this a permanent
+  no-op on dev, so the env guard is the honest doc.
+- `apps/mobile/app/_layout.tsx` — `void detectRevokedPushPermission()`
+  added to the boot wiring.
+- `apps/mobile/app/index.tsx` — staff §9.6 trigger. `useEffect`
+  fires `runIfNeeded()` the first time an authenticated home screen
+  renders per install (short-circuits on subsequent renders via the
+  hook's own guards). Fire-and-forget.
+- `apps/mobile/app/(consumer)/submit.tsx` — consumer §9.6 trigger.
+  `void runPushRegistration()` between `clearDraft()` and
+  `router.replace(...)` so the token is on its way before the
+  confirmation screen renders. Fire-and-forget.
+- `apps/mobile/src/lib/pushPromptCooldown.test.ts` — 2 tests
+  (per-principal isolation + window-close assertion; corrupt-payload
+  guard).
+
+#### What bit us
+
+Nothing new. The two `useAuthStore` / `useConsumerAuthStore` reads
+inside `usePushRegistration` deliberately use `useAuthStore.getState()`
+rather than subscribing — the hook is fired imperatively at a
+one-shot trigger moment, and subscribing would re-render whenever the
+auth token rotated. This is the same pattern the transport uses in
+`wireApi.ts`.
+
+#### What we tested (minimum policy)
+
+- 2 tests on `pushPromptCooldown`. The imperative `usePushRegistration`
+  hook and the boot-time `detectRevokedPushPermission` helper are
+  intentionally NOT unit-tested:
+  - `usePushRegistration` is a thin composition of `pushProvider`,
+    `pushRegistration` (both covered in c.1) and `pushPromptCooldown`
+    (covered here). Each short-circuit branch would be a "renders
+    without crashing"-flavour test the policy bans.
+  - `detectRevokedPushPermission` is a fire-and-forget boot helper —
+    testing it means asserting that two other helpers were called,
+    which is a redundant integration test.
+  - Both get their real coverage from manual E2E against the dev BE
+    once real Firebase credentials are placed (§21.3-c.2-a docs).
+
+#### Gates
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter mobile test                 → 9 files / 19 tests
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web untouched)
+```
+
+#### Carry-overs
+
+- **Stage 21.3-c.3 (next slice)**: message handlers.
+  - `messaging().setBackgroundMessageHandler(...)` — must be
+    registered at module scope in a background-safe entry
+    (Firebase requirement).
+  - `messaging().onMessage(...)` for foreground — surface via
+    `expo-notifications` local-notification so the OS renders it
+    (FCM data-only frames don't auto-display).
+  - v1 frame parser + `schemaVersion` guard (§4). Unknown
+    schemaVersion → render a generic banner, don't route.
+  - `type → screen + params` map: `COMPLAINT_ASSIGNED` →
+    `/complaints/[id]`, `COMPLAINT_CLOSED` → complaint detail with
+    a "rate the resolution" nudge, etc. FE owns the map (§4).
+  - Closes the Stage 21.2 payload smoke — the outstanding FE→BE
+    round-trip confirmation from earlier stages.
+- **Stage 21.3-d**: wire `revokeStaff(...)` into the staff logout
+  reducer. The current `authStore.clear()` on the home screen's
+  logout button becomes `void revokeStaff(hooks); clear();`. Two
+  lines including the hooks factory reuse.
+- **Real Firebase credentials** — still gated on user placing
+  `google-services.json` / `GoogleService-Info.plist`; documented
+  in `credentials/README.md`. No FE code depends on them being
+  present for gates to pass.
+- **Settings-screen "enable notifications"** — `clearDenied(...)`
+  + a manual `usePushRegistration.runIfNeeded({ force: true })` is
+  the single-tap path. Ship once a settings screen exists (later).
+- **Mobile MSW (was b.3-c)**, **`getOrCreateDeviceId` promotion**,
+  **Mobile role chooser**, **i18n locale selector UI**, **Global 401
+  → navigation glue**, **`@complaints/ui-tokens` promotion**,
+  **`@complaints/api` peerDeps React 19**, **route typegen refresh
+  in CI (as-never cast paper cut)**, **shared BottomSheet primitive**,
+  **camera-capture button**, **confirmation-screen share / copy /
+  refresh polish**, **jest test-perf globalSetup** — all unchanged
+  from c.2-a.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

@@ -74,23 +74,24 @@ CORS is a non-issue on mobile — Expo's native `fetch` sends no `Origin`
 header, and the BE's dev profile allows `http://localhost:*` anyway
 (confirmed by BE 2026-06-25).
 
-## What's NOT in 21.3-c.2-a (lands in 21.3-c.2-b / 21.3-c.3 / 21.3-d)
+## What's NOT in 21.3-c.2-b (lands in 21.3-c.3 / 21.3-d)
 
-- **Permission prompts + trigger wiring** — the §9.6 post-login /
-  post-submit prompts, 7-day debounce on denial, cold-start
-  permission-revoke detection → 21.3-c.2-b.
-- **Foreground / background message handlers** and the type→screen
-  routing map — 21.3-c.3. Closes the Stage 21.2 payload smoke test.
+- **Foreground / background message handlers** — `setBackgroundMessageHandler`,
+  `onMessage`, v1-frame parser + `schemaVersion` guard, `type → screen`
+  route map. Closes the Stage 21.2 payload smoke test → 21.3-c.3.
 - **Staff-logout `revokeStaffDevice`** wiring per contract §9.4 —
-  21.3-d.
-- **Real Firebase credentials** — placeholder + docs shipped;
-  actual `google-services.json` / `GoogleService-Info.plist` must be
-  supplied per `credentials/README.md` before an
-  `EXPO_PUBLIC_ENABLE_PUSH=true` build will work end-to-end.
-- **MSW dev mode** — parked (see IMPLEMENTATION_LOG.md).
+  21.3-d (two lines: replace `authStore.clear()` on the logout
+  button with `void revokeStaff(hooks); clear();`).
+- **Settings-screen "enable notifications" button** — the code path
+  is ready (`clearDenied('staff')` + `runIfNeeded({ force: true })`);
+  ships when a settings screen exists.
+- **Real Firebase credentials** — gated on user supplying
+  `google-services.json` / `GoogleService-Info.plist` per
+  `credentials/README.md`.
+- **MSW dev mode** — parked.
 - **Locale selector UI**, **camera-capture button**, **confirmation
-  polish (share/copy/refresh)** — all polish.
+  polish (share/copy/refresh)** — polish.
 
-See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-c.2-a entry for the full
+See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-c.2-b entry for the full
 carry-over list.
 

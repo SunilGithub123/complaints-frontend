@@ -18,6 +18,7 @@ import { initI18n } from '@complaints/i18n';
 import { wireApi } from '@/lib/wireApi';
 import { wireI18n } from '@/lib/wireI18n';
 import { wirePushProvider } from '@/lib/wirePushProvider';
+import { detectRevokedPushPermission } from '@/lib/detectRevokedPushPermission';
 
 // Single boot wiring — synchronous so `setAuthHooks` is in place by the
 // time the first generated TanStack Query hook fires. `wireI18n()` plugs
@@ -26,10 +27,14 @@ import { wirePushProvider } from '@/lib/wirePushProvider';
 // default stub `PushProvider` for the real FCM one when the app is
 // built with `EXPO_PUBLIC_ENABLE_PUSH=true` and real Firebase
 // credentials are in place (see credentials/README.md).
+// `detectRevokedPushPermission()` (Stage 21.3-c.2-b) reconciles §9.6
+// OS-level revokes on cold start — fire-and-forget, no-ops when push
+// is disabled or the stub provider is active.
 wireApi();
 initI18n();
 wireI18n();
 wirePushProvider();
+void detectRevokedPushPermission();
 
 const queryClient = new QueryClient({
   defaultOptions: {
