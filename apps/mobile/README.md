@@ -74,12 +74,8 @@ CORS is a non-issue on mobile — Expo's native `fetch` sends no `Origin`
 header, and the BE's dev profile allows `http://localhost:*` anyway
 (confirmed by BE 2026-06-25).
 
-## What's NOT in 21.3-b.3-b-2 (lands in 21.3-b.3-b-3 / 21.3-b.3-c / 21.3-c / 21.3-d)
+## What's NOT in 21.3-b.3-b-3 (lands in 21.3-b.3-c / 21.3-c / 21.3-d)
 
-- **Draft persistence** for the submit form (survive-a-re-OTP) —
-  mobile twin of `apps/web/src/features/consumer/draftStorage.ts` over
-  AsyncStorage, with the `restoredDraft` banner and hydrated form
-  defaults. Lands in 21.3-b.3-b-3.
 - **MSW** for dev-mode offline work — 21.3-b.3-c.
 - **Push** — permission UX, FCM token acquisition, foreground /
   background handlers — 21.3-c.
@@ -93,6 +89,6 @@ header, and the BE's dev profile allows `http://localhost:*` anyway
   exposes camera on both platforms; a dedicated Take Photo button is
   polish, add if user testing surfaces friction.
 
-See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-b.3-b-2 entry for the full
+See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-b.3-b-3 entry for the full
 carry-over list.
 

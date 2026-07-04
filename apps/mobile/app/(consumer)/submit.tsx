@@ -17,16 +17,19 @@
  * real gate; the store selector goes false the instant the 5-minute
  * window elapses).
  *
- * Draft persistence (survive-a-re-OTP) is deferred to b.3-b-3 so this
- * slice stays focused on the multipart pipeline. Losing the typed
- * description on a token-expiry round trip is a known regression vs
- * web until then.
+ * Draft persistence (as of 21.3-b.3-b-3): the typed
+ * `{categoryId, description, location}` mirror to `AsyncStorage` on
+ * every change, hydrate back on mount, and clear on successful submit.
+ * Images are deliberately NOT persisted — see `draftStorage.ts` for why.
+ * On mount, if a non-empty draft is restored, a small banner surfaces
+ * so the user isn't confused by pre-filled fields ("photos need to be
+ * re-picked" mirrors web).
  *
  * On success we `router.replace` to `/(consumer)/submitted` with the
  * ticket number as a query param — expo-router's file-based analogue
  * of web's `/consumer/submitted/:ticketNo`.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -58,6 +61,12 @@ import {
   selectMinutesRemaining,
 } from '@/auth/consumerAuthStore';
 import { useSubmitComplaint } from '@/lib/submitComplaint';
+import {
+  loadDraft,
+  saveDraft,
+  clearDraft,
+  draftIsNonEmpty,
+} from '@/lib/draftStorage';
 import {
   prepareImageForUpload,
   assertImageCount,
@@ -99,6 +108,7 @@ export default function ConsumerSubmitScreen(): React.JSX.Element {
       mobile={mobile}
       minutesLeft={minutesLeft}
       onStartOver={() => {
+        void clearDraft();
         clearConsumer();
         router.replace('/(consumer)/landing');
       }}
@@ -130,6 +140,7 @@ function SubmitForm({
   const [imageBusy, setImageBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
 
   const categoriesQuery = useListActiveCategoriesForConsumer({ pageable: PAGE });
   const categoriesEnvelope = (
@@ -146,11 +157,51 @@ function SubmitForm({
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<SubmitValues>({
     resolver: zodResolver(submitSchema),
     defaultValues: { categoryId: 0, description: '', location: '' },
   });
+
+  // Hydrate the draft on mount (AsyncStorage is async; we can't feed
+  // this into `defaultValues` synchronously). Cancel via a mounted
+  // flag so an unmount-mid-load doesn't call `reset` on a dead form.
+  useEffect(() => {
+    let mounted = true;
+    void (async () => {
+      const draft = await loadDraft();
+      if (!mounted) return;
+      if (draftIsNonEmpty(draft)) {
+        reset({
+          categoryId: draft.categoryId ?? 0,
+          description: draft.description,
+          location: draft.location,
+        });
+        setDraftRestored(true);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [reset]);
+
+  // Auto-save: mirror every change to AsyncStorage. `watch` returns a
+  // Subscription; unsubscribe on unmount so a re-render after unmount
+  // doesn't touch storage.
+  useEffect(() => {
+    const sub = watch((values) => {
+      void saveDraft({
+        categoryId:
+          typeof values.categoryId === 'number' && values.categoryId > 0
+            ? values.categoryId
+            : null,
+        description: values.description ?? '',
+        location: values.location ?? '',
+      });
+    });
+    return () => sub.unsubscribe();
+  }, [watch]);
 
   const currentCategoryId = watch('categoryId');
   const currentCategory = categories.find((c) => c.id === currentCategoryId);
@@ -223,6 +274,10 @@ function SubmitForm({
         setFormError(t('errors.generic'));
         return;
       }
+      // Draft only matters for the in-progress complaint — once we
+      // have a ticket number, clear it so a re-visit to the form
+      // starts fresh.
+      void clearDraft();
       router.replace({
         // Cast: expo-router's route-typegen runs on `expo start` /
         // `expo build`; it hasn't observed `submitted.tsx` yet in the
@@ -260,6 +315,14 @@ function SubmitForm({
         <Text style={styles.meta}>
           {t('consumer.submit.tokenExpiresIn', { minutes: minutesLeft })}
         </Text>
+
+        {draftRestored ? (
+          <View accessibilityRole="alert" style={styles.info}>
+            <Text style={styles.infoText}>
+              {t('consumer.submit.restoredDraft')}
+            </Text>
+          </View>
+        ) : null}
 
         {/* Category */}
         <View style={styles.field}>
@@ -564,6 +627,14 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   alertText: { color: '#991b1b', fontSize: 13 },
+  info: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#bfdbfe',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+  },
+  infoText: { color: '#1e3a8a', fontSize: 13 },
   button: {
     backgroundColor: '#0f172a',
     paddingVertical: 12,

@@ -25,6 +25,17 @@ import '@testing-library/react-native/extend-expect';
 
 import { initI18n } from '@complaints/i18n';
 
+// jest-expo's preset does NOT auto-mock `@react-native-async-storage/async-storage`
+// — the module errors with "NativeModule: AsyncStorage is null" the
+// moment any code path touches it (draftStorage, wireI18n, …). The
+// upstream project ships an in-memory jest mock; wire it once here so
+// every test file gets it without repeating the boilerplate.
+// See: https://react-native-async-storage.github.io/async-storage/docs/advanced/jest
+jest.mock('@react-native-async-storage/async-storage', () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
 initI18n();
 
 

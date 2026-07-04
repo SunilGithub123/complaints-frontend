@@ -3141,6 +3141,97 @@ pnpm --filter web build                   → 146.51 KB gz entry (+130 B for 4 n
 
 ---
 
+### Stage 21.3-b.3-b-3  Mobile complaint-draft persistence — ✅ 2026-07-04
+
+> Fifth (and final consumer-flow) slice of Stage 21.3-b. Closes the
+> "survive a re-OTP round trip" regression flagged in b.3-b-2 by
+> mirroring web's `sessionStorage` draft over `AsyncStorage` on mobile.
+> Small, self-contained.
+
+#### What shipped
+
+- `apps/mobile/src/lib/draftStorage.ts` — mobile twin of
+  `apps/web/src/features/consumer/draftStorage.ts`. Same `{categoryId,
+  description, location}` shape, same `:v1` migration hook (spelled
+  `_v1` so a future migration to SecureStore is a rename-only change —
+  SecureStore rejects colons per the 21.3-b.1 finding). Same shape
+  guard against corrupt payloads (JSON.parse in a try/catch → return
+  `EMPTY_DRAFT` rather than crash the form on mount). Async by
+  necessity — AsyncStorage has no sync surface.
+- `apps/mobile/app/(consumer)/submit.tsx` — hydration on mount
+  (`useEffect` + a `mounted` flag so an unmount-mid-load doesn't
+  `reset()` a dead form), auto-save subscription on `watch()`,
+  `clearDraft()` on submit success **and** on "start over".
+  A one-line `restoredDraft` banner surfaces when a non-empty draft
+  hydrates so the user isn't spooked by pre-filled fields.
+- `apps/mobile/src/lib/draftStorage.test.ts` — 2 tests: round trip
+  through save + load; corrupt payload → `EMPTY_DRAFT` (regression
+  guard on the shape-guard). Uses the upstream in-memory
+  AsyncStorage mock via `jest.setup.ts`.
+- `apps/mobile/jest.setup.ts` — jest-mock `@react-native-async-storage/async-storage`
+  via the module's official in-memory `jest/async-storage-mock` (see
+  incident below).
+
+#### What bit us
+
+1. **jest-expo's preset does NOT auto-mock AsyncStorage.** I'd
+   assumed it did (native-side stubbed same way `expo-file-system` is).
+   The moment `draftStorage.test.ts` and — by transitive import —
+   `submit.test.tsx` touched AsyncStorage, both failed with
+   `NativeModule: AsyncStorage is null`. The fix is the one-liner
+   documented at https://react-native-async-storage.github.io/async-storage/docs/advanced/jest
+   which registers the upstream in-memory mock; wired once in
+   `jest.setup.ts` so every future test file gets it for free.
+   Failed 2 files → 0 files after the setup change; the pre-existing
+   4 files continued to pass on the first re-run.
+
+#### What we tested (minimum policy)
+
+- 2 unit tests on `draftStorage` (round trip + corrupt-payload
+  guard). The submit form's hydration + auto-save was NOT re-tested
+  — it's plumbing that either works (form re-fills after
+  `AsyncStorage.setItem` seeded from the test) or the `reset()` /
+  `watch()` calls throw at the source, both of which would show up
+  in the existing submit-screen tests. Adding a third test for the
+  banner render would be a "renders without crashing" variant, which
+  the policy explicitly bans.
+
+#### Gates
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter mobile test                 → 5 files / 10 tests
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web untouched)
+```
+
+#### Carry-overs
+
+- **Stage 21.3-b.3-c (next slice)**: MSW dev mode for mobile (twin of
+  the web MSW carry-over from earlier stages) — lets the mobile app
+  boot against a canned OpenAPI response set when the BE is offline.
+  Closes the b.3 chain.
+- **Stage 21.3-c (push wiring)**: unchanged — RN-Firebase install +
+  native config, device-registration POST on 9.6 triggers, FCM
+  token-refresh re-register, foreground / background handlers,
+  `INVALID_PUSH_TOKEN_FORMAT` retry-once, OS-permission-revoke
+  detection. Stage 21.2 payload smoke-test runs here.
+- **Stage 21.3-d**: mobile staff-logout best-effort
+  `revokeStaffDevice` per contract §9.4.
+- **Mobile role chooser**, **i18n locale selector UI**, **Global 401
+  → navigation glue**, **`@complaints/ui-tokens` promotion**,
+  **`@complaints/api` peerDeps React 19**, **route typegen refresh
+  in CI (as-never cast paper cut)**, **shared BottomSheet primitive**,
+  **camera-capture button**, **confirmation-screen share / copy /
+  refresh polish**, **jest test-perf globalSetup** — all unchanged
+  from b.3-b-2.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.
