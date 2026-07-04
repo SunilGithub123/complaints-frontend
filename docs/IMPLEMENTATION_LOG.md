@@ -2996,6 +2996,151 @@ pnpm --filter web build                   → 146.38 KB gz entry (unchanged; web
 
 ---
 
+### Stage 21.3-b.3-b-2  Mobile consumer submit form + confirmation — ✅ 2026-07-04
+
+> Fourth slice of Stage 21.3-b. Replaces the b.3-a placeholder with the
+> real complaint submit form (category dropdown, description, location,
+> 0..3 photos with client-side compression) plus a minimal confirmation
+> route. Draft persistence over AsyncStorage moves to b.3-b-3 to keep
+> this slice focused on the multipart pipeline; MSW is still b.3-c.
+
+#### What shipped
+
+- `apps/mobile/src/lib/imageCompression.ts` — RN twin of
+  `apps/web/src/features/consumer/imageCompression.ts`. Same
+  `ImagePickError` typed rejection codes (`IMAGE_INVALID_TYPE`,
+  `IMAGE_TOO_LARGE`, `IMAGE_LIMIT_EXCEEDED`, `IMAGE_COMPRESSION_FAILED`),
+  same 1 MB / 3-image caps, same one-pass compression heuristic — swap
+  `browser-image-compression` for `expo-image-manipulator` + sized via
+  `expo-file-system.getInfoAsync`. Returns the RN FormData file-part
+  shape (`{uri, name, type}`) directly so the caller doesn't have to
+  adapt types.
+- `apps/mobile/src/lib/submitComplaint.ts` — hand-rolled multipart
+  for `POST /api/v1/consumer/complaints`, twin of web's
+  `submitComplaint.ts` with the same reasoning: orval's generated
+  helper tags the `complaint` part as `text/plain`, the BE requires
+  `application/json`. The RN workaround is different from web's Blob
+  trick — RN's FormData accepts `{uri, name, type}` file parts, so we
+  write the complaint JSON to a temp file in
+  `FileSystem.cacheDirectory` (unique per-call filename to be
+  concurrent-safe) and append it with `type: 'application/json'`. Best-
+  effort cleanup in a `finally`.
+- `apps/mobile/app/(consumer)/submit.tsx` — real form replacing the
+  b.3-a placeholder. RHF + Zod (`categoryId: positive int, description:
+  1..4000, location: 0..500`), category dropdown built as an in-file
+  `Modal` + `Pressable` rows (rolled our own rather than pulling in
+  `@react-native-picker/picker`; the picker is the first caller so
+  YAGNI on a shared BottomSheet primitive per the "abstract at the
+  second use" rule), single-line location field, multi-line
+  description, photo picker firing `ImagePicker.requestMediaLibrary
+  PermissionsAsync` before `launchImageLibraryAsync` (permission-denied
+  copy uses the new `imagePermissionDenied` key). Guarded by
+  `selectIsVerified` → `<Redirect href="/(consumer)/landing" />`.
+- `apps/mobile/app/(consumer)/submitted.tsx` — narrow confirmation
+  screen. Reads `ticketNo` / `submittedAt` / `slaDeadline` from route
+  params (passed via `router.replace` on submit success), formats
+  timestamps via `formatIstDateTime` per the IST hard rule. No
+  share / copy / status-refresh / view-all — those are polish work
+  and the two things that actually matter (ticket number + SLA
+  deadline) are here. Bounces to landing on a missing `ticketNo`
+  (deep-link recovery).
+- `apps/mobile/app/(consumer)/submit.test.tsx` — 2 tests (happy
+  path: category picked + description typed → submit mutation called
+  with the exact `{consumerId, mobile, categoryId, description}`
+  payload + empty `images: []` + `router.replace` to
+  `/(consumer)/submitted` with the ticket param; unhappy: mutation
+  rejects with `ApiError` → BE-provided message surfaces via
+  `mapApiError` fallback ladder + no navigation).
+- `packages/i18n/src/locales/{en,mr}.json` — two new
+  `consumer.submit.*` keys: `imageCompressionFailed` and
+  `imagePermissionDenied`. Existing web keys (`imageInvalidType`,
+  `imageTooLarge`, `imageLimitExceeded`) still cover the shared cases.
+- `apps/mobile/package.json` — `expo-image-picker@~16.0.0`,
+  `expo-image-manipulator@~13.0.0`, `expo-file-system@~18.0.0` (all
+  SDK 52 compatible).
+- README + this log updated.
+
+#### What bit us
+
+Nothing runtime — every gate went green on first attempt after
+the incidents from b.3-b-1 (jest-expo plumbing, SecureStore key
+validator) had already paid down the setup cost. One typegen
+friction:
+
+1. **expo-router route typegen doesn't pick up new routes during
+   `tsc --noEmit`.** First typecheck rejected
+   `pathname: '/(consumer)/submitted'` because expo-router's
+   generated `Href` union only refreshes when `expo start` /
+   `expo build` runs. Cast at the call site with `as never` — the
+   route exists at runtime and typegen catches up on the next
+   `expo` invocation. Documented inline so the next reader
+   doesn't try to "fix" the cast without understanding why.
+
+#### What we tested (minimum policy)
+
+- 2 tests on the submit screen — matches the policy's "1 happy + 1
+  unhappy per form / screen". No exhaustive matrix on category
+  variants, no test for the image picker permission-denied path
+  (that's a permission-branch smoke I'd rather see in Playwright
+  when we eventually mirror the E2E 4-critical-journey list on
+  mobile via Maestro). Zero tests on
+  `submitComplaintMultipart` / `imageCompression.ts` themselves —
+  they touch `expo-file-system` / `expo-image-manipulator`, both of
+  which are mocked by jest-expo's preset with no-op stubs. The wire
+  format is validated against the real BE during the b.3-c manual
+  QA pass.
+
+#### Gates
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter mobile test                 → 4 files / 8 tests
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.51 KB gz entry (+130 B for 4 new i18n keys; budget 180 KB)
+```
+
+#### Carry-overs
+
+- **Stage 21.3-b.3-b-3 (next slice)**: draft persistence over
+  AsyncStorage (mobile twin of
+  `apps/web/src/features/consumer/draftStorage.ts`); `restoredDraft`
+  banner + hydrated defaults on the submit form; 1 test for the
+  round-trip. Small, self-contained slice.
+- **Stage 21.3-b.3-c**: MSW dev mode (mobile twin of the web MSW
+  carry-over from earlier stages).
+- **Stage 21.3-c (push wiring)**: unchanged — RN-Firebase install +
+  native config, device-registration POST on 9.6 triggers, FCM
+  token-refresh re-register, foreground / background handlers,
+  `INVALID_PUSH_TOKEN_FORMAT` retry-once, OS-permission-revoke
+  detection. Stage 21.2 payload smoke-test runs here.
+- **Stage 21.3-d**: mobile staff-logout best-effort
+  `revokeStaffDevice` per contract §9.4.
+- **Take-photo (camera) path**: not wired — the picker sheet on iOS
+  / Android exposes camera capture already, and a dedicated camera
+  button is polish. Add if user testing surfaces friction.
+- **Shared BottomSheet / Picker primitive**: deferred until a second
+  screen needs one, per the "abstract at the second use" rule. The
+  in-file Modal is 30 LOC and testable.
+- **Confirmation screen polish**: share (native share sheet),
+  copy-ticket (expo-clipboard), status-refresh, "view all my
+  complaints". None of these move the needle for v1 — add
+  incrementally when the consumer tracking list ships.
+- **Route typegen refresh in CI**: the `as never` cast is a paper
+  cut. Once mobile CI runs `expo prebuild` or equivalent as part of
+  the pipeline (Stage 21.4 CI expansion) the generated route union
+  will exist and the cast can be dropped. Small; tracked here so it
+  doesn't linger past Stage 21.4.
+- **Mobile role chooser**, **i18n locale selector UI**, **Global 401
+  → navigation glue**, **`@complaints/ui-tokens` promotion**,
+  **`@complaints/api` peerDeps React 19**, **jest test-perf
+  globalSetup** — all unchanged from b.3-b-1.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

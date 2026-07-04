@@ -295,7 +295,9 @@
       "restoredDraft": "We restored your draft. Photos need to be re-picked.",
       "imageInvalidType": "Skipped: only JPEG / PNG are accepted.",
       "imageTooLarge": "Skipped: image is over 1 MB even after compression.",
-      "imageLimitExceeded": "You can attach at most 3 photos."
+      "imageLimitExceeded": "You can attach at most 3 photos.",
+      "imageCompressionFailed": "Couldn't compress this photo. Please try a different one.",
+      "imagePermissionDenied": "We need permission to open your photo library. Grant it in Settings and try again."
     },
     "confirmation": {
       "title": "Complaint registered",
