@@ -36,9 +36,14 @@
  */
 import { router } from 'expo-router';
 import messaging from '@react-native-firebase/messaging';
+import * as Notifications from 'expo-notifications';
 
 import { parsePushFrame, type ParsedPushFrame } from './pushFrame';
 import { routeForPushFrame } from './pushRouteMap';
+import {
+  configureLocalNotifications,
+  displayLocalNotificationForFrame,
+} from './localNotifications';
 
 /**
  * Safe navigator: expo-router types the `push` argument against the
@@ -61,6 +66,50 @@ function safeNavigate(frame: ParsedPushFrame): void {
       // land on its default route.
     }
   }
+}
+
+/**
+ * Local-notification tap: `data` on the response is exactly what
+ * `displayLocalNotificationForFrame` put there. Rebuild the minimal
+ * frame shape and route via the same `safeNavigate` path used by
+ * FCM system-notification taps. Missing / malformed data is treated
+ * as "no route" — the tap already brought the app to foreground,
+ * which is 90% of the value.
+ */
+function handleLocalNotificationResponse(
+  response: Notifications.NotificationResponse,
+): void {
+  const data = response.notification.request.content.data as
+    | {
+        complaintId?: string;
+        ticketNo?: string;
+        pushType?: string;
+        eventOccurredAt?: string;
+        title?: string;
+        body?: string;
+      }
+    | undefined;
+  if (
+    !data ||
+    !data.complaintId ||
+    !data.ticketNo ||
+    !data.pushType ||
+    !data.eventOccurredAt
+  ) {
+    return;
+  }
+  // Rehydrate a `ParsedPushFrame`. `title` / `body` aren't strictly
+  // needed for routing but keep the shape consistent with the FCM
+  // path so future logic can share it.
+  safeNavigate({
+    type: data.pushType as ParsedPushFrame['type'],
+    complaintId: data.complaintId,
+    ticketNo: data.ticketNo,
+    title: data.title ?? '',
+    body: data.body ?? '',
+    eventOccurredAt: data.eventOccurredAt,
+    schemaVersion: '1',
+  });
 }
 
 function logFrameResult(
@@ -91,36 +140,64 @@ function logFrameResult(
 export function wirePushHandlers(): void {
   if (process.env.EXPO_PUBLIC_ENABLE_PUSH !== 'true') return;
 
+  // Configure the local-notification display surface once at boot
+  // (foreground-handler defaults + Android channel). Fire-and-forget:
+  // the setNotificationChannelAsync call is async on Android but
+  // there's no benefit to blocking boot on it — the channel is
+  // ready before the first push arrives.
+  void configureLocalNotifications();
+
   messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-    logFrameResult('background', remoteMessage.data as
-      | Record<string, string | undefined>
-      | undefined);
-    // §4: data-only frames — no OS display in background either. A
-    // future slice can call `expo-notifications` here to schedule a
-    // heads-up notification even though the JS was warm-started.
+    const frame = logFrameResult(
+      'background',
+      remoteMessage.data as Record<string, string | undefined> | undefined,
+    );
+    if (frame) {
+      // §4: data-only frames — no OS-level display. Schedule a local
+      // notification so Android background users (and iOS users on
+      // `content-available: 1` silent pushes) see the banner.
+      await displayLocalNotificationForFrame(frame);
+    }
   });
 
   messaging().onMessage(async (remoteMessage) => {
-    logFrameResult('foreground', remoteMessage.data as
-      | Record<string, string | undefined>
-      | undefined);
+    const frame = logFrameResult(
+      'foreground',
+      remoteMessage.data as Record<string, string | undefined> | undefined,
+    );
+    if (frame) {
+      // Foreground display: without this, iOS shows nothing while
+      // the app is open; Android relies on the channel importance
+      // via the same call.
+      await displayLocalNotificationForFrame(frame);
+    }
   });
 
   messaging().onNotificationOpenedApp((remoteMessage) => {
-    const frame = logFrameResult('tap', remoteMessage.data as
-      | Record<string, string | undefined>
-      | undefined);
+    const frame = logFrameResult(
+      'tap',
+      remoteMessage.data as Record<string, string | undefined> | undefined,
+    );
     if (frame) safeNavigate(frame);
   });
+
+  // Tap on a LOCAL notification (the one we scheduled from
+  // onMessage / setBackgroundMessageHandler). FCM's
+  // onNotificationOpenedApp doesn't fire for local notifs — the
+  // expo-notifications listener is the only path here.
+  Notifications.addNotificationResponseReceivedListener(
+    handleLocalNotificationResponse,
+  );
 
   // Cold-start tap: the notification that woke the app. Runs once.
   void messaging()
     .getInitialNotification()
     .then((remoteMessage) => {
       if (!remoteMessage) return;
-      const frame = logFrameResult('tap', remoteMessage.data as
-        | Record<string, string | undefined>
-        | undefined);
+      const frame = logFrameResult(
+        'tap',
+        remoteMessage.data as Record<string, string | undefined> | undefined,
+      );
       if (frame) safeNavigate(frame);
     })
     .catch(() => {

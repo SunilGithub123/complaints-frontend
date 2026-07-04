@@ -3948,6 +3948,149 @@ manual QA) or **out-of-Stage-21 polish**:
 
 ---
 
+### Stage 21.3-e  Local-notification display via expo-notifications — ✅ 2026-07-05
+
+> Post-Stage-21 polish. Closes the last UX gap from the c.3
+> log entry: data-only FCM frames don't auto-render banners, so
+> foreground users saw nothing when a push arrived (parsed and
+> logged, but invisible). Android background frames had the same
+> problem — the JS wakes briefly, we logged, users saw nothing.
+>
+> Not counted as a Stage 21 contract item — §4 is silent on how
+> the FE displays the frame, only on what's IN it. This slice ships
+> the "make it visible" half.
+
+#### What shipped
+
+- `apps/mobile/src/lib/localNotifications.ts`:
+  - `configureLocalNotifications()` — wires the foreground
+    `setNotificationHandler` (otherwise iOS suppresses banners while
+    the app is open) and creates the Android `default` channel
+    (`DEFAULT` importance, no sound / vibration in v1 — polish
+    later if users ask).
+  - `displayLocalNotificationForFrame(frame)` — schedules an
+    immediate local notification (`trigger: null`) with the frame's
+    `title`/`body` + routing identifiers on `data`. Never throws —
+    a failed schedule returns `null` so the background message
+    handler doesn't blow up.
+- `apps/mobile/src/lib/pushMessageHandler.ts`:
+  - `wirePushHandlers()` calls `configureLocalNotifications()` once
+    at boot.
+  - `onMessage` (foreground) and `setBackgroundMessageHandler`
+    (Android background / iOS `content-available: 1`) both call
+    `displayLocalNotificationForFrame(frame)` after logging.
+  - New `handleLocalNotificationResponse(response)` reads the
+    routing identifiers off the tap-response's `data`, rehydrates
+    a `ParsedPushFrame` (title/body default to `''` — not needed
+    for routing), and calls the same `safeNavigate` path.
+  - `Notifications.addNotificationResponseReceivedListener(...)`
+    registered in `wirePushHandlers()` — FCM's
+    `onNotificationOpenedApp` doesn't fire for LOCAL notifications,
+    so the expo-notifications listener is the only tap-path here.
+- `apps/mobile/app.json` — `expo-notifications` plugin registered
+  with the app's brand color for Android accent.
+- `apps/mobile/package.json` — `expo-notifications@~0.29.11`.
+- `apps/mobile/jest.setup.ts` — global mock covering
+  `setNotificationHandler`, `setNotificationChannelAsync`,
+  `scheduleNotificationAsync`, `addNotificationResponseReceivedListener`,
+  and the `AndroidImportance` enum. `__scheduled` array exposed
+  on the mock module so per-test assertions can inspect the
+  scheduling calls.
+- `apps/mobile/src/lib/localNotifications.test.ts` — 3 tests:
+  - Load-bearing happy path: `scheduleNotificationAsync` called
+    with the frame's title/body/data (asserts the data shape the
+    tap listener depends on).
+  - Unhappy path: `scheduleNotificationAsync` rejects → returns
+    `null`, doesn't throw.
+  - `configureLocalNotifications` calls `setNotificationHandler`.
+    (Third test justified: the setup fn is otherwise untested and
+    silent regression = foreground banners disappear.)
+
+#### What bit us
+
+Nothing. The tap-response path had one subtle design choice —
+FCM's `onNotificationOpenedApp` does NOT fire for the local
+notifications we schedule ourselves, so a separate
+`addNotificationResponseReceivedListener` handles that route. The
+`data` payload shape is deliberately symmetric with the frame it
+was scheduled from, so rehydration is a mechanical rebuild.
+
+#### What we tested (minimum policy)
+
+- 3 tests on `localNotifications`. The tap-response
+  `handleLocalNotificationResponse` is a thin data-shape rehydrator
+  that composes `safeNavigate` (already-manual-QA'd in c.3); a
+  fourth test on it would be spy-round-tripping mocked navigation
+  which the policy warns against. The wire-up in
+  `pushMessageHandler` is the standard "call the tested helper"
+  pattern — also excluded.
+
+#### Gates
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter mobile test                 → 13 files / 28 tests
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web untouched)
+```
+
+#### Manual QA additions
+
+For the Stage 21.2 payload smoke pass (once real Firebase credentials
+are placed per `apps/mobile/credentials/README.md`), add these
+observations:
+
+1. Trigger a Stage 20 event with the app in **foreground** → banner
+   appears at top of screen (Android) / notification tray (iOS).
+2. Trigger a Stage 20 event with the app in **background** → banner
+   appears on lock screen / status bar (Android; iOS if BE sets
+   `content-available: 1` on the APNs payload).
+3. Tap the banner → app opens on `/(consumer)/landing` (consumer
+   events) or `/` (staff events, TODO detail routes) with the
+   expected `complaintId` / `ticketNo` / `pushType` query params.
+
+BE-side prerequisite for full iOS background display: the fan-out
+should include `apns.payload.aps.content-available = 1` on the FCM
+send. If not, iOS silent pushes are dropped by the OS before the JS
+background handler wakes, and users see no notification until they
+next open the app (foreground path still fires). This is a BE
+polish carry-over, NOT a FE bug — noting it here so the payload
+smoke doesn't get flagged for a delivery gap that's really an APNs
+payload gap.
+
+#### Carry-overs
+
+- **BE-side APNs `content-available: 1`** on the FCM send —
+  required for iOS background display. Not a contract-freeze
+  concern (§4 is silent on APNs headers); worth flagging when the
+  payload smoke covers iOS.
+- **Local-notif polish**: sound, vibration, per-channel importance
+  per event type, notification grouping. Wait for user testing to
+  ask.
+- **Notification permission gate for expo-notifications** — on
+  Android 13+ the `POST_NOTIFICATIONS` runtime permission is
+  requested by expo-notifications when the first notification
+  schedules. If denied, our foreground / background handlers still
+  execute but the schedule silently drops. The §9.6 permission-
+  prompt flow already handles the FCM side; adding the
+  expo-notifications call to the same permission moment (via
+  `Notifications.requestPermissionsAsync()`) is a small follow-up.
+- **Mobile MSW (was b.3-c)**, **`getOrCreateDeviceId` promotion**,
+  **Mobile role chooser**, **i18n locale selector UI**, **Global 401
+  → navigation glue**, **`@complaints/ui-tokens` promotion**,
+  **`@complaints/api` peerDeps React 19**, **route typegen refresh
+  in CI (as-never cast paper cut)**, **shared BottomSheet primitive**,
+  **camera-capture button**, **confirmation-screen share / copy /
+  refresh polish**, **jest test-perf globalSetup**, **staff /
+  consumer complaint-detail routes for `pushRouteMap.ts` TODOs** —
+  all unchanged from d.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

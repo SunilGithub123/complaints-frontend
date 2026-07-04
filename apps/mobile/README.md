@@ -74,22 +74,28 @@ CORS is a non-issue on mobile — Expo's native `fetch` sends no `Origin`
 header, and the BE's dev profile allows `http://localhost:*` anyway
 (confirmed by BE 2026-06-25).
 
-## What's NOT in 21.3-d (Stage 21 mobile bracket closed; carry-overs post-21)
+## What's NOT in 21.3-e (post-Stage-21 carry-overs)
 
+- **BE-side APNs `content-available: 1`** on the FCM send — required
+  for iOS background local-notification display. Not a contract
+  concern (§4 is silent on APNs headers); worth flagging when the
+  payload smoke covers iOS.
+- **Notification permission gate** for `expo-notifications` — on
+  Android 13+ the `POST_NOTIFICATIONS` runtime permission is
+  requested by expo-notifications when the first notification
+  schedules. Wiring it into the §9.6 permission moment is a small
+  follow-up.
 - **Real Firebase credentials** — gated on user supplying
   `google-services.json` / `GoogleService-Info.plist` per
   `credentials/README.md`. Required to run the Stage 21.2 payload
   smoke end-to-end.
-- **Local-notification banner display** for foreground / background
-  frames via `expo-notifications` — polish; payload is received
-  regardless.
 - **Real staff/consumer complaint-detail routes** for
   `pushRouteMap.ts`'s two `TODO` pathnames — post-21 mobile
   roadmap; only the constants change.
-- **MSW dev mode** — parked.
-- **Locale selector UI**, **camera-capture button**, **confirmation
-  polish (share/copy/refresh)** — polish.
+- **MSW dev mode**, **locale selector UI**, **camera-capture
+  button**, **confirmation polish (share/copy/refresh)** — all
+  polish.
 
-See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-d entry for the full
-carry-over list and the Stage 21 contract-conformance table.
+See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-e entry for the full
+carry-over list.
 

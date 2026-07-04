@@ -70,6 +70,28 @@ jest.mock('@react-native-firebase/messaging', () => {
   return { __esModule: true, default: impl };
 });
 
+// `expo-notifications` binds to a native module the moment any of
+// its exports is invoked. Ship an in-memory stub covering the
+// surface `localNotifications.ts` + `pushMessageHandler.ts` touch,
+// with `__lastScheduled` exposed for per-test assertions.
+jest.mock('expo-notifications', () => {
+  const scheduled: unknown[] = [];
+  return {
+    __esModule: true,
+    AndroidImportance: { MIN: 1, LOW: 2, DEFAULT: 3, HIGH: 4, MAX: 5 },
+    setNotificationHandler: jest.fn(),
+    setNotificationChannelAsync: jest.fn(async () => undefined),
+    scheduleNotificationAsync: jest.fn(async (input: unknown) => {
+      scheduled.push(input);
+      return `notif-${scheduled.length}`;
+    }),
+    addNotificationResponseReceivedListener: jest.fn(() => ({
+      remove: jest.fn(),
+    })),
+    __scheduled: scheduled,
+  };
+});
+
 initI18n();
 
 

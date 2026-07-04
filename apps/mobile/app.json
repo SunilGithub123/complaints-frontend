@@ -21,6 +21,12 @@
       "expo-router",
       "@react-native-firebase/app",
       [
+        "expo-notifications",
+        {
+          "color": "#0f172a"
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "ios": {
