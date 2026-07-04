@@ -57,6 +57,13 @@ jest.mock('@react-native-firebase/messaging', () => {
     hasPermission: jest.fn(async () => AuthorizationStatus.AUTHORIZED),
     requestPermission: jest.fn(async () => AuthorizationStatus.AUTHORIZED),
     onTokenRefresh: jest.fn(() => () => undefined),
+    // 21.3-c.3 message handlers: default stubs return no-op
+    // unsubscribes / null initial notification so any test that
+    // transitively imports `pushMessageHandler` doesn't crash.
+    setBackgroundMessageHandler: jest.fn(),
+    onMessage: jest.fn(() => () => undefined),
+    onNotificationOpenedApp: jest.fn(() => () => undefined),
+    getInitialNotification: jest.fn(async () => null),
   }));
   (impl as unknown as { AuthorizationStatus: typeof AuthorizationStatus }).AuthorizationStatus =
     AuthorizationStatus;

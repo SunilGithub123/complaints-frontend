@@ -74,24 +74,26 @@ CORS is a non-issue on mobile — Expo's native `fetch` sends no `Origin`
 header, and the BE's dev profile allows `http://localhost:*` anyway
 (confirmed by BE 2026-06-25).
 
-## What's NOT in 21.3-c.2-b (lands in 21.3-c.3 / 21.3-d)
+## What's NOT in 21.3-c.3 (lands in 21.3-d / post-21)
 
-- **Foreground / background message handlers** — `setBackgroundMessageHandler`,
-  `onMessage`, v1-frame parser + `schemaVersion` guard, `type → screen`
-  route map. Closes the Stage 21.2 payload smoke test → 21.3-c.3.
 - **Staff-logout `revokeStaffDevice`** wiring per contract §9.4 —
-  21.3-d (two lines: replace `authStore.clear()` on the logout
-  button with `void revokeStaff(hooks); clear();`).
-- **Settings-screen "enable notifications" button** — the code path
-  is ready (`clearDenied('staff')` + `runIfNeeded({ force: true })`);
-  ships when a settings screen exists.
+  21.3-d (two-line change on the home screen's logout button).
+- **Local-notification display** for foreground / background frames
+  via `expo-notifications` — polish; payloads are received either
+  way, users just don't see a banner while the app is open.
+- **Real staff/consumer complaint-detail routes** — the current
+  `pushRouteMap.ts` falls through to `/` (staff) and
+  `/(consumer)/landing` (consumer). Lands with the real detail
+  screens in the post-21 mobile roadmap; only the two `TODO`
+  pathname constants change.
 - **Real Firebase credentials** — gated on user supplying
   `google-services.json` / `GoogleService-Info.plist` per
-  `credentials/README.md`.
+  `credentials/README.md`. Also required to run the Stage 21.2
+  payload smoke end-to-end.
 - **MSW dev mode** — parked.
 - **Locale selector UI**, **camera-capture button**, **confirmation
   polish (share/copy/refresh)** — polish.
 
-See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-c.2-b entry for the full
+See `docs/IMPLEMENTATION_LOG.md` Stage 21.3-c.3 entry for the full
 carry-over list.
 

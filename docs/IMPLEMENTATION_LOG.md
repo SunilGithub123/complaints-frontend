@@ -3666,6 +3666,169 @@ pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web
 
 ---
 
+### Stage 21.3-c.3  Push message handlers + frame parser + type→screen map — ✅ 2026-07-05
+
+> Fourth (and final push) slice of Stage 21.3-c. Registers the three
+> FCM message-handler surfaces (background / foreground / tap),
+> parses the contract §4 v1 frame with a `schemaVersion` forward-
+> compat guard, and applies the FE-owned type→screen map for the
+> notification-tap navigation path.
+>
+> **Closes the outstanding Stage 21.2 payload smoke test** — the
+> longest-standing FE→BE round-trip confirmation from earlier stages.
+> With real Firebase credentials placed (per credentials/README.md),
+> an `EXPO_PUBLIC_ENABLE_PUSH=true` dev build now receives, parses,
+> and routes on every event listed in contract §5.
+
+#### What shipped
+
+- `apps/mobile/src/lib/pushFrame.ts` — v1 wire schema types +
+  **total** parser (never throws — background FCM handlers on
+  Android kill the app process on uncaught throws). Discriminated
+  `Result` covers `wrong-schema-version` (forward-compat per §4),
+  `unknown-type` (BE §5 enum drift), and `missing-field` (defensive
+  guard). `PushEventType` union mirrors contract §5, kept sorted
+  for grep.
+- `apps/mobile/src/lib/pushRouteMap.ts` — FE-owned `type →
+  {pathname, params}` map per §4. v1 reality: no staff / consumer
+  detail screens on mobile yet; the map returns the eventual
+  pathnames (marked `TODO` inline for staff detail; consumer
+  events route to `/(consumer)/landing`). Params always include
+  `complaintId`, `ticketNo`, `pushType` so a future detail screen
+  can render a targeted "we brought you here from an X
+  notification" affordance without another parse round trip.
+- `apps/mobile/src/lib/pushMessageHandler.ts` — `wirePushHandlers()`
+  registers all four RN Firebase message surfaces at module scope:
+  - `setBackgroundMessageHandler(cb)` — data-only frames while
+    backgrounded / killed. Logs, no local-notification display in
+    v1 (see carry-over).
+  - `onMessage(cb)` — foreground. Same log-only behaviour; local
+    banner via `expo-notifications` is a follow-up.
+  - `onNotificationOpenedApp(cb)` — tap while backgrounded →
+    `safeNavigate(frame)` (try/catch fallback to `/` because the
+    route map's TODO pathnames don't exist yet).
+  - `getInitialNotification()` — cold-start tap, once.
+  - Console logs mirror **contract §6.2 never-log rules** — only
+    `type`, `ticketNo`, `complaintId`; deliberately omit
+    `title` / `body` / `eventOccurredAt` since those may carry PII
+    in future stages. Sentry `beforeSend` scrubbing lands in
+    Phase 7.
+  - Guarded on `EXPO_PUBLIC_ENABLE_PUSH === 'true'` — dev builds
+    without RN Firebase credentials never touch the native module.
+- `apps/mobile/app/_layout.tsx` — `wirePushHandlers()` added to
+  boot wiring after `wirePushProvider()` and before
+  `detectRevokedPushPermission()`.
+- `apps/mobile/jest.setup.ts` — extended the RN Firebase mock with
+  the four handler methods (`setBackgroundMessageHandler`,
+  `onMessage`, `onNotificationOpenedApp`, `getInitialNotification`)
+  so any test transitively importing `pushMessageHandler` doesn't
+  crash on a native-module lookup.
+- Tests:
+  - `pushFrame.test.ts` — 2 tests (valid v1 frame parses;
+    schemaVersion=2 → `wrong-schema-version` reject).
+  - `pushRouteMap.test.ts` — 2 tests (staff-scoped → staff detail
+    placeholder + params; consumer-scoped → landing).
+
+#### What bit us
+
+Nothing. The `safeNavigate` try/catch pattern was deliberate — the
+route-map TODOs mean many pathnames don't actually resolve today, so
+a raw `router.push` would throw on tap in some flows. The
+router-fallback in a try/catch keeps the app on a valid screen
+regardless.
+
+#### What we tested (minimum policy)
+
+- 2 tests on `pushFrame` (happy + schemaVersion guard — the whole
+  reason contract §4 froze the field).
+- 2 tests on `pushRouteMap` (staff vs consumer — one test per
+  bucket of the routing decision; further variants would each be a
+  "one enum value each" test the policy bans).
+- Zero tests on `pushMessageHandler` — it's an imperative boot
+  wrapper composed entirely of already-tested `parsePushFrame` +
+  `routeForPushFrame` + RN Firebase primitives. A test would
+  assert "we called `messaging().setBackgroundMessageHandler` with
+  our callback", i.e. spy-round-tripping the mock, which is
+  ceremony. Real coverage comes from the manual E2E against a
+  Firebase-enabled dev build (closes the Stage 21.2 smoke).
+
+#### Gates
+
+```
+pnpm typecheck                            → 6 packages, 0 errors
+pnpm lint                                 → 6 packages, 0 warnings
+pnpm --filter mobile test                 → 11 files / 23 tests
+pnpm --filter web test                    → 19 files / 37 tests
+pnpm --filter web build                   → 146.51 KB gz entry (unchanged; web untouched)
+```
+
+#### Stage 21 push status
+
+With c.3 shipped, the mobile side of the Stage 21 push contract is
+functionally complete pending Firebase credentials and the two
+polish items below:
+
+- ✅ Device registration (c.1) — retry-once on `INVALID_PUSH_TOKEN_FORMAT`.
+- ✅ Real FCM transport (c.2-a) — env-gated boot swap; credentials
+  scaffolding + docs.
+- ✅ Permission UX + revoke detection (c.2-b) — §9.6 triggers,
+  7-day debounce, cold-start reconciliation.
+- ✅ Message handlers (c.3, this slice) — background / foreground /
+  tap; §4 frame parser with `schemaVersion` guard; FE-owned
+  `type → screen` map.
+- ⏸ **Stage 21.3-d**: staff-logout `revokeStaffDevice` (~2-line
+  change once a real logout button lives on the home screen).
+- ⏸ **Local-notification display for foreground / background**
+  frames via `expo-notifications` — polish; the payload is received
+  either way, users just don't see a banner while the app is open.
+- ⏸ **Real staff/consumer complaint-detail routes** — currently
+  the route map falls through to `/` (staff) or
+  `/(consumer)/landing` (consumer). Landing when detail screens
+  ship in the post-21 mobile roadmap; only the pathname strings
+  in `pushRouteMap.ts` change.
+- ⏸ **BE-user action** — place real
+  `google-services.json` / `GoogleService-Info.plist`
+  (`apps/mobile/credentials/README.md`) before an
+  `EXPO_PUBLIC_ENABLE_PUSH=true` build will exchange tokens with
+  Firebase end-to-end. Then the payload smoke is a one-shot manual
+  QA pass:
+    1. Cold-start a dev build with credentials → app registers a
+       device → BE row visible in `device_token`.
+    2. Trigger any Stage 20 event on the BE (assign a complaint via
+       the web portal) → BE `AFTER_COMMIT` listener → FCM →
+       `[push:background] frame { type, ticketNo, complaintId }`
+       in the Metro console (or `[push:foreground]` if the app is
+       open, `[push:tap]` after tapping the notification).
+
+#### Carry-overs
+
+- **Stage 21.3-d (next slice)**: wire `revokeStaff(hooks)` into
+  the staff logout reducer. On `app/index.tsx`'s logout button,
+  replace `authStore.clear()` with `void revokeStaff(makeStaffHooks()); clear();`.
+  Small self-contained slice; closes the Stage 21 mobile bracket.
+- **Local-notification display** on foreground / background via
+  `expo-notifications`. Wire from `pushMessageHandler.ts` using
+  `Notifications.scheduleNotificationAsync({ content: { title, body }, trigger: null })`.
+  Requires adding `expo-notifications@~0.29.0` + a jest mock in
+  `jest.setup.ts`. Deferred so this slice stays focused on the
+  wire contract; the payload is received regardless.
+- **Real staff/consumer detail routes** for `pushRouteMap.ts` —
+  post-21 mobile roadmap; only the two `TODO`-marked constants in
+  `pushRouteMap.ts` change.
+- **Mobile MSW (was b.3-c)**, **`getOrCreateDeviceId` promotion**,
+  **Mobile role chooser**, **i18n locale selector UI**, **Global 401
+  → navigation glue**, **`@complaints/ui-tokens` promotion**,
+  **`@complaints/api` peerDeps React 19**, **route typegen refresh
+  in CI (as-never cast paper cut)**, **shared BottomSheet primitive**,
+  **camera-capture button**, **confirmation-screen share / copy /
+  refresh polish**, **jest test-perf globalSetup** — all unchanged
+  from c.2-b.
+- **Unchanged FE-owned**: optimistic-concurrency `version`, URL-synced
+  filter state, orval `?pageable=[object Object]` upstream PR,
+  Sentry `beforeSend` 6.2 mirror (Phase 7).
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.
