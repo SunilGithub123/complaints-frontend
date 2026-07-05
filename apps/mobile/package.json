@@ -9,6 +9,8 @@
     "ios": "expo run:ios",
     "prebuild": "expo prebuild --clean",
     "lint": "if [ -d node_modules/eslint ]; then eslint . --max-warnings=0; else echo 'noop (run pnpm install before mobile lint)'; fi",
+    "router:typegen": "if [ -d node_modules/expo-router ]; then node scripts/generateRouterTypes.mjs; else echo 'noop (run pnpm install before mobile router:typegen)'; fi",
+    "pretypecheck": "pnpm run router:typegen",
     "typecheck": "if [ -d node_modules/expo ]; then tsc --noEmit -p tsconfig.json; else echo 'noop (run pnpm install before mobile typecheck — Expo and RN type packages are not yet on disk)'; fi",
     "test": "if [ -d node_modules/jest-expo ]; then jest; else echo 'noop (run pnpm install before mobile test)'; fi",
     "clean": "rm -rf .expo dist android ios node_modules"

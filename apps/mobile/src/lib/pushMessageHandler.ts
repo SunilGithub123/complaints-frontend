@@ -46,11 +46,15 @@ import {
 } from './localNotifications';
 
 /**
- * Safe navigator: expo-router types the `push` argument against the
- * generated route union. The push route map returns pathnames that
- * may or may not exist yet (see `pushRouteMap.ts`). Wrap in a
- * try/catch and fall back to `/` so a tap never strands the user on
- * a blank screen.
+ * Safe navigator: expo-router's typedRoutes union is a closed literal
+ * set built from `app/**` at typegen time. `routeForPushFrame` however
+ * returns runtime strings that include placeholders (`STAFF_DETAIL_
+ * PATHNAME = '/'` today, `'/staff/complaints/[id]'` once that screen
+ * lands — see `pushRouteMap.ts`). Casting through `never` is the
+ * intentional escape hatch: we opt out of the typed-routes check for
+ * this one dynamic call site. The try/catch below still catches a
+ * runtime "unknown route" and falls back to `/` so a tap never
+ * strands the user on a blank screen.
  */
 function safeNavigate(frame: ParsedPushFrame): void {
   const { pathname, params } = routeForPushFrame(frame);

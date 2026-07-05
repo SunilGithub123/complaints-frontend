@@ -134,5 +134,18 @@ export default [
       'react/display-name': 'off',
     },
   },
+
+  // Node-only tooling under `scripts/` (e.g. `generateRouterTypes.mjs`).
+  // These run under `node` at build time, not inside the RN bundle, so
+  // they need Node globals (`process`, `console`) and the base ts/tsx
+  // block above never matches their extension.
+  {
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      ecmaVersion: 2024,
+      sourceType: 'module',
+      globals: { ...globals.node },
+    },
+  },
 ];
 

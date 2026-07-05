@@ -287,11 +287,7 @@ function SubmitForm({
       // submit re-triggers per the same short-circuit logic).
       void runPushRegistration();
       router.replace({
-        // Cast: expo-router's route-typegen runs on `expo start` /
-        // `expo build`; it hasn't observed `submitted.tsx` yet in the
-        // static-only typecheck path. The route exists; the typegen
-        // catches up on the next `expo` invocation.
-        pathname: '/(consumer)/submitted' as never,
+        pathname: '/(consumer)/submitted',
         params: {
           ticketNo: payload.ticketNo,
           submittedAt: payload.submittedAt ?? '',

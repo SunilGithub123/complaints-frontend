@@ -4332,6 +4332,126 @@ None. The change slotted into the existing `AuthHooks` shape.
 
 ---
 
+### Post-Stage-21 polish  Headless expo-router typegen wired to typecheck — ✅ 2026-07-05
+
+> Closes the "route typegen refresh in CI (as-never cast paper cut)"
+> carry-over. `app.json` has `experiments.typedRoutes: true`, but
+> the `.d.ts` union (`.expo/types/router.d.ts`) is normally produced
+> only as a side effect of `expo start` / `expo run` / `expo prebuild`.
+> That leaves CI (which only runs `typecheck`) and cold checkouts
+> staring at a stale file — any new route added between full-boot
+> sessions is missing from the union, and the affected caller has to
+> `as never`-cast its `router.push({ pathname })` payload to compile.
+> This entry ships a headless generator and wires it as a `typecheck`
+> prestep so `pnpm install && pnpm typecheck` "just works".
+
+#### Scope delivered
+
+- **`apps/mobile/scripts/generateRouterTypes.mjs`** — Node script
+  that:
+  1. Builds a `require.context`-shaped ponyfill for `./app` via
+     `expo-router/build/testing-library/require-context-ponyfill`.
+  2. Calls `getTypedRoutesDeclarationFile(ctx)` from
+     `expo-router/build/typed-routes/generate` — the same public
+     entry point `@expo/cli` uses in `expo start`.
+  3. Writes the result to `.expo/types/router.d.ts` (gitignored, no
+     new file committed).
+  Layered filter regex (`CTX_INCLUDE`) matches expo-router's default
+  behaviour PLUS excludes colocated `*.test.tsx` / `*.spec.tsx` files
+  so tests inside `app/` don't leak into the typed-routes union.
+  Import failures on the two internals surface as loud errors so an
+  SDK bump that moves them can't silently drift.
+- **`apps/mobile/package.json`**:
+  - Added `"router:typegen"` script (guards on `node_modules/
+    expo-router` existing so a fresh clone without deps installed
+    fails gracefully).
+  - Added `"pretypecheck": "pnpm run router:typegen"` — npm-lifecycle
+    convention triggers it before `typecheck`. Turbo picks this up
+    automatically because it invokes `pnpm run typecheck`.
+- **`apps/mobile/eslint.config.mjs`** — new scoped block for
+  `scripts/**/*.{js,mjs,cjs}` adding Node globals (`process`,
+  `console`). Without it, the base ts/tsx block never matches the
+  `.mjs` script and the generic recommended rules flagged
+  `no-undef`.
+- **`apps/mobile/app/(consumer)/submit.tsx`** — removed the
+  `'/(consumer)/submitted' as never` cast now that typegen sees the
+  route. Direct `pathname: '/(consumer)/submitted'` typechecks.
+- **`apps/mobile/src/lib/pushMessageHandler.ts`** — kept the
+  `as never` on the DYNAMIC `router.push({ pathname })` in
+  `safeNavigate` (the pathname comes from `routeForPushFrame` and
+  includes intentional placeholders for staff/consumer detail
+  screens not yet shipped — the closed literal `Href` union can
+  never accept those). Rewrote the doc comment to explain why the
+  escape hatch stays for this ONE dynamic callsite. The try/catch
+  around it still catches runtime "unknown route" and falls back to
+  `/`.
+
+#### Incidents fixed during implementation
+
+1. **First typegen run produced a garbage union** (only `.test.tsx`
+   files, no real routes). Root cause: I passed my own inverted
+   regex, misreading `EXPO_ROUTER_CTX_IGNORE`'s NAME — it is really
+   an INCLUDE pattern with a negative lookahead against `+api` /
+   `+html` / `+native-intent`. Fixed by writing a proper include
+   regex (`CTX_INCLUDE`) that matches all `.tsx?` files minus the
+   three sentinels AND colocated test files.
+2. **Lint failed with `no-undef` on `process` / `console`** in the
+   new `.mjs` script. Root cause: the base ts/tsx block in
+   `eslint.config.mjs` matches `**/*.{ts,tsx}` only, so `.mjs` files
+   fell through to `js.configs.recommended` without any environment
+   globals. Fixed by adding a `scripts/**/*.{js,mjs,cjs}` block with
+   `globals.node`.
+3. **Considered `as any` for the `safeNavigate` cast** — rejected
+   because `@typescript-eslint/no-explicit-any` is `error` per the
+   copilot-instructions hard rule. `as never` stays; the intent is
+   the same (opt out of the closed union) but the escape hatch is
+   the one the codebase already sanctions.
+
+#### Tests added
+
+None. This is a build-tooling change — no runtime behaviour changed,
+so nothing new to assert. The existing 30 mobile tests exercise the
+routes the typegen now catches; the cast removal is validated by
+`tsc --noEmit` on `submit.tsx`.
+
+#### Build status
+
+- `pnpm -w typecheck` → **6/6** projects clean.
+  Typegen ran automatically as a prestep on the mobile project;
+  emitted `wrote /apps/mobile/.expo/types/router.d.ts` in the log.
+- `pnpm -w lint` → **6/6** projects clean, zero warnings (after
+  incident #2 fix).
+- `npx jest` in `apps/mobile` → **30/30 passing**, unchanged.
+- Web bundle unchanged (mobile-only change).
+
+#### Carry-overs
+
+- **Closed by this entry**: "Route typegen refresh in CI
+  (as-never cast paper cut)" (was flagged since Stage 21.3-b.3-b-2).
+- **Dynamic cast retained**: `safeNavigate` in
+  `pushMessageHandler.ts` still uses `as never`. This is
+  INTENTIONAL — `pushRouteMap.ts` returns placeholder pathnames for
+  routes that don't exist yet. The cast disappears naturally when
+  those TODO routes ship and the placeholders are swapped for real
+  Href-union members.
+- **SDK bump risk**: the script imports two `build/` paths from
+  `expo-router`. An SDK 53+ layout change will break the loader
+  with a clear error message (we `try/catch` the requires and log
+  the failing entry point). Fix at that point is either updating
+  the path or discovering a new public typegen API expo-router may
+  ship by then.
+- **Unchanged FE-owned**: same list as the prior entry —
+  optimistic-concurrency `version`, URL-synced filter state, orval
+  `?pageable=[object Object]` upstream PR, Sentry `beforeSend`
+  6.2 mirror (Phase 7), `@complaints/api` peerDeps React 19
+  hygiene, Mobile role chooser, i18n locale selector UI,
+  `@complaints/ui-tokens` promotion, shared BottomSheet primitive,
+  camera-capture button, confirmation-screen share / copy /
+  refresh polish, jest test-perf globalSetup, staff / consumer
+  complaint-detail routes for `pushRouteMap.ts` TODOs.
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.
