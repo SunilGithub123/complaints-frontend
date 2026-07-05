@@ -4091,6 +4091,247 @@ payload gap.
 
 ---
 
+### Stage 21 doc carry-over  BE confirms APNs `content-available=1` + Android HIGH priority — ✅ 2026-07-05
+
+> Pairs with a BE update: the FCM envelope that wraps the 4 data
+> payload now carries `aps.content-available = 1` (APNs) and
+> `android.priority = "HIGH"` (FCM) on **every** send. Closes the
+> "BE-side APNs `content-available: 1` on the FCM send" carry-over
+> logged in the previous entry and unblocks the iOS silent-push
+> wake path from the BE side.
+
+#### Scope delivered
+
+- **`docs/STAGE_21_DEVICE_TOKEN_CONTRACT.md`** bumped to **v1.0.2 FROZEN**
+  (doc-only patch, no wire change):
+  - Header note + top-of-file version bumped from v1.0.1 → v1.0.2.
+  - New **4.1 "FCM envelope flags BE attaches to every send"** subsection
+    explaining what APNs `content-available=1` and Android `priority=HIGH`
+    do to the data-only messages defined in 4, why APNs priority stays at
+    the default `5` (silent-push constraint), and why no `notification`
+    block is set on Android (FE still owns tray surfacing via
+    `notifee.displayNotification()` inside
+    `setBackgroundMessageHandler`).
+  - Changelog entry recording the patch and its zero-code-change impact
+    on the FE.
+
+#### Incidents fixed during implementation
+
+None — doc-only.
+
+#### Tests added
+
+None — doc-only patch. The Stage 21.3-c push smoke path already exercises
+the wake handler on both platforms; that path stops failing on iOS with no
+FE change now that BE attaches the envelope flags.
+
+#### Build status
+
+Docs-only. No `pnpm build` / `typecheck` / `test` re-run required.
+
+#### Carry-overs
+
+- **Closed by this entry**: "BE-side APNs `content-available: 1` on the
+  FCM send" (was flagged in the Stage 21.3-c push wiring entry above).
+  Also implicitly closes the equivalent Android Doze-delivery worry —
+  `HIGH` priority guarantees the background handler wakes promptly.
+- **FE handlers unchanged**: `pushRouteMap.ts`, foreground display via
+  notifee, background wake via `setBackgroundMessageHandler`, tap →
+  navigate — all still correct against the frozen 4 data payload.
+- **Unchanged FE-owned**: same list as the previous entry (optimistic-
+  concurrency `version`, URL-synced filter state, orval
+  `?pageable=[object Object]` upstream PR, Sentry `beforeSend` 6.2
+  mirror in Phase 7, etc.).
+
+---
+
+### Stage 21 polish  Android 13+ POST_NOTIFICATIONS gate for local-notification display — ✅ 2026-07-05
+
+> Closes the "notification-permission gate for `expo-notifications` on
+> Android 13+" carry-over flagged in Stage 21.3-e. Without this gate,
+> `Notifications.scheduleNotificationAsync()` silently no-ops on
+> Android 13+ when POST_NOTIFICATIONS was never granted — the
+> foreground `onMessage` handler and the `setBackgroundMessageHandler`
+> both call `displayLocalNotificationForFrame` on every incoming FCM
+> frame, so the user would see zero banners despite FCM delivering
+> data payloads correctly.
+
+#### Scope delivered
+
+- **`apps/mobile/src/lib/localNotifications.ts`**:
+  - New `ensureNotificationDisplayPermission({ request })` — reads
+    `Notifications.getPermissionsAsync()`, requests when undetermined
+    (and `canAskAgain !== false`), caches the verdict, never throws.
+    Orthogonal to FCM's `messaging().requestPermission()`: FCM governs
+    delivery, expo-notifications governs OS-level tray display of
+    scheduled notifications (POST_NOTIFICATIONS on Android 13+; iOS
+    tracks the same authorisation but independently).
+  - `displayLocalNotificationForFrame` short-circuits to `null` when
+    the cached verdict is `false` — saves a native-bridge round-trip
+    on every FCM message once the user has denied.
+  - `__resetNotificationDisplayPermissionCacheForTests` test-only
+    export so unit tests can assert first-call behaviour.
+- **`apps/mobile/src/lib/usePushRegistration.ts`**: after FCM's
+  `requestPermission` grant succeeds, fire-and-forget
+  `void ensureNotificationDisplayPermission({ request: true })` in the
+  same §9.6 permission moment. Deliberately does NOT gate
+  `registerStaff` / `registerConsumer` on the display grant — FCM
+  registration is still valuable when local display is denied (silent-
+  push wake, `onMessage` state updates, taps on future BE-owned
+  system notifications).
+- **`apps/mobile/jest.setup.ts`**: extended the `expo-notifications`
+  mock with `getPermissionsAsync` + `requestPermissionsAsync` (both
+  default to granted; test files override per case).
+
+#### Incidents fixed during implementation
+
+None — the change slots into an existing permission-prompt moment
+and an existing display fast-path.
+
+#### Tests added
+
+- **`apps/mobile/src/lib/localNotifications.test.ts`**: +2 tests —
+  1) `ensureNotificationDisplayPermission` requests when undetermined
+  and returns true on grant; 2) caches denial and short-circuits
+  `displayLocalNotificationForFrame` (asserts no
+  `requestPermissionsAsync` re-prompt when `canAskAgain === false`,
+  and no `scheduleNotificationAsync` call when cached denied). Existing
+  `beforeEach` now resets the cache so display tests remain
+  deterministic regardless of run order.
+
+#### Build status
+
+- `npx jest` in `apps/mobile` → 13 files, **30 tests passing** (was 28).
+- `pnpm -w typecheck` → **6/6** projects clean.
+- `pnpm -w lint` → **6/6** projects clean, zero warnings.
+- Web bundle unchanged (mobile-only edit).
+
+#### Carry-overs
+
+- **Closed by this entry**: "Notification-permission gate for
+  expo-notifications on Android 13+" (was flagged in Stage 21.3-e).
+- **Deliberate non-gate**: FCM registration still fires even when
+  the display grant is denied. Users who deny POST_NOTIFICATIONS but
+  keep FCM on will get silent state updates (via `onMessage`) but no
+  tray banners — this matches Android's own semantics.
+- **Unchanged FE-owned**: same list as the prior entry — optimistic-
+  concurrency `version`, URL-synced filter state, orval `?pageable=
+  [object Object]` upstream PR, Sentry `beforeSend` 6.2 mirror
+  (Phase 7), Global 401 → nav glue, route typegen refresh in CI,
+  `@complaints/api` peerDeps React 19 hygiene, Mobile role chooser,
+  i18n locale selector UI, `@complaints/ui-tokens` promotion, shared
+  BottomSheet primitive, camera-capture button, confirmation-screen
+  share / copy / refresh polish, jest test-perf globalSetup, staff /
+  consumer complaint-detail routes for `pushRouteMap.ts` TODOs.
+
+---
+
+### Post-Stage-21 polish  Global consumer 401 dispatch — ✅ 2026-07-05
+
+> Closes the "Global 401 → navigation glue" carry-over. Actually
+> narrower than the carry-over title suggested — staff web already
+> had it (`auth:logout` event → App-level `useEffect` →
+> `window.location.assign('/login')`, wired in Stage 8) and staff
+> mobile works passively via Zustand reactivity + `<Redirect>` in
+> `app/index.tsx`. The real gap was the **consumer** side: when a
+> `/api/v1/consumer/**` call returned 401 (server-rejected 5-min
+> verify JWT — clock skew, tamper, future revoke path), the transport
+> threw an `ApiError` and nothing cleared the consumer store. The
+> wall-clock `selectIsVerified` guard kept returning true because the
+> local `expiresAt` hadn't elapsed yet, so the user stayed stuck in a
+> broken state until they manually navigated back.
+
+#### Scope delivered
+
+- **`packages/api/src/client.ts`** — transport changes:
+  - Added `onConsumerUnauthenticated?: () => void` to `AuthHooks`.
+    Separate from `onUnauthenticated` because the two auth surfaces
+    (staff / consumer) are independent — a 401 on one must not knock
+    the other out.
+  - New `dispatchConsumerLogout()` internal helper — invokes the hook
+    and additionally dispatches an `auth:consumer-logout` window
+    event so host apps can layer routing on top of the store clear
+    without taking a store dep (currently unused; kept for symmetry
+    with `auth:logout`).
+  - New `isConsumerAuthedUrl(url)` predicate — matches only
+    `/api/v1/consumer/**`. Deliberately EXCLUDES
+    `/api/v1/auth/consumer/**` because those endpoints (OTP send /
+    verify) are anonymous — a 401 there is a business error
+    (rate-limit / stale OTP), not a session-expiry. Mapping the
+    anonymous 401 to a logout would nuke the identity the consumer
+    just typed on the landing screen.
+  - `doFetch` — on a `/consumer/**` 401 we call
+    `dispatchConsumerLogout()` before `throw await parseError(res)`
+    so the mutation's `onError` still surfaces the failure (toast /
+    banner). Explicit `else if` branch — never enter the
+    refresh-token path for consumer URLs.
+- **`apps/web/src/auth/wireApi.ts`** — wired
+  `onConsumerUnauthenticated → useConsumerAuthStore.getState().clear()`.
+  No App-level event listener needed:
+  `ConsumerRequireVerification` subscribes to `selectIsVerified`,
+  which flips false on clear, and its `<Navigate to="/consumer"
+  state={{ from }}>` re-fires reactively — preserves the redirect
+  contract the guard already implements.
+- **`apps/mobile/src/lib/wireApi.ts`** — wired the same. Consumer
+  screens (`landing`, `submit`, `submitted`) each render
+  `<Redirect href="/(consumer)/landing" />` on `!isVerified`, so the
+  store clear alone bounces the user back — no imperative
+  `router.replace` call that could race with the current screen's
+  own `<Redirect>`.
+
+#### Incidents fixed during implementation
+
+None. The change slotted into the existing `AuthHooks` shape.
+
+#### Tests added
+
+- **`packages/api/src/__tests__/client.test.ts`** — +2 tests:
+  1. Happy: consumer 401 dispatches `onConsumerUnauthenticated`
+     exactly once, does NOT invoke the staff `onUnauthenticated`,
+     does NOT walk the refresh-token path (fetchMock called exactly
+     once), and throws an `ApiError` with `status: 401` +
+     `code: 'AUTH_EXPIRED'` so the caller still sees the failure.
+  2. Unhappy: a 401 on `/api/v1/auth/consumer/verify` (anonymous OTP
+     verify) does NOT dispatch `onConsumerUnauthenticated` — proves
+     the `isConsumerAuthedUrl` prefix boundary is right.
+  No new web / mobile tests: the existing
+  `ConsumerRequireVerification` test already exercises the "cleared
+  store → `<Navigate>` back to `/consumer`" branch (the reactive path
+  we now trigger from the transport).
+
+#### Build status
+
+- `pnpm --filter @complaints/api test` → **4/4 passing** (was 2, +2).
+- `pnpm --filter web test` → **37/37 passing**, unchanged.
+- `npx jest` in `apps/mobile` → **30/30 passing**, unchanged.
+- `pnpm -w typecheck` → **6/6** projects clean.
+- `pnpm -w lint` → **6/6** projects clean, zero warnings.
+- `pnpm --filter web build` → **146.56 KB gzipped main chunk**
+  (budget 180 KB, effectively unchanged — transport diff is
+  tree-shakeable).
+
+#### Carry-overs
+
+- **Closed by this entry**: "Global 401 → navigation glue" (the
+  consumer half; the staff halves were already shipped on web in
+  Stage 8 and on mobile in Stage 21.3-b.2).
+- **Unused-for-now**: the `auth:consumer-logout` window event has no
+  listener. Kept for symmetry with `auth:logout` — if a future
+  screen needs to layer non-router side effects (analytics ping,
+  toast, cache purge) on top of the store clear, subscribe there
+  rather than growing the `wireApi` closure.
+- **Unchanged FE-owned**: same list as the prior entry — optimistic-
+  concurrency `version`, URL-synced filter state, orval `?pageable=
+  [object Object]` upstream PR, Sentry `beforeSend` 6.2 mirror
+  (Phase 7), route typegen refresh in CI (as-never cast paper cut),
+  `@complaints/api` peerDeps React 19 hygiene, Mobile role chooser,
+  i18n locale selector UI, `@complaints/ui-tokens` promotion, shared
+  BottomSheet primitive, camera-capture button, confirmation-screen
+  share / copy / refresh polish, jest test-perf globalSetup, staff /
+  consumer complaint-detail routes for `pushRouteMap.ts` TODOs.
+
+---
+
 ## How to update this log
 
 1. At the end of a stage, append (or fill in) the corresponding subsection.

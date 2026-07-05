@@ -100,5 +100,60 @@ describe('customFetch', () => {
       expect.objectContaining({ accessToken: 'fresh-token', refreshToken: 'refresh-xyz' }),
     );
   });
+
+  it('on consumer 401: dispatches onConsumerUnauthenticated (no refresh) and throws', async () => {
+    const onConsumerUnauthenticated = vi.fn();
+    const onUnauthenticated = vi.fn();
+    setAuthHooks({
+      baseUrl: '',
+      getConsumerToken: () => 'consumer-jwt-abc',
+      // These are staff-only hooks; wire them to prove we do NOT walk
+      // the refresh path when a `/consumer/**` URL returns 401.
+      getRefreshToken: () => 'staff-refresh-should-not-fire',
+      onConsumerUnauthenticated,
+      onUnauthenticated,
+    });
+
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: { code: 'AUTH_EXPIRED', message: 'expired' } }),
+        { status: 401, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(
+      customFetch('/api/v1/consumer/complaints', { method: 'POST' }),
+    ).rejects.toMatchObject({ status: 401, code: 'AUTH_EXPIRED' });
+
+    // Exactly one call — no refresh attempt.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(onConsumerUnauthenticated).toHaveBeenCalledTimes(1);
+    // Staff logout hook stays untouched — the two auth surfaces are independent.
+    expect(onUnauthenticated).not.toHaveBeenCalled();
+  });
+
+  it('does NOT dispatch onConsumerUnauthenticated for anonymous /auth/consumer/** 401s', async () => {
+    // The OTP send/verify endpoints are anonymous (no Bearer sent); a
+    // 401 there is a business error surface (rate-limit / stale OTP),
+    // not a session-expiry. Mapping it to a logout would nuke the
+    // identity the consumer just typed.
+    const onConsumerUnauthenticated = vi.fn();
+    setAuthHooks({ baseUrl: '', onConsumerUnauthenticated });
+
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: { code: 'OTP_STALE', message: 'stale' } }),
+        { status: 401, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(
+      customFetch('/api/v1/auth/consumer/verify', { method: 'POST' }),
+    ).rejects.toMatchObject({ status: 401 });
+
+    expect(onConsumerUnauthenticated).not.toHaveBeenCalled();
+  });
 });
 

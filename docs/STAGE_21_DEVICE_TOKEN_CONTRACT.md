@@ -1,6 +1,7 @@
-# Stage 21 — Device Token & Push Notification Contract (v1.0.1 FROZEN)
+# Stage 21 — Device Token & Push Notification Contract (v1.0.2 FROZEN)
 
 > Status: **FROZEN — implementing in Stage 21.1**, 2026-06-25.
+> Patch 2026-07-05 (v1.0.2): §4.1 documents the APNs / Android FCM envelope flags BE sets on every send (doc-only, no wire change).
 > Patch 2026-06-25 (v1.0.1): §2.3 WEB-platform behaviour clarified (doc-only, no wire change).
 > Owner: BE. Sibling FE copy lives at `complaints-frontend/docs/STAGE_21_DEVICE_TOKEN_CONTRACT.md`
 > and is the same source of truth — both sides update together.
@@ -217,6 +218,34 @@ Stage 21 sends **data-only** FCM messages (no `notification` block). Rationale:
 No deep-link URL in the payload. FE owns the `type → screen + params` map. The
 identifiers (`ticketNo`, `complaintId`) are everything needed for routing.
 
+### 4.1 FCM envelope flags BE attaches to every send (added in v1.0.2)
+
+The schema in §4 is the **data payload** — the part the FE reads. The FCM message that
+wraps it also carries platform-specific delivery hints. These are set by BE on **every**
+send and are **not** negotiable per notification `type` in v1:
+
+- **APNs (iOS)** — `aps.content-available = 1` on every message.
+  - Data-only messages (§4) would otherwise not wake a suspended / backgrounded iOS app.
+    With `content-available=1` iOS treats it as a **silent push** and hands it to
+    `setBackgroundMessageHandler`, which is what unblocks the RN Firebase
+    background-processing path on iOS.
+  - Priority stays at APNs default (`5`) for silent pushes — iOS rejects
+    `content-available=1` combined with `apns-priority: 10`. If a future notification
+    `type` needs a user-visible alert, BE will add an `aps.alert` block for that type
+    and bump priority; the data payload shape does not change.
+- **Android (FCM)** — `android.priority = "HIGH"` on every message.
+  - Data-only messages default to `NORMAL` priority, which Android may batch / defer
+    when the device is in Doze. `HIGH` guarantees prompt wake-up of
+    `setBackgroundMessageHandler` regardless of Doze state.
+  - No `notification` block is set (§4 is still data-only); the FE remains in control
+    of whether / how to surface a system tray notification via
+    `notifee.displayNotification()` inside the handler.
+
+**FE impact: none.** The wire schema (§4), the operation IDs (§3), the error codes (§8)
+and the FE handlers are all unchanged. This subsection exists purely so the next
+contract reader has a written answer to *"does BE set `content-available` / HIGH
+priority?"* — yes, on every send, since 2026-07-05.
+
 ---
 
 ## 5. Event → recipient policy
@@ -389,14 +418,22 @@ Total ~2.5 days BE once 21.0 is signed off, fully parallel-friendly.
 
 ## 11. Versioning
 
-This doc is **v1.0.1 FROZEN** as of 2026-06-25 (v1.0 froze the contract; v1.0.1 is a
-doc-only clarification of WEB-platform behaviour, no wire change). Material changes
-after freeze bump a version suffix (`v1.1`, `v2.0`) at the top and are appended to the
-changelog below. Both the BE copy (`complaints/docs/`) and the FE copy
+This doc is **v1.0.2 FROZEN** as of 2026-07-05 (v1.0 froze the contract; v1.0.1 was a
+doc-only clarification of WEB-platform behaviour; v1.0.2 is a doc-only note recording
+the APNs / Android FCM envelope flags BE attaches to every send — no wire change).
+Material changes after freeze bump a version suffix (`v1.1`, `v2.0`) at the top and are
+appended to the changelog below. Both the BE copy (`complaints/docs/`) and the FE copy
 (`complaints-frontend/docs/`) update together.
 
 ### Changelog
 
+- **2026-07-05 — v1.0.2 (doc-only patch).** §4.1 added, recording that BE now attaches
+  `aps.content-available = 1` (APNs) and `android.priority = "HIGH"` (FCM) on **every**
+  push send. This unblocks the iOS silent-push wake path for the data-only messages
+  described in §4 and guarantees prompt Android delivery through Doze. Contract
+  unchanged — the §4 data payload, §3 endpoints and §8 error codes are all as-is. FE
+  handlers require no change; entry exists as a carry-over so the next contract reader
+  has a written answer to "does BE set those?".
 - **2026-06-25 — v1.0.1 (doc-only patch).** §2.3 clarified WEB-platform behaviour in
   v1 after FE caught an ambiguity: register with `platform: "WEB"` is accepted but the
   fan-out has no `PushService` impl for WEB until Stage 22+ adds one; staff web portal

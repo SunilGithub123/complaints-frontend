@@ -35,6 +35,16 @@ export function wireApi(): void {
       // Routing side-effect is handled by the `auth:logout` listener installed
       // in `main.tsx`; we just clear store state here.
     },
+    onConsumerUnauthenticated: () => {
+      // BE rejected the 5-min consumer JWT (clock skew, tamper, or a
+      // future revoke path). Clearing the store flips
+      // `selectIsVerified` to false, and `ConsumerRequireVerification`
+      // (routed via `/consumer/**`) re-renders + `<Navigate>`'s back
+      // to `/consumer` with `state.from` preserved so the landing
+      // screen can resume the flow after re-OTP. No App-level
+      // listener needed — Zustand reactivity carries the redirect.
+      useConsumerAuthStore.getState().clear();
+    },
   });
 }
 

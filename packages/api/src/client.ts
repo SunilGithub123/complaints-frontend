@@ -61,6 +61,18 @@ export interface AuthHooks {
    */
   onUnauthenticated?: () => void;
   /**
+   * Called when a `/api/v1/consumer/**` request returns 401 — the
+   * server rejected the 5-minute consumer verify JWT (clock skew,
+   * server-side invalidation, tampered token). Consumer JWTs are
+   * NOT refreshable (§Stage 11 contract), so the host app should
+   * clear the consumer store and route back to the OTP landing page.
+   *
+   * Separate from `onUnauthenticated` because the two auth surfaces
+   * are independent — a staff tab and a consumer tab may coexist,
+   * and one expiring must not knock the other out.
+   */
+  onConsumerUnauthenticated?: () => void;
+  /**
    * Called after a successful refresh so the host app can persist the new
    * access + refresh pair (matches `LoginResponse` shape from the backend).
    */
@@ -126,6 +138,19 @@ function isStaffUrl(url: string): boolean {
   );
 }
 
+/**
+ * Consumer-owned URLs whose 401 means "the 5-min verify JWT is
+ * dead" — i.e. `/api/v1/consumer/**`. The OTP send/verify endpoints
+ * under `/api/v1/auth/consumer/**` are DELIBERATELY excluded: they
+ * are anonymous (no Bearer sent), so a 401 there is a business
+ * error surface (rate-limit / stale OTP), not a session-expiry
+ * signal. Mapping those to a logout would nuke the identity the
+ * user just typed.
+ */
+function isConsumerAuthedUrl(url: string): boolean {
+  return url.startsWith(CONSUMER_API_PREFIX);
+}
+
 function joinUrl(base: string, url: string): string {
   if (/^https?:\/\//i.test(url)) return url;
   const b = base.endsWith('/') ? base.slice(0, -1) : base;
@@ -139,6 +164,23 @@ function dispatchLogout(): void {
   } finally {
     if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
       window.dispatchEvent(new Event('auth:logout'));
+    }
+  }
+}
+
+/**
+ * Consumer-side counterpart to `dispatchLogout`. Fires when a
+ * `/api/v1/consumer/**` endpoint returns 401. Also emits a window
+ * event so host apps that want to layer routing on top of the store
+ * clear (rare — consumer screens already redirect reactively when
+ * `selectIsVerified` flips false) can subscribe without a store dep.
+ */
+function dispatchConsumerLogout(): void {
+  try {
+    authHooks.onConsumerUnauthenticated?.();
+  } finally {
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new Event('auth:consumer-logout'));
     }
   }
 }
@@ -248,13 +290,20 @@ async function doFetch<T>(
   const res = await fetch(fullUrl, { ...rest, headers: finalHeaders });
   if (!res.ok) {
     // Only the staff transport refreshes on 401. Consumer endpoints use a
-    // non-refreshable 5-minute JWT — on 401 we throw straight up to the
-    // caller (the ConsumerRequireVerification guard handles the re-OTP).
+    // non-refreshable 5-minute JWT — on 401 we dispatch the consumer
+    // logout hook (host clears the store; the guard-driven Redirect /
+    // Navigate re-fires reactively) and then throw straight up to the
+    // caller so the mutation onError still surfaces the failure to the
+    // UI (toast / inline banner). Never enter the refresh branch for
+    // consumer URLs — that would POST to /staff/auth/refresh with a
+    // consumer refresh token that does not exist.
     if (res.status === 401 && !url.endsWith(REFRESH_PATH) && isStaffUrl(url)) {
       const newToken = await refreshAccessToken();
       if (newToken) {
         return doFetch<T>(url, init, newToken);
       }
+    } else if (res.status === 401 && isConsumerAuthedUrl(url)) {
+      dispatchConsumerLogout();
     }
     throw await parseError(res);
   }

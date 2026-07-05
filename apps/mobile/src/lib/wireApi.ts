@@ -55,6 +55,15 @@ export function wireApi(): void {
       // (lands in Stage 21.3-b.2). Until then a 401 silently clears
       // the session and the user re-authenticates on next interaction.
     },
+    onConsumerUnauthenticated: () => {
+      // Consumer JWT rejected by the BE (clock skew, tamper). Clearing
+      // the store flips `selectIsVerified` to false; every consumer
+      // screen (`landing`, `submit`, `submitted`) subscribes to it and
+      // its `<Redirect href="/(consumer)/landing" />` re-fires on the
+      // next render. No expo-router navigation call needed here — that
+      // would race with the current screen's own `<Redirect>`.
+      useConsumerAuthStore.getState().clear();
+    },
   });
 }
 
