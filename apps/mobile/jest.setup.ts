@@ -81,6 +81,19 @@ jest.mock('expo-notifications', () => {
     AndroidImportance: { MIN: 1, LOW: 2, DEFAULT: 3, HIGH: 4, MAX: 5 },
     setNotificationHandler: jest.fn(),
     setNotificationChannelAsync: jest.fn(async () => undefined),
+    // Android 13+ POST_NOTIFICATIONS + iOS local-display permission.
+    // Default fixture: granted, no re-ask needed. Test files that
+    // exercise the denial branch override via mockResolvedValueOnce.
+    getPermissionsAsync: jest.fn(async () => ({
+      granted: true,
+      canAskAgain: true,
+      status: 'granted',
+    })),
+    requestPermissionsAsync: jest.fn(async () => ({
+      granted: true,
+      canAskAgain: true,
+      status: 'granted',
+    })),
     scheduleNotificationAsync: jest.fn(async (input: unknown) => {
       scheduled.push(input);
       return `notif-${scheduled.length}`;

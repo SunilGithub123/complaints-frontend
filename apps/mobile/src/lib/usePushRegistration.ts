@@ -35,6 +35,7 @@ import {
 } from './pushRegistration';
 import { getActivePushProvider } from './pushProvider';
 import { isCoolingDown, markDenied, type Principal } from './pushPromptCooldown';
+import { ensureNotificationDisplayPermission } from './localNotifications';
 
 interface RunOptions {
   /**
@@ -101,6 +102,19 @@ export function usePushRegistration(principal: Principal): {
         await markDenied(principal);
         return 'skipped-permission-denied';
       }
+
+      // Ask for the `expo-notifications` DISPLAY permission in the
+      // same moment. This is a separate OS surface from FCM's grant
+      // (Android 13+ POST_NOTIFICATIONS governs whether the tray
+      // actually shows scheduled notifications; iOS uses the same
+      // authorisation but expo-notifications tracks it independently).
+      // Fire-and-forget on failure — a `false` here only means local
+      // banners won't render; the FCM registration itself is still
+      // valuable (silent-push wake, foreground state updates via
+      // `onMessage`, tap navigation on system notifications sent by
+      // future BE-owned display paths). We deliberately do NOT gate
+      // `registerStaff` / `registerConsumer` on this.
+      void ensureNotificationDisplayPermission({ request: true });
 
       try {
         const register = principal === 'staff' ? registerStaff : registerConsumer;

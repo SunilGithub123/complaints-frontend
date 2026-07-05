@@ -32,6 +32,69 @@ import type { ParsedPushFrame } from './pushFrame';
 const ANDROID_CHANNEL_ID = 'default';
 
 /**
+ * Cached OS display-permission verdict. `null` means "not yet checked
+ * this session"; a boolean means "we asked (or read) at least once".
+ *
+ * We cache to avoid a `getPermissionsAsync()` round-trip on every
+ * incoming FCM frame (both `onMessage` and the background handler
+ * call `displayLocalNotificationForFrame` on every message).
+ * `resetNotificationDisplayPermissionCacheForTests` exists so unit
+ * tests can assert first-call behaviour.
+ */
+let displayPermissionCache: boolean | null = null;
+
+/**
+ * Test-only: clear the cached display-permission verdict.
+ */
+export function __resetNotificationDisplayPermissionCacheForTests(): void {
+  displayPermissionCache = null;
+}
+
+/**
+ * Ensure the OS-level notification-DISPLAY permission is granted.
+ *
+ * This is orthogonal to FCM's `messaging().requestPermission()` — that
+ * one governs whether Firebase Cloud Messaging can deliver messages
+ * to the app at all (APNs entitlement on iOS; no-op on Android <13;
+ * POST_NOTIFICATIONS runtime prompt on Android 13+). `expo-
+ * notifications` owns a SEPARATE permission surface for
+ * `scheduleNotificationAsync` — without it, `displayLocalNotification
+ * ForFrame` silently drops on Android 13+ (the OS suppresses the
+ * banner) even when FCM itself is happily delivering the data frame.
+ *
+ * Called from `usePushRegistration` immediately after the FCM grant
+ * so both prompts land in the same permission moment. Callers that
+ * only want to READ (§9.6 cold-start revoke detection, `display
+ * LocalNotificationForFrame` fast-path) pass `{ request: false }`.
+ *
+ * Never throws. A native failure is treated as "not granted".
+ */
+export async function ensureNotificationDisplayPermission(opts?: {
+  request?: boolean;
+}): Promise<boolean> {
+  try {
+    const current = await Notifications.getPermissionsAsync();
+    if (current.granted) {
+      displayPermissionCache = true;
+      return true;
+    }
+    // `canAskAgain === false` means the user hard-denied; the OS won't
+    // show its dialog even if we call requestPermissionsAsync. Cache
+    // and bail so we don't repeatedly no-op through the native bridge.
+    if (opts?.request && current.canAskAgain !== false) {
+      const next = await Notifications.requestPermissionsAsync();
+      displayPermissionCache = next.granted;
+      return next.granted;
+    }
+    displayPermissionCache = false;
+    return false;
+  } catch {
+    displayPermissionCache = false;
+    return false;
+  }
+}
+
+/**
  * Configure the OS-level display defaults. Call once at boot,
  * before any `scheduleNotificationAsync`. Idempotent — repeat
  * calls just re-assert the handler + channel.
@@ -76,6 +139,10 @@ export async function configureLocalNotifications(): Promise<void> {
 export async function displayLocalNotificationForFrame(
   frame: ParsedPushFrame,
 ): Promise<string | null> {
+  // Fast-path short-circuit: if a prior `ensureNotificationDisplay
+  // Permission` call cached a denial, don't spend the native bridge
+  // round-trip. Android 13+ silently drops the schedule anyway.
+  if (displayPermissionCache === false) return null;
   try {
     const id = await Notifications.scheduleNotificationAsync({
       content: {

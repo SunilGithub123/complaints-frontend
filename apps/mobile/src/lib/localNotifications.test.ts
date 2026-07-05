@@ -14,6 +14,8 @@ import * as Notifications from 'expo-notifications';
 import {
   configureLocalNotifications,
   displayLocalNotificationForFrame,
+  ensureNotificationDisplayPermission,
+  __resetNotificationDisplayPermissionCacheForTests,
 } from './localNotifications';
 import type { ParsedPushFrame } from './pushFrame';
 
@@ -21,6 +23,8 @@ interface NotificationsMock {
   scheduleNotificationAsync: jest.Mock;
   setNotificationHandler: jest.Mock;
   setNotificationChannelAsync: jest.Mock;
+  getPermissionsAsync: jest.Mock;
+  requestPermissionsAsync: jest.Mock;
   __scheduled: unknown[];
 }
 
@@ -40,7 +44,10 @@ describe('localNotifications', () => {
   beforeEach(() => {
     notif.scheduleNotificationAsync.mockClear();
     notif.setNotificationHandler.mockClear();
+    notif.getPermissionsAsync.mockClear();
+    notif.requestPermissionsAsync.mockClear();
     notif.__scheduled.length = 0;
+    __resetNotificationDisplayPermissionCacheForTests();
   });
 
   it('schedules a local notification with the frame title/body and routing data', async () => {
@@ -80,6 +87,41 @@ describe('localNotifications', () => {
   it('configureLocalNotifications wires the foreground handler', async () => {
     await configureLocalNotifications();
     expect(notif.setNotificationHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it('ensureNotificationDisplayPermission requests when undetermined and returns true on grant', async () => {
+    notif.getPermissionsAsync.mockResolvedValueOnce({
+      granted: false,
+      canAskAgain: true,
+      status: 'undetermined',
+    });
+    notif.requestPermissionsAsync.mockResolvedValueOnce({
+      granted: true,
+      canAskAgain: true,
+      status: 'granted',
+    });
+
+    const granted = await ensureNotificationDisplayPermission({ request: true });
+
+    expect(granted).toBe(true);
+    expect(notif.requestPermissionsAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('caches denial and short-circuits displayLocalNotificationForFrame', async () => {
+    notif.getPermissionsAsync.mockResolvedValueOnce({
+      granted: false,
+      canAskAgain: false,
+      status: 'denied',
+    });
+
+    const granted = await ensureNotificationDisplayPermission({ request: true });
+    expect(granted).toBe(false);
+    // canAskAgain === false → we must NOT re-prompt.
+    expect(notif.requestPermissionsAsync).not.toHaveBeenCalled();
+
+    const id = await displayLocalNotificationForFrame(frame);
+    expect(id).toBeNull();
+    expect(notif.scheduleNotificationAsync).not.toHaveBeenCalled();
   });
 });
 
