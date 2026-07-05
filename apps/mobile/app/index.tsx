@@ -1,23 +1,29 @@
 /**
- * Authenticated mobile home — replaces the Stage 21.3-a smoke screen.
+ * Cold-start entry (`/`) — either the staff home (authenticated) or
+ * the **role chooser** (anonymous). Replaces the Stage 21.3-b.2
+ * "always redirect to staff-login" behaviour so consumers opening
+ * the app icon can reach the complaint-submission flow without a
+ * deep-link.
  *
- * Two states:
- *  - No access token (and not still rehydrating) → `<Redirect>` to
- *    `/(auth)/staff-login`. Subscribing to `accessToken` via the zustand
- *    selector means the redirect re-fires automatically the moment
- *    `onUnauthenticated` clears the store (the transport's 401 path).
- *  - Authenticated → tiny greeting + logout button. This is NOT the
- *    real staff dashboard (no master-data, no complaints) — that lands
- *    later in the mobile roadmap. The point at 21.3-b.2 is to make the
- *    staff login loop end-to-end testable.
+ * Three states:
+ *  - Not yet hydrated (SecureStore async) → invisible placeholder to
+ *    avoid an anonymous-flash while the persisted token loads.
+ *  - Hydrated + no access token → **role chooser**: two CTAs
+ *    ("File a complaint" → `/(consumer)/landing`, "Staff sign in"
+ *    → `/(auth)/staff-login`) plus a `<LanguageToggle>` in the
+ *    header. Both routes are already implemented; the chooser only
+ *    adds discoverability.
+ *  - Hydrated + authenticated → tiny staff greeting + logout (v1
+ *    home — dashboard proper lands later in the mobile roadmap).
  *
- * Consumer flow has its own landing route (lands in 21.3-b.3); for
- * now this screen only handles the staff side.
+ * The staff-only §9.6 push-permission trigger stays gated on
+ * `accessToken` so anonymous role-chooser visits don't ask for
+ * notifications.
  */
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Redirect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useT } from '@complaints/i18n';
 
 import {
@@ -27,10 +33,12 @@ import {
 } from '@/auth/authStore';
 import { performStaffLogout } from '@/auth/staffLogout';
 import { usePushRegistration } from '@/lib/usePushRegistration';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 export default function HomeScreen(): React.JSX.Element {
   const t = useT();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const accessToken = useAuthStore(selectAccessToken);
   const staff = useAuthStore(selectStaff);
   const hydrated = usePersistHydrated();
@@ -47,20 +55,68 @@ export default function HomeScreen(): React.JSX.Element {
     void runPushRegistration();
   }, [hydrated, accessToken, runPushRegistration]);
 
-  // Wait for SecureStore rehydration before deciding to redirect — the
-  // first render after a cold start always sees `null` tokens even when
-  // a valid session is on disk. Without this gate we'd briefly bounce
-  // an authenticated user back to the login screen.
+  // Wait for SecureStore rehydration before deciding what to render.
+  // A cold start always sees `null` tokens on the first frame; without
+  // this gate we'd briefly flash the role chooser at an authenticated
+  // staff user before the persisted session catches up.
   if (!hydrated) {
     return <View style={[styles.container, styles.center]} />;
   }
 
   if (!accessToken) {
-    return <Redirect href="/(auth)/staff-login" />;
+    return (
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 },
+        ]}
+      >
+        <View style={styles.header}>
+          <LanguageToggle />
+        </View>
+        <Text style={styles.chooserTitle}>{t('roleChooser.title')}</Text>
+        <Text style={styles.chooserSubtitle}>{t('roleChooser.subtitle')}</Text>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('roleChooser.consumerCta')}
+          onPress={() => router.push('/(consumer)/landing')}
+          style={({ pressed }) => [
+            styles.card,
+            styles.cardPrimary,
+            pressed && styles.cardPressed,
+          ]}
+        >
+          <Text style={styles.cardTitlePrimary}>
+            {t('roleChooser.consumerCta')}
+          </Text>
+          <Text style={styles.cardHintPrimary}>
+            {t('roleChooser.consumerHint')}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('roleChooser.staffCta')}
+          onPress={() => router.push('/(auth)/staff-login')}
+          style={({ pressed }) => [
+            styles.card,
+            styles.cardSecondary,
+            pressed && styles.cardPressed,
+          ]}
+        >
+          <Text style={styles.cardTitle}>{t('roleChooser.staffCta')}</Text>
+          <Text style={styles.cardHint}>{t('roleChooser.staffHint')}</Text>
+        </Pressable>
+      </ScrollView>
+    );
   }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 32 }]}>
+      <View style={styles.header}>
+        <LanguageToggle />
+      </View>
       <Text style={styles.title}>
         {t('staff.dashboard.welcome', { name: staff?.fullName ?? '' })}
       </Text>
@@ -107,6 +163,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   center: { alignItems: 'center', justifyContent: 'center' },
+  header: { alignItems: 'flex-end', marginBottom: 8 },
   title: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
   meta: { fontSize: 13, color: '#64748b' },
   body: { fontSize: 14, color: '#475569', marginTop: 12, marginBottom: 24 },
@@ -119,5 +176,42 @@ const styles = StyleSheet.create({
   },
   buttonPressed: { opacity: 0.85 },
   buttonText: { color: '#ffffff', fontWeight: '600' },
+
+  // Role-chooser styles
+  chooserTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginTop: 12,
+  },
+  chooserSubtitle: {
+    fontSize: 15,
+    color: '#475569',
+    marginTop: 6,
+    marginBottom: 24,
+  },
+  card: {
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+  },
+  cardPrimary: {
+    backgroundColor: '#0f172a',
+  },
+  cardSecondary: {
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  cardPressed: { opacity: 0.9 },
+  cardTitlePrimary: { fontSize: 18, fontWeight: '700', color: '#ffffff' },
+  cardHintPrimary: {
+    fontSize: 13,
+    color: '#cbd5e1',
+    marginTop: 6,
+    lineHeight: 18,
+  },
+  cardTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a' },
+  cardHint: { fontSize: 13, color: '#475569', marginTop: 6, lineHeight: 18 },
 });
 
